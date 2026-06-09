@@ -264,6 +264,35 @@
             .topbar { display: none !important; }
             .sidebar-overlay { display: none !important; }
         }
+
+        /* ── Secciones de cotización ── */
+        .seccion-chip {
+            display:inline-flex; align-items:center; gap:6px;
+            padding:5px 10px 5px 13px; border-radius:20px;
+            background:#e0f2fe; color:#0369a1; font-size:12px; font-weight:600;
+            border:1.5px solid #bae6fd; cursor:pointer; transition:.15s; }
+        .seccion-chip.activa { background:#0284c7; color:white; border-color:#0284c7; }
+        .seccion-chip .chip-x { font-size:14px; cursor:pointer; color:inherit; opacity:.6; }
+        .seccion-chip .chip-x:hover { opacity:1; color:#dc2626; }
+        .seccion-banner {
+            display:flex; align-items:center; gap:10px;
+            background:#f0f9ff; border:1px solid #bae6fd;
+            border-radius:6px; padding:8px 14px; margin-bottom:8px; }
+        .seccion-banner .nombre { font-size:13px; font-weight:700; color:#0284c7; }
+        .seccion-banner .count  { font-size:11px; color:#94a3b8; }
+        tr.tr-sec-head td {
+            background:#1e3a5f !important; color:white !important;
+            font-size:11px; font-weight:700; letter-spacing:.8px;
+            padding:6px 10px !important; text-transform:uppercase;
+            -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+        tr.tr-sec-head .btn-sec-add {
+            background:rgba(255,255,255,.18); border:1px solid rgba(255,255,255,.35);
+            color:white; border-radius:4px; padding:2px 8px;
+            cursor:pointer; font-size:11px; }
+        tr.tr-sec-subtotal td {
+            background:#f0f9ff; font-weight:600; font-size:12px;
+            color:#0369a1; border-top:1.5px solid #bae6fd;
+            padding:6px 10px !important; }
     </style>
 </head>
 <body>
@@ -327,7 +356,32 @@
                     </div>
                 </div>
                 <hr style="margin:20px 0; border:0; border-top:1px solid #e2e8f0;">
-                
+
+                <!-- Control de secciones -->
+                <div style="margin-bottom:14px;">
+                    <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-bottom:8px;">
+                        <div class="form-group" style="flex:1;margin-bottom:0;">
+                            <label style="color:#0369a1;font-weight:600;">📂 Nombre de la sección de trabajo</label>
+                            <input type="text" id="cot-seccion-nombre"
+                                   placeholder="Ej: DRYWALL, GASFITERÍA, VEREDA PULIDA..."
+                                   style="text-transform:uppercase;font-weight:600;color:#0369a1;"
+                                   onkeydown="if(event.key==='Enter') nuevaSeccion()">
+                        </div>
+                        <button class="btn" onclick="nuevaSeccion()"
+                                style="background:#0369a1;color:white;padding:10px 18px;font-size:13px;white-space:nowrap;margin-bottom:1px;">
+                            + Nueva Sección
+                        </button>
+                    </div>
+                    <div class="seccion-banner">
+                        <span class="nombre" id="sec-banner-nombre">GENERAL</span>
+                        <span class="count"  id="sec-banner-count">0 ítems</span>
+                        <span style="margin-left:auto;font-size:12px;color:#64748b;">
+                            ← los ítems que agregues van a esta sección
+                        </span>
+                    </div>
+                    <div id="secciones-chips" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+                </div>
+
                 <div class="grid-form" style="grid-template-columns: 2fr 1.2fr 1fr 1fr 1fr auto; margin-bottom: 5px;">
                     <div class="form-group">
                         <label>Concepto / Servicio</label>
@@ -658,9 +712,11 @@ async function guardarEnNube(nombreTabla, datosArray) {
     }
 }
         
-        let itemsCotizacionActual = [];
+        // Secciones: [{nombre, items:[{desc,tipoPrecio,unid,cant,precio,subtotal}]}]
+        let seccionesCotizacion = [{ nombre: 'GENERAL', items: [] }];
+        let seccionActualIdx    = 0;
         let memoriaCotizaciones = [];
-        let correlativoActual = 1;
+        let correlativoActual   = 1;
         let editIndexCatalogo = null;
         let editIndexCliente = null;
         let editIndexCuenta = null;
@@ -749,6 +805,54 @@ async function guardarEnNube(nombreTabla, datosArray) {
             }
         }
 
+        // ── Gestión de secciones ────────────────────────
+        function nuevaSeccion() {
+            const inp    = document.getElementById('cot-seccion-nombre');
+            const nombre = inp.value.trim().toUpperCase();
+            if (!nombre) return alert('Escribe el nombre de la sección (ej: DRYWALL, GASFITERÍA...)');
+            seccionesCotizacion.push({ nombre, items: [] });
+            seccionActualIdx = seccionesCotizacion.length - 1;
+            inp.value = '';
+            renderizarChipsSecciones();
+            actualizarContenedorCotizacion();
+        }
+
+        function activarSeccion(idx) {
+            seccionActualIdx = idx;
+            renderizarChipsSecciones();
+        }
+
+        function eliminarSeccion(idx, e) {
+            e.stopPropagation();
+            if (seccionesCotizacion.length === 1)
+                return alert('Debe haber al menos una sección.');
+            const sec = seccionesCotizacion[idx];
+            if (sec.items.length > 0 &&
+                !confirm(`¿Eliminar la sección "${sec.nombre}" y sus ${sec.items.length} ítem(s)?`)) return;
+            seccionesCotizacion.splice(idx, 1);
+            if (seccionActualIdx >= seccionesCotizacion.length)
+                seccionActualIdx = seccionesCotizacion.length - 1;
+            renderizarChipsSecciones();
+            actualizarContenedorCotizacion();
+        }
+
+        function renderizarChipsSecciones() {
+            const cont = document.getElementById('secciones-chips');
+            if (!cont) return;
+            cont.innerHTML = seccionesCotizacion.map((s, i) => `
+                <div class="seccion-chip ${i === seccionActualIdx ? 'activa' : ''}"
+                     onclick="activarSeccion(${i})">
+                    ${s.nombre}&nbsp;(${s.items.length})
+                    <span class="chip-x" onclick="eliminarSeccion(${i}, event)">✕</span>
+                </div>`).join('');
+            const sec = seccionesCotizacion[seccionActualIdx];
+            const bn  = document.getElementById('sec-banner-nombre');
+            const bc  = document.getElementById('sec-banner-count');
+            if (bn) bn.textContent = sec.nombre;
+            if (bc) bc.textContent = sec.items.length + ' ítem(s)';
+        }
+
+
 async function agregarFilaCotizacion() {
     const desc = document.getElementById('cot-item').value.trim();
     const tipoPrecio = document.getElementById('cot-tipo-precio').value;
@@ -767,7 +871,9 @@ async function agregarFilaCotizacion() {
         }
     }
 
-            itemsCotizacionActual.push({ desc, tipoPrecio, unid: unidad, cant: cantidad, precio, subtotal: cantidad * precio });
+            seccionesCotizacion[seccionActualIdx].items.push(
+                { desc, tipoPrecio, unid: unidad, cant: cantidad, precio, subtotal: cantidad * precio });
+            renderizarChipsSecciones();
             actualizarContenedorCotizacion();
 
             document.getElementById('cot-item').value = "";
@@ -777,45 +883,70 @@ async function agregarFilaCotizacion() {
             inicializarModulos();
         }
 
-        function eliminarFilaCotizacion(index) {
-            itemsCotizacionActual.splice(index, 1);
+        function eliminarFilaCotizacion(secIdx, itemIdx) {
+            seccionesCotizacion[secIdx].items.splice(itemIdx, 1);
+            renderizarChipsSecciones();
             actualizarContenedorCotizacion();
         }
 
         function actualizarContenedorCotizacion() {
-            const tbody = document.getElementById('tabla-cotizacion-body');
+            const tbody  = document.getElementById('tabla-cotizacion-body');
+            const igvOn  = document.getElementById('cot-impuesto-config').value === 'SI';
             tbody.innerHTML = '';
-            let sumaSubtotales = 0;
+            let granTotal = 0;
 
-            itemsCotizacionActual.forEach((item, i) => {
-                sumaSubtotales += item.subtotal;
-                tbody.innerHTML += `
-                    <tr>
-                        <td><b>${item.desc}</b><br><span style="font-size:11px; color:#0284c7; font-weight:600; font-style:italic;">➔ ${item.tipoPrecio}</span></td>
+            seccionesCotizacion.forEach((sec, si) => {
+                // Cabecera de sección
+                tbody.innerHTML += `<tr class="tr-sec-head">
+                    <td colspan="5">${sec.nombre}</td>
+                    <td class="no-print" style="text-align:center;">
+                        <button class="btn-sec-add" onclick="activarSeccion(${si})" title="Agregar ítems a esta sección">
+                            ✎ Editar
+                        </button>
+                    </td></tr>`;
+
+                if (sec.items.length === 0) {
+                    tbody.innerHTML += `<tr><td colspan="6"
+                        style="color:#94a3b8;font-style:italic;font-size:12px;padding:8px 12px;">
+                        Sin ítems — selecciona esta sección y agrega conceptos</td></tr>`;
+                }
+
+                let secSubtotal = 0;
+                sec.items.forEach((item, ii) => {
+                    secSubtotal += item.subtotal;
+                    tbody.innerHTML += `<tr>
+                        <td><b>${item.desc}</b><br>
+                            <span style="font-size:11px;color:#0284c7;font-weight:600;font-style:italic;">
+                                ➔ ${item.tipoPrecio}</span></td>
                         <td style="text-align:center;">${item.unid}</td>
                         <td style="text-align:right;">${item.cant}</td>
                         <td style="text-align:right;">S/ ${item.precio.toFixed(2)}</td>
-                        <td style="text-align:right; font-weight:700;">S/ ${item.subtotal.toFixed(2)}</td>
-                        <td class="no-print"><button class="btn btn-danger" onclick="eliminarFilaCotizacion(${i})" style="padding:4px 8px;">X</button></td>
-                    </tr>`;
+                        <td style="text-align:right;font-weight:700;">S/ ${item.subtotal.toFixed(2)}</td>
+                        <td class="no-print">
+                            <button class="btn btn-danger" onclick="eliminarFilaCotizacion(${si},${ii})"
+                                    style="padding:3px 7px;font-size:11px;">✕</button>
+                        </td></tr>`;
+                });
+
+                if (sec.items.length > 0) {
+                    const secIgv   = igvOn ? secSubtotal * 0.18 : 0;
+                    const secTotal = secSubtotal + secIgv;
+                    granTotal += secTotal;
+                    const igvTxt = igvOn
+                        ? `&nbsp;+&nbsp;IGV&nbsp;S/&nbsp;${secIgv.toFixed(2)}&nbsp;=&nbsp;<b>S/ ${secTotal.toFixed(2)}</b>`
+                        : `<b>S/ ${secTotal.toFixed(2)}</b>`;
+                    tbody.innerHTML += `<tr class="tr-sec-subtotal">
+                        <td colspan="4" style="text-align:right;">
+                            Total ${sec.nombre}: S/ ${secSubtotal.toFixed(2)} ${igvTxt}
+                        </td>
+                        <td></td><td class="no-print"></td></tr>`;
+                }
             });
 
-            const configIgv = document.getElementById('cot-impuesto-config').value;
-            if(configIgv === "SI") {
-                let calculoIgv = sumaSubtotales * 0.18;
-                let totalConIgv = sumaSubtotales + calculoIgv;
-
-                document.getElementById('lbl-subtotal').innerText = sumaSubtotales.toFixed(2);
-                document.getElementById('lbl-igv').innerText = calculoIgv.toFixed(2);
-                document.getElementById('lbl-total').innerText = totalConIgv.toFixed(2);
-
-                document.getElementById('row-summary-subtotal').style.display = "flex";
-                document.getElementById('row-summary-igv').style.display = "flex";
-            } else {
-                document.getElementById('lbl-total').innerText = sumaSubtotales.toFixed(2);
-                document.getElementById('row-summary-subtotal').style.display = "none";
-                document.getElementById('row-summary-igv').style.display = "none";
-            }
+            // Gran total
+            document.getElementById('lbl-total').innerText = granTotal.toFixed(2);
+            document.getElementById('row-summary-subtotal').style.display = 'none';
+            document.getElementById('row-summary-igv').style.display      = 'none';
         }
 
         function renderizarCuentasDocumento() {
@@ -827,12 +958,12 @@ async function agregarFilaCotizacion() {
         }
 
         function limpiarCotizacion() {
-            if (itemsCotizacionActual.length > 0) {
-                if (!confirm("¿Limpiar la cotización actual y comenzar una nueva?")) return;
-            }
+            const totalItems = seccionesCotizacion.reduce((s, sec) => s + sec.items.length, 0);
+            if (totalItems > 0 && !confirm("¿Limpiar todas las secciones y comenzar una nueva cotización?")) return;
 
-            // Limpiar items
-            itemsCotizacionActual = [];
+            seccionesCotizacion = [{ nombre: 'GENERAL', items: [] }];
+            seccionActualIdx    = 0;
+            renderizarChipsSecciones();
             actualizarContenedorCotizacion();
 
             // Resetear campos del formulario
@@ -843,6 +974,7 @@ async function agregarFilaCotizacion() {
             document.getElementById('cot-item').value              = "";
             document.getElementById('cot-precio').value            = "";
             document.getElementById('cot-cantidad').value          = "1";
+            document.getElementById('cot-seccion-nombre').value       = "";
 
             // Resetear etiquetas del documento
             document.getElementById('lbl-cliente').innerText   = "-- Seleccione Cliente --";
@@ -881,15 +1013,17 @@ async function crearPdfEnDrive(cotizacion) {
 // 2. LUEGO VA ESTA FUNCIÓN
 async function finalizarEImprimir() {
     if(document.getElementById('cot-cliente').value === "") return alert("Seleccione un cliente.");
-    if(itemsCotizacionActual.length === 0) return alert("Añada al menos un ítem.");
+    const totalItems = seccionesCotizacion.reduce((s, sec) => s + sec.items.length, 0);
+    if(totalItems === 0) return alert("Añada al menos un ítem.");
 
     const numCotizacion = "PRE-" + ("000" + correlativoActual).slice(-4);
     const clienteIdx    = document.getElementById('cot-cliente').value;
     const nombreCliente = memoriaClientes[clienteIdx]?.nombre || "Cliente";
     
     const configIgv     = document.getElementById('cot-impuesto-config').value;
-    const subtotal      = itemsCotizacionActual.reduce((s, i) => s + i.subtotal, 0);
-    const igv           = configIgv === "SI" ? subtotal * 0.18 : 0;
+    const igvOnF    = document.getElementById('cot-impuesto-config').value === "SI";
+    const subtotal  = seccionesCotizacion.reduce((s, sec) => s + sec.items.reduce((a,i) => a+i.subtotal, 0), 0);
+    const igv           = igvOnF ? subtotal * 0.18 : 0;
     const total         = subtotal + igv;
 
     const cotizacion = {
@@ -897,7 +1031,7 @@ async function finalizarEImprimir() {
         fecha:         document.getElementById('cot-fecha').value,
         cliente:       nombreCliente,
         ruc:           memoriaClientes[clienteIdx]?.doc || "",
-        items:         JSON.stringify(itemsCotizacionActual),
+        secciones:     JSON.stringify(seccionesCotizacion),
         subtotal:      subtotal.toFixed(2),
         igv:           igv.toFixed(2),
         total:         total.toFixed(2),
