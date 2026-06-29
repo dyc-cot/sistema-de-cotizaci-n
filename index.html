@@ -60,20 +60,31 @@
 
         /* Formato de Impresión Corporativo */
         .invoice-box { background: white; padding: 40px; border-radius: 4px; box-shadow: 0 0 10px rgba(0,0,0,0.05); max-width: 850px; margin: 0 auto; border: 1px solid #e2e8f0; }
-        .invoice-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px; }
+        .invoice-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px; flex-wrap: nowrap; gap: 16px; }
         .company-logo-area { display: flex; align-items: center; gap: 15px; }
         .company-logo-area img { max-height: 70px; max-width: 180px; object-fit: contain; display: none; }
         .company-details h2 { font-size: 24px; color: var(--primary); font-weight: 800; line-height: 1.1; }
         .company-details span { color: var(--accent); font-weight: 600; font-size: 14px; }
-        .invoice-meta { text-align: right; }
+        .invoice-meta { text-align: right; flex-shrink: 0; min-width: 180px; }
         .invoice-meta h3 { font-size: 22px; color: var(--primary); margin-bottom: 5px; letter-spacing: 1px; }
         
         .invoice-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px; padding: 15px 0; border-top: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; }
         
         /* Bloque de Totales */
-        .invoice-summary-block { display: flex; flex-direction: column; align-items: flex-end; margin-top: 20px; padding-bottom: 15px; border-bottom: 1px solid #e2e8f0; gap: 5px; }
-        .summary-row { display: flex; width: 280px; justify-content: space-between; font-size: 14px; color: #475569; }
-        .summary-row.total-final { font-size: 19px; color: #0f172a; font-weight: bold; margin-top: 5px; padding-top: 5px; border-top: 1px solid #cbd5e1; }
+        .invoice-summary-block {
+            display:flex; flex-direction:column; align-items:flex-end;
+            margin-top:20px; padding-bottom:12px;
+            border-bottom:1px solid #e2e8f0; gap:0; }
+        .summary-row {
+            display:flex; width:300px; justify-content:space-between;
+            font-size:13px; color:#64748b;
+            padding:5px 12px; }
+        .summary-row + .summary-row { border-top:1px solid #f1f5f9; }
+        .summary-row.total-final {
+            font-size:16px; font-weight:800; color:#0f172a;
+            background:#f8fafc; border-radius:6px;
+            padding:10px 12px; margin-top:6px;
+            border-top:2px solid #cbd5e1 !important; }
         
         /* Notas y Cuentas */
         .notes-footer { margin-top: 20px; font-size: 12px; color: #475569; line-height: 1.5; white-space: pre-line; }
@@ -82,14 +93,75 @@
         .bank-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
         .bank-card { background: #f8fafc; padding: 8px 12px; border-radius: 4px; border-left: 3px solid var(--accent); }
 
-        @page { margin: 0; }
+        /* ── A4: margin:0 elimina el header/footer automático del navegador ── */
+        @page { size: A4; margin: 0; }
+
         @media print {
             body { background: white; color: black; }
-            .sidebar, .main-content > h1, .card:not(.print-only), .no-print, #screen-title-panel { display: none !important; }
+
+            /* Ocultar todo lo que no es el documento */
+            .sidebar, .main-content > h1, .card:not(.print-only),
+            .no-print, #screen-title-panel,
+            .topbar, .sidebar-overlay, .hamburger,
+            #fb-overlay, #fb-toast, #fb-config-banner { display: none !important; }
+
             .main-content { padding: 0; overflow: visible; height: auto; }
-            .invoice-box { border: none; box-shadow: none; padding: 14mm 16mm; max-width: 100%; }
-            table th { background-color: #e2e8f0 !important; color: black !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            .bank-card { background: #f1f5f9 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+            /* Invoice box: padding en los 4 lados (reemplaza los márgenes de @page) */
+            .invoice-box {
+                border: none; box-shadow: none;
+                padding: 12mm 13mm;
+                max-width: 100%;
+                font-size: 12px;
+            }
+
+            /* Cabecera: siempre horizontal sin importar ancho de pantalla */
+            .invoice-header {
+                flex-direction: row !important;
+                align-items: flex-start !important;
+                gap: 20px;
+            }
+            .invoice-meta { text-align: right !important; flex-shrink: 0; }
+
+            /* Tabla */
+            table th {
+                background-color: #e2e8f0 !important; color: black !important;
+                -webkit-print-color-adjust: exact; print-color-adjust: exact;
+            }
+            .bank-card {
+                background: #f8fafc !important;
+                border-left: 3px solid #0284c7 !important;
+                -webkit-print-color-adjust: exact; print-color-adjust: exact;
+            }
+
+            /* Tamaños compactos */
+            .invoice-header h2 { font-size: 18px !important; }
+            .invoice-meta h3   { font-size: 17px !important; }
+            .company-details span, .company-details p { font-size: 11px !important; }
+            .invoice-info-grid { margin-bottom: 12px; padding: 10px 0; }
+            .invoice-info-grid p { font-size: 11px !important; margin: 1px 0; }
+            table td, table th { font-size: 11px !important; padding: 6px 8px !important; }
+            .notes-footer      { font-size: 11px !important; margin-top: 10px; }
+            .bank-footer h4    { font-size: 12px !important; }
+            .bank-card         { font-size: 11px !important; padding: 6px 10px; }
+
+            /* ── TOTALES: siempre alineados a la derecha ── */
+            .invoice-summary-block {
+                align-items: flex-end !important;
+                margin-top: 16px;
+                page-break-inside: avoid;
+            }
+            .summary-row       { width: 300px !important; font-size: 12px !important; }
+            .summary-row.total-final { font-size: 14px !important; }
+            .summary-row.cargo-extra { width: 300px !important; }
+
+            /* ── CUENTAS BANCARIAS: exactamente igual que la vista previa ── */
+            .bank-footer { margin-top: 20px; page-break-inside: avoid; }
+            .bank-grid {
+                display: grid !important;
+                grid-template-columns: 1fr 1fr !important;
+                gap: 10px !important;
+            }
         }
 
         /* ── Guía de Precios ── */
@@ -293,6 +365,65 @@
             background:#f0f9ff; font-weight:600; font-size:12px;
             color:#0369a1; border-top:1.5px solid #bae6fd;
             padding:6px 10px !important; }
+
+        /* ── Cargos adicionales ── */
+        .cargos-panel {
+            margin-top:16px; padding:14px 16px; background:#f8fafc;
+            border:1px solid #e2e8f0; border-radius:8px; }
+        .cargos-panel-title {
+            font-size:12px; font-weight:700; color:#0f172a; margin-bottom:10px; }
+        .cargos-form {
+            display:flex; gap:8px; flex-wrap:wrap; align-items:flex-end; }
+        .cargos-form .form-group { margin-bottom:0; }
+        .cargo-lista { display:flex; flex-direction:column; gap:5px; margin-top:10px; }
+        .cargo-tag {
+            display:flex; align-items:center; justify-content:space-between;
+            background:white; border:1px solid #e2e8f0; border-radius:6px;
+            padding:6px 12px; font-size:13px; }
+        .cargo-tag-label { flex:1; color:#334155; }
+        .cargo-tag-val { font-weight:700; color:#0f172a; margin:0 10px; white-space:nowrap; }
+        .cargo-tag-del {
+            background:none; border:none; color:#94a3b8;
+            font-size:16px; cursor:pointer; padding:0 2px; line-height:1; }
+        .cargo-tag-del:hover { color:#dc2626; }
+        .summary-row.cargo-extra { color:#334155; font-size:13px; font-style:italic; }
+
+        /* ── Módulo Cotizaciones ── */
+        .cot-toolbar { display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end; margin-bottom:16px; }
+        .cot-toolbar input, .cot-toolbar select { padding:9px 12px; border:1px solid #cbd5e1; border-radius:6px; font-size:13px; outline:none; }
+        .cot-toolbar input:focus, .cot-toolbar select:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(2,132,199,.15); }
+        .cot-search { flex:1; min-width:180px; }
+        .cot-stats { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:18px; }
+        .cot-stat { background:#f1f5f9; border-radius:6px; padding:10px 14px; }
+        .cot-stat-label { font-size:11px; color:#64748b; margin-bottom:3px; }
+        .cot-stat-val { font-size:20px; font-weight:700; color:#0f172a; }
+        /* Badges de estado */
+        .badge-estado { display:inline-block; padding:3px 10px; border-radius:12px; font-size:11px; font-weight:700; letter-spacing:.3px; white-space:nowrap; }
+        .badge-BORRADOR  { background:#f1f5f9; color:#64748b; border:1px solid #cbd5e1; }
+        .badge-ENVIADA   { background:#dbeafe; color:#1d4ed8; border:1px solid #bfdbfe; }
+        .badge-APROBADA  { background:#dcfce7; color:#16a34a; border:1px solid #bbf7d0; }
+        .badge-RECHAZADA { background:#fee2e2; color:#dc2626; border:1px solid #fecaca; }
+        .badge-ANULADA   { background:#f3f4f6; color:#6b7280; border:1px solid #d1d5db; text-decoration:line-through; }
+        /* Botones acción tabla cotizaciones */
+        .btn-abrir  { background:#2563eb; color:white; padding:5px 10px; font-size:11px; border-radius:5px; border:none; cursor:pointer; font-weight:600; white-space:nowrap; }
+        .btn-abrir:hover { background:#1d4ed8; }
+        .btn-dup    { background:#0369a1; color:white; padding:5px 10px; font-size:11px; border-radius:5px; border:none; cursor:pointer; font-weight:600; white-space:nowrap; }
+        .btn-dup:hover { background:#075985; }
+        .btn-pdf    { background:#16a34a; color:white; padding:5px 10px; font-size:11px; border-radius:5px; border:none; cursor:pointer; font-weight:600; white-space:nowrap; }
+        .btn-pdf:hover { background:#15803d; }
+        .btn-del    { background:#dc2626; color:white; padding:5px 10px; font-size:11px; border-radius:5px; border:none; cursor:pointer; font-weight:600; white-space:nowrap; }
+        .btn-del:hover { background:#b91c1c; }
+        .cot-empty  { text-align:center; padding:40px 20px; color:#94a3b8; font-size:14px; }
+        .cot-modo-edicion-banner {
+            display:none; background:#fef3c7; border:1.5px solid #fbbf24; border-radius:8px;
+            padding:10px 16px; margin-bottom:14px; font-size:13px; font-weight:600;
+            color:#92400e; align-items:center; gap:10px; }
+        .cot-modo-edicion-banner.visible { display:flex; }
+        @media (max-width:768px) {
+            .cot-stats { grid-template-columns:1fr 1fr; gap:8px; }
+            .cot-toolbar { flex-direction:column; }
+            .cot-search { width:100%; }
+        }
     </style>
 </head>
 <body>
@@ -312,6 +443,7 @@
     <div class="sidebar">
         <h2>ALEXANDER D&C</h2>
         <button class="menu-btn active" onclick="switchView('nueva-cotizacion')">📄 Nueva Cotización</button>
+        <button class="menu-btn" onclick="switchView('cotizaciones')">📂 Cotizaciones</button>
         <button class="menu-btn" onclick="switchView('catalogo')">📦 Catálogo de Costos</button>
         <button class="menu-btn" onclick="switchView('clientes')">👥 Base de Clientes</button>
         <button class="menu-btn" onclick="switchView('cuentas')">🏦 Cuentas Bancarias</button>
@@ -474,6 +606,37 @@
                     <tbody id="tabla-cotizacion-body"></tbody>
                 </table></div>
 
+                <!-- Panel cargos adicionales (oculto en impresión, refleja en totales) -->
+                <div class="cargos-panel no-print">
+                    <div class="cargos-panel-title">➕ Cargos adicionales al presupuesto</div>
+                    <div class="cargos-form">
+                        <div class="form-group" style="flex:2;min-width:150px;">
+                            <label>Concepto</label>
+                            <input type="text" id="cargo-concepto"
+                                   placeholder="Ej: Trabajo en alturas, Nocturno..."
+                                   onkeydown="if(event.key==='Enter') agregarCargo()">
+                        </div>
+                        <div class="form-group" style="flex:1;min-width:110px;">
+                            <label>Tipo</label>
+                            <select id="cargo-tipo">
+                                <option value="pct">% Porcentaje</option>
+                                <option value="monto">S/ Monto fijo</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="flex:1;min-width:90px;">
+                            <label>Valor</label>
+                            <input type="number" id="cargo-valor" min="0" step="0.01"
+                                   placeholder="Ej: 5 ó 200">
+                        </div>
+                        <button class="btn btn-primary"
+                                onclick="agregarCargo()"
+                                style="padding:10px 16px;white-space:nowrap;margin-bottom:1px;">
+                            + Agregar
+                        </button>
+                    </div>
+                    <div class="cargo-lista" id="cargo-lista"></div>
+                </div>
+
                 <!-- BLOQUE DE TOTALES MODULAR -->
                 <div class="invoice-summary-block">
                     <div class="summary-row" id="row-summary-subtotal" style="display:none;">
@@ -484,6 +647,7 @@
                         <span>IGV (18%):</span>
                         <span>S/ <span id="lbl-igv">0.00</span></span>
                     </div>
+                    <div id="summary-cargos"></div>
                     <div class="summary-row total-final">
                         <span>TOTAL ESTIMADO:</span>
                         <span>S/ <span id="lbl-total">0.00</span></span>
@@ -630,11 +794,80 @@
             </div>
         </div>
 
+        <!-- VISTA: COTIZACIONES -->
+        <div id="cotizaciones" class="view">
+            <h1>📂 Historial de Cotizaciones</h1>
+
+            <!-- Banner modo edición -->
+            <div class="cot-modo-edicion-banner" id="cot-edicion-banner">
+                ✏️ <span id="cot-edicion-label">Editando cotización</span>
+                <button onclick="cancelarModoEdicion()" class="btn btn-danger" style="margin-left:auto;padding:5px 14px;font-size:12px;">✕ Cancelar edición</button>
+            </div>
+
+            <!-- Estadísticas -->
+            <div class="cot-stats">
+                <div class="cot-stat"><div class="cot-stat-label">Total</div><div class="cot-stat-val" id="cst-total">0</div></div>
+                <div class="cot-stat"><div class="cot-stat-label">Aprobadas</div><div class="cot-stat-val" id="cst-aprobadas" style="color:#16a34a;">0</div></div>
+                <div class="cot-stat"><div class="cot-stat-label">Pendientes</div><div class="cot-stat-val" id="cst-pendientes" style="color:#ea580c;">0</div></div>
+                <div class="cot-stat"><div class="cot-stat-label">Total S/</div><div class="cot-stat-val" id="cst-monto" style="font-size:15px;">0.00</div></div>
+            </div>
+
+            <div class="card">
+                <!-- Barra de búsqueda y filtros -->
+                <div class="cot-toolbar">
+                    <input type="text" class="cot-search" id="cot-buscador"
+                        placeholder="🔍 Buscar por número, cliente, RUC, importe, observaciones..."
+                        oninput="renderTablaHistorial()">
+                    <select id="cot-filtro-estado" onchange="renderTablaHistorial()">
+                        <option value="">Todos los estados</option>
+                        <option value="BORRADOR">Borrador</option>
+                        <option value="ENVIADA">Enviada</option>
+                        <option value="APROBADA">Aprobada</option>
+                        <option value="RECHAZADA">Rechazada</option>
+                        <option value="ANULADA">Anulada</option>
+                    </select>
+                    <select id="cot-filtro-mes" onchange="renderTablaHistorial()">
+                        <option value="">Todos los meses</option>
+                        <option value="01">Enero</option><option value="02">Febrero</option>
+                        <option value="03">Marzo</option><option value="04">Abril</option>
+                        <option value="05">Mayo</option><option value="06">Junio</option>
+                        <option value="07">Julio</option><option value="08">Agosto</option>
+                        <option value="09">Septiembre</option><option value="10">Octubre</option>
+                        <option value="11">Noviembre</option><option value="12">Diciembre</option>
+                    </select>
+                    <select id="cot-filtro-anio" onchange="renderTablaHistorial()">
+                        <option value="">Todos los años</option>
+                    </select>
+                    <select id="cot-filtro-cliente" onchange="renderTablaHistorial()">
+                        <option value="">Todos los clientes</option>
+                    </select>
+                </div>
+
+                <div class="table-scroll">
+                    <table id="tabla-historial">
+                        <thead>
+                            <tr>
+                                <th>N°</th>
+                                <th>Cliente</th>
+                                <th>Fecha</th>
+                                <th style="text-align:right;">Subtotal</th>
+                                <th style="text-align:right;">IGV</th>
+                                <th style="text-align:right;">Total</th>
+                                <th>Estado</th>
+                                <th style="min-width:210px;">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-historial-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <script>
         // NUEVA INICIALIZACIÓN CON LA NUBE
-const URL_GAS = "https://script.google.com/macros/s/AKfycbz2lUqvDFumU0QQQm3LbLjum0KlosaoYdG6seZTZmaA9_FGakhYaoNlYh0Jn5VqY87_Eg/exec";
+const URL_GAS = "https://script.google.com/macros/s/AKfycbxO_uQRSBKbbaQ8RC0noy36VqR8GlrD03dZecPII_Hww371tt2MgLLLcBVCbUYW0npz/exec";
 
 let memoriaCatalogo = [];
 let memoriaClientes = [];
@@ -642,73 +875,59 @@ let memoriaCuentas = [];
 
 // correlativo gestionado desde la nube (correlativoActual)
 
-// Función que lee los datos desde tu Google Sheets (VERSIÓN LIMPIA)
-async function cargarDatosDesdeNube() {
-    try {
+// ── GET: carga datos usando JSONP (compatible con file://) ─────
+function cargarDatosDesdeNube() {
+    return new Promise(function(resolve, reject) {
         const panelTitulo = document.getElementById('screen-title-panel');
         panelTitulo.innerText = "⏳ Conectando con la base de datos en la nube...";
-        panelTitulo.style.color = "#ea580c"; 
-        
-        // Petición estándar. Sin headers, sin configuraciones extra.
-        const respuesta = await fetch(URL_GAS);
-        const datos = await respuesta.json(); 
-        
-        memoriaCatalogo   = datos.catalogo     || [];
-        memoriaClientes   = datos.clientes     || [];
-        memoriaCuentas    = datos.cuentas      || [];
-        memoriaCotizaciones = datos.cotizaciones || [];
-        correlativoActual = parseInt(datos.correlativo) || 1;
-        localStorage.setItem('correlativo', String(correlativoActual));
+        panelTitulo.style.color = "#ea580c";
 
-        panelTitulo.innerText = "Panel de Creación de Presupuestos";
-        panelTitulo.style.color = "var(--primary)";
-        
-        inicializarModulos();
-        
-    } catch (error) {
-        console.error("Error de conexión:", error);
-        alert("Hubo un problema de conexión. Verifica la consola.");
-    }
+        const callbackName = "jsonpCb_" + Date.now();
+        const script = document.createElement("script");
+
+        window[callbackName] = function(datos) {
+            delete window[callbackName];
+            document.body.removeChild(script);
+
+            memoriaCatalogo     = datos.catalogo     || [];
+            memoriaClientes     = datos.clientes     || [];
+            memoriaCuentas      = datos.cuentas      || [];
+            memoriaCotizaciones = datos.cotizaciones || [];
+            correlativoActual   = parseInt(datos.correlativo) || 1;
+            localStorage.setItem('correlativo', String(correlativoActual));
+
+            panelTitulo.innerText = "Panel de Creación de Presupuestos";
+            panelTitulo.style.color = "var(--primary)";
+
+            inicializarModulos();
+            resolve();
+        };
+
+        script.onerror = function() {
+            delete window[callbackName];
+            document.body.removeChild(script);
+            panelTitulo.innerText = "❌ Error de conexión";
+            panelTitulo.style.color = "var(--danger)";
+            console.error("JSONP: no se pudo conectar con la nube.");
+            reject(new Error("Error JSONP"));
+        };
+
+        script.src = URL_GAS + "?callback=" + callbackName;
+        document.body.appendChild(script);
+    });
 }
 
-// Función centralizada para enviar datos (VERSIÓN LIMPIA)
+// ── POST: guarda datos (text/plain evita preflight CORS) ───────
 async function guardarEnNube(nombreTabla, datosArray) {
     try {
         await fetch(URL_GAS, {
-            method: 'POST',
-            // Al enviar un JSON.stringify sin headers, el navegador 
-            // usa text/plain por defecto y evita el bloqueo CORS
+            method: "POST",
+            redirect: "follow",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
             body: JSON.stringify({ tabla: nombreTabla, datos: datosArray })
         });
     } catch (error) {
         console.error("Error al guardar:", error);
-        alert("Hubo un error al guardar en la nube.");
-    }
-}
-// Función centralizada para enviar datos
-async function guardarEnNube(nombreTabla, datosArray) {
-    try {
-        await fetch(URL_GAS, {
-            method: 'POST',
-            // Usamos text/plain para evitar el bloqueo CORS del navegador (Preflight error)
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({ tabla: nombreTabla, datos: datosArray })
-        });
-    } catch (error) {
-        console.error("Error al guardar:", error);
-        alert("Hubo un error al guardar en la nube.");
-    }
-}
-
-// Función centralizada para enviar datos a la nube cuando guardes o borres algo
-async function guardarEnNube(nombreTabla, datosArray) {
-    try {
-        await fetch(URL_GAS, {
-            method: 'POST',
-            body: JSON.stringify({ tabla: nombreTabla, datos: datosArray })
-        });
-    } catch (error) {
-        alert("Hubo un error al guardar en la nube.");
     }
 }
         
@@ -721,6 +940,11 @@ async function guardarEnNube(nombreTabla, datosArray) {
         let editIndexCliente = null;
         let editIndexCuenta = null;
 
+        // FASE 4: Variables de modo edición
+        let modoEdicion = false;
+        let indiceEdicion = -1;
+        let cotizacionEditando = null;
+
         function switchView(viewId) {
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
             document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('active'));
@@ -730,6 +954,7 @@ async function guardarEnNube(nombreTabla, datosArray) {
             }
             inicializarModulos();
             if (viewId === 'guia-precios') { guiaRenderFiltros(); guiaRender(); }
+            if (viewId === 'cotizaciones') { inicializarFiltrosHistorial(); renderTablaHistorial(); }
         }
 
         function inicializarModulos() {
@@ -820,6 +1045,29 @@ async function guardarEnNube(nombreTabla, datosArray) {
         function activarSeccion(idx) {
             seccionActualIdx = idx;
             renderizarChipsSecciones();
+            // Feedback visual: scroll al formulario
+            const banner = document.getElementById('sec-banner-nombre');
+            if (banner) {
+                const wrap = banner.closest('.seccion-banner');
+                if (wrap) {
+                    wrap.style.transition = 'background .15s';
+                    wrap.style.background = '#bae6fd';
+                    setTimeout(() => wrap.style.background = '#f0f9ff', 500);
+                }
+            }
+            const itemInput = document.getElementById('cot-item');
+            if (itemInput) itemInput.scrollIntoView({behavior:'smooth', block:'center'});
+        }
+
+        function renombrarSeccion(idx) {
+            const nombre = prompt(
+                'Nuevo nombre para la sección:',
+                seccionesCotizacion[idx].nombre
+            );
+            if (!nombre || !nombre.trim()) return;
+            seccionesCotizacion[idx].nombre = nombre.trim().toUpperCase();
+            renderizarChipsSecciones();
+            actualizarContenedorCotizacion();
         }
 
         function eliminarSeccion(idx, e) {
@@ -899,9 +1147,14 @@ async function agregarFilaCotizacion() {
                 // Cabecera de sección
                 tbody.innerHTML += `<tr class="tr-sec-head">
                     <td colspan="5">${sec.nombre}</td>
-                    <td class="no-print" style="text-align:center;">
-                        <button class="btn-sec-add" onclick="activarSeccion(${si})" title="Agregar ítems a esta sección">
-                            ✎ Editar
+                    <td class="no-print" style="text-align:center; white-space:nowrap;">
+                        <button class="btn-sec-add" onclick="activarSeccion(${si})"
+                                style="margin-right:4px;" title="Agregar ítems a esta sección">
+                            + Aquí
+                        </button>
+                        <button class="btn-sec-add" onclick="renombrarSeccion(${si})"
+                                title="Renombrar sección">
+                            ✎
                         </button>
                     </td></tr>`;
 
@@ -943,10 +1196,53 @@ async function agregarFilaCotizacion() {
                 }
             });
 
-            // Gran total
-            document.getElementById('lbl-total').innerText = granTotal.toFixed(2);
-            document.getElementById('row-summary-subtotal').style.display = 'none';
-            document.getElementById('row-summary-igv').style.display      = 'none';
+            // ── Bloque de totales ──
+            if (igvOn) {
+                // granTotal ya incluye IGV (se sumó en secTotal = secSubtotal * 1.18)
+                const base = granTotal / 1.18;
+                const igv  = granTotal - base;
+                document.getElementById('lbl-subtotal').innerText = base.toFixed(2);
+                document.getElementById('lbl-igv').innerText      = igv.toFixed(2);
+                document.getElementById('row-summary-subtotal').style.display = 'flex';
+                document.getElementById('row-summary-igv').style.display      = 'flex';
+            } else {
+                document.getElementById('row-summary-subtotal').style.display = 'none';
+                document.getElementById('row-summary-igv').style.display      = 'none';
+            }
+            // Cargos adicionales
+            const totalCargos = calcularTotalCargos(granTotal);
+            const totalFinal  = granTotal + totalCargos;
+
+            // Subtotal e IGV
+            if (igvOn) {
+                const base = granTotal / 1.18;
+                document.getElementById('lbl-subtotal').innerText = base.toFixed(2);
+                document.getElementById('lbl-igv').innerText      = (granTotal - base).toFixed(2);
+                document.getElementById('row-summary-subtotal').style.display = 'flex';
+                document.getElementById('row-summary-igv').style.display      = 'flex';
+            } else if (cargosAdicionales.length > 0) {
+                document.getElementById('lbl-subtotal').innerText = granTotal.toFixed(2);
+                document.getElementById('row-summary-subtotal').style.display = 'flex';
+                document.getElementById('row-summary-igv').style.display      = 'none';
+            } else {
+                document.getElementById('row-summary-subtotal').style.display = 'none';
+                document.getElementById('row-summary-igv').style.display      = 'none';
+            }
+
+            // Filas de cargos en el bloque de totales
+            const sumCargos = document.getElementById('summary-cargos');
+            if (sumCargos) {
+                sumCargos.innerHTML = cargosAdicionales.map(c => {
+                    const monto = c.tipo === 'pct' ? granTotal * c.valor / 100 : c.valor;
+                    const label = c.tipo === 'pct' ? `${c.concepto} (${c.valor}%)` : c.concepto;
+                    return `<div class="summary-row cargo-extra">
+                        <span>+ ${label}:</span>
+                        <span>S/ ${monto.toFixed(2)}</span>
+                    </div>`;
+                }).join('');
+            }
+
+            document.getElementById('lbl-total').innerText = totalFinal.toFixed(2);
         }
 
         function renderizarCuentasDocumento() {
@@ -961,8 +1257,15 @@ async function agregarFilaCotizacion() {
             const totalItems = seccionesCotizacion.reduce((s, sec) => s + sec.items.length, 0);
             if (totalItems > 0 && !confirm("¿Limpiar todas las secciones y comenzar una nueva cotización?")) return;
 
+            // FASE 4: Resetear modo edición
+            modoEdicion = false;
+            indiceEdicion = -1;
+            cotizacionEditando = null;
+
             seccionesCotizacion = [{ nombre: 'GENERAL', items: [] }];
             seccionActualIdx    = 0;
+            cargosAdicionales   = [];
+            renderCargoUI();
             renderizarChipsSecciones();
             actualizarContenedorCotizacion();
 
@@ -981,6 +1284,10 @@ async function agregarFilaCotizacion() {
             document.getElementById('lbl-doc').innerText       = "---";
             document.getElementById('lbl-direccion').innerText = "---";
 
+            // FASE 7: liberar readonly del número
+            document.getElementById('cot-numero').removeAttribute('readonly');
+            document.getElementById('cot-numero').style.background = '';
+
             // Avanzar al siguiente número de cotización
             const nuevoNum = "PRE-" + ("000" + correlativoActual).slice(-4);
             document.getElementById('cot-numero').value = nuevoNum;
@@ -989,21 +1296,33 @@ async function agregarFilaCotizacion() {
             // Nueva fecha
             document.getElementById('cot-fecha').value    = new Date().toLocaleDateString('es-PE');
             document.getElementById('lbl-fecha').innerText = document.getElementById('cot-fecha').value;
+
+            // Ocultar banner modo edición
+            const banner = document.getElementById('cot-edicion-banner');
+            if (banner) banner.classList.remove('visible');
+
+            // Actualizar título
+            document.getElementById('screen-title-panel').innerText = "Panel de Creación de Presupuestos";
+            document.getElementById('screen-title-panel').style.color = "var(--primary)";
         }
 
-// 1. ESTA FUNCIÓN VA PRIMERO, SOLA Y LIBRE
+// ── PDF EN DRIVE ───────────────────────────────────────────────
 async function crearPdfEnDrive(cotizacion) {
     try {
         cotizacion.tipo = "guardarPresupuestoConPdf";
         const respuesta = await fetch(URL_GAS, {
-            method: 'POST',
+            method: "POST",
+            redirect: "follow",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
             body: JSON.stringify(cotizacion)
         });
         const resultado = await respuesta.json();
         if (resultado.ok) {
-            console.log("✅ PDF generado en Drive");
+            console.log("✅ PDF generado en Drive:", resultado.url);
+            mostrarToast("☁️ PDF guardado en Drive", "success");
         } else {
             console.error("❌ Error en Drive:", resultado.error);
+            mostrarToast("⚠️ Error al guardar PDF: " + resultado.error, "warning");
         }
     } catch(e) {
         console.warn("⚠️ Error de conexión con Drive", e);
@@ -1012,57 +1331,78 @@ async function crearPdfEnDrive(cotizacion) {
 
 // 2. LUEGO VA ESTA FUNCIÓN
 async function finalizarEImprimir() {
-    if(document.getElementById('cot-cliente').value === "") return alert("Seleccione un cliente.");
+    if(document.getElementById('cot-cliente').value === "") return mostrarToast("⚠️ Seleccione un cliente.", "warning");
     const totalItems = seccionesCotizacion.reduce((s, sec) => s + sec.items.length, 0);
-    if(totalItems === 0) return alert("Añada al menos un ítem.");
+    if(totalItems === 0) return mostrarToast("⚠️ Añada al menos un ítem.", "warning");
 
-    const numCotizacion = "PRE-" + ("000" + correlativoActual).slice(-4);
     const clienteIdx    = document.getElementById('cot-cliente').value;
     const nombreCliente = memoriaClientes[clienteIdx]?.nombre || "Cliente";
+    const clienteData   = memoriaClientes[clienteIdx] || {};
     
-    const configIgv     = document.getElementById('cot-impuesto-config').value;
-    const igvOnF    = document.getElementById('cot-impuesto-config').value === "SI";
-    const subtotal  = seccionesCotizacion.reduce((s, sec) => s + sec.items.reduce((a,i) => a+i.subtotal, 0), 0);
-    const igv           = igvOnF ? subtotal * 0.18 : 0;
-    const total         = subtotal + igv;
+    const configIgv  = document.getElementById('cot-impuesto-config').value;
+    const igvOnF     = configIgv === "SI";
+    const subtotal   = seccionesCotizacion.reduce((s, sec) => s + sec.items.reduce((a,i) => a+i.subtotal, 0), 0);
+    const igv        = igvOnF ? subtotal * 0.18 : 0;
+    const totalCargos = calcularTotalCargos(subtotal + igv);
+    const total      = subtotal + igv + totalCargos;
+    const numCotizacion = document.getElementById('cot-numero').value;
+    const ahora      = new Date().toISOString();
 
     const cotizacion = {
-        numero:        numCotizacion,
-        fecha:         document.getElementById('cot-fecha').value,
-        cliente:       nombreCliente,
-        ruc:           memoriaClientes[clienteIdx]?.doc || "",
-        secciones:     JSON.stringify(seccionesCotizacion),
-        subtotal:      subtotal.toFixed(2),
-        igv:           igv.toFixed(2),
-        total:         total.toFixed(2),
-        observaciones: document.getElementById('cot-observaciones').value,
-        timestamp:     new Date().toISOString()
+        numero:          numCotizacion,
+        fecha:           document.getElementById('cot-fecha').value,
+        cliente:         nombreCliente,
+        clienteId:       clienteIdx,
+        ruc:             clienteData.doc || "",
+        secciones:       JSON.stringify(seccionesCotizacion),
+        cargos:          JSON.stringify(cargosAdicionales),
+        impuesto:        configIgv,
+        subtotal:        subtotal.toFixed(2),
+        igv:             igv.toFixed(2),
+        total:           total.toFixed(2),
+        observaciones:   document.getElementById('cot-observaciones').value,
+        estado:          modoEdicion ? (cotizacionEditando?.estado || "BORRADOR") : "BORRADOR",
+        timestamp:       modoEdicion ? (cotizacionEditando?.timestamp || ahora) : ahora,
+        ultimaModificacion: ahora,
+        version:         modoEdicion ? ((cotizacionEditando?.version || 1) + 1) : 1
     };
 
-    // Actualizar memoria
-    memoriaCotizaciones.push(cotizacion);
-    correlativoActual++;
-    localStorage.setItem('correlativo', String(correlativoActual));
+    // FASE 4: modo edición vs nuevo
+    if (modoEdicion) {
+        memoriaCotizaciones[indiceEdicion] = cotizacion;
+    } else {
+        memoriaCotizaciones.push(cotizacion);
+        correlativoActual++;
+        localStorage.setItem('correlativo', String(correlativoActual));
+    }
+
     document.getElementById('cot-numero').value = numCotizacion;
 
-    // Ejecutar tareas: 
-    // 1. Guardar en Sheets (esperamos a que termine)
+    // Guardar en Sheets
     await guardarEnNube("Cotizaciones", memoriaCotizaciones);
     await guardarEnNube("Config", [{ key: "correlativo", value: correlativoActual }]);
     
-    // 2. Generar PDF en Drive (llamamos a la función que definimos arriba)
+    // Generar PDF en Drive
     await crearPdfEnDrive(cotizacion);
 
-    // 3. Imprimir
+    // Imprimir
     const tituloOriginal = document.title;
     const nombreLimpio = nombreCliente.replace(/[^a-zA-Z0-9 ]/g, "").trim().replace(/\s+/g, "_");
     document.title = `Presupuesto_${numCotizacion}_${nombreLimpio}`;
-
     window.print();
+    setTimeout(() => { document.title = tituloOriginal; }, 1000);
 
-    setTimeout(() => {
-        document.title = tituloOriginal;
-    }, 1000);
+    // Si estábamos en modo edición, salir de él
+    if (modoEdicion) {
+        modoEdicion = false;
+        indiceEdicion = -1;
+        cotizacionEditando = null;
+        const banner = document.getElementById('cot-edicion-banner');
+        if (banner) banner.classList.remove('visible');
+        mostrarToast("✅ Cotización actualizada correctamente.", "success");
+    } else {
+        mostrarToast("✅ Cotización guardada correctamente.", "success");
+    }
 }
 
         function renderizarTablasMantenimiento() {
@@ -1082,36 +1422,60 @@ async function finalizarEImprimir() {
             });
         }
 
-        // CONTROLERS DE CATÁLOGO
+        // ── Catálogo CRUD ──────────────────────────────
         function cargarItemEnFormulario(i) {
-            editIndexCatalogo = i; const item = memoriaCatalogo[i];
-            document.getElementById('cat-nuevo-tipo').value = item.tipo; document.getElementById('cat-nuevo-desc').value = item.desc;
-            document.getElementById('cat-nuevo-unid').value = item.unid; document.getElementById('cat-nuevo-precio').value = item.precio;
+            editIndexCatalogo = i;
+            const item = memoriaCatalogo[i];
+            document.getElementById('cat-nuevo-tipo').value   = item.tipo;
+            document.getElementById('cat-nuevo-desc').value   = item.desc;
+            document.getElementById('cat-nuevo-unid').value   = item.unid;
+            document.getElementById('cat-nuevo-precio').value = item.precio;
             document.getElementById('form-catalogo-titulo').innerText = "⚠️ Editando Ítem del Catálogo";
-            document.getElementById('btn-guardar-catalogo').innerText = "Actualizar"; document.getElementById('btn-guardar-catalogo').className = "btn btn-warning";
+            document.getElementById('btn-guardar-catalogo').innerText = "Actualizar";
+            document.getElementById('btn-guardar-catalogo').className = "btn btn-warning";
             document.getElementById('btn-cancelar-catalogo').style.display = "inline-flex";
         }
-        async function guardarItemCatalogo() {
-    const tipo = document.getElementById('cat-nuevo-tipo').value.trim(), desc = document.getElementById('cat-nuevo-desc').value.trim(), unid = document.getElementById('cat-nuevo-unid').value.trim(), precio = parseFloat(document.getElementById('cat-nuevo-precio').value);
-    if(!tipo || !desc || !unid || isNaN(precio)) return alert("Complete los datos.");
-    
-    // Cambiamos el texto del botón temporalmente
-    document.getElementById('btn-guardar-catalogo').innerText = "Guardando...";
-    
-    if (editIndexCatalogo === null) memoriaCatalogo.push({tipo, desc, unid, precio}); else memoriaCatalogo[editIndexCatalogo] = {tipo, desc, unid, precio};
-    
-    await guardarEnNube("Catalogo", memoriaCatalogo); // <--- NUEVO
-    
-    renderizarTablasMantenimiento(); cancelarEdicionCatalogo();
-}
 
-async function borrarDelCatalogo(i) { 
-    if(confirm("¿Eliminar?")) { 
-        memoriaCatalogo.splice(i, 1); 
-        await guardarEnNube("Catalogo", memoriaCatalogo); // <--- NUEVO
-        renderizarTablasMantenimiento(); 
-    } 
-}
+        function cancelarEdicionCatalogo() {
+            editIndexCatalogo = null;
+            document.getElementById('cat-nuevo-tipo').value   = '';
+            document.getElementById('cat-nuevo-desc').value   = '';
+            document.getElementById('cat-nuevo-unid').value   = '';
+            document.getElementById('cat-nuevo-precio').value = '';
+            document.getElementById('form-catalogo-titulo').innerText = "Agregar Nuevo Producto o Servicio";
+            document.getElementById('btn-guardar-catalogo').innerText = "Guardar";
+            document.getElementById('btn-guardar-catalogo').className = "btn btn-primary";
+            document.getElementById('btn-cancelar-catalogo').style.display = "none";
+        }
+
+        async function guardarItemCatalogo() {
+            const tipo   = document.getElementById('cat-nuevo-tipo').value.trim();
+            const desc   = document.getElementById('cat-nuevo-desc').value.trim();
+            const unid   = document.getElementById('cat-nuevo-unid').value.trim();
+            const precio = parseFloat(document.getElementById('cat-nuevo-precio').value);
+            if (!tipo || !desc || !unid || isNaN(precio)) return alert("Complete todos los datos.");
+
+            const btn = document.getElementById('btn-guardar-catalogo');
+            btn.innerText = "Guardando...";
+            btn.disabled  = true;
+
+            try {
+                if (editIndexCatalogo === null) memoriaCatalogo.push({tipo, desc, unid, precio});
+                else memoriaCatalogo[editIndexCatalogo] = {tipo, desc, unid, precio};
+                await guardarEnNube("Catalogo", memoriaCatalogo);
+            } finally {
+                btn.disabled = false;
+                renderizarTablasMantenimiento();
+                cancelarEdicionCatalogo();
+            }
+        }
+
+        async function borrarDelCatalogo(i) {
+            if (!confirm("¿Eliminar este ítem del catálogo?")) return;
+            memoriaCatalogo.splice(i, 1);
+            await guardarEnNube("Catalogo", memoriaCatalogo);
+            renderizarTablasMantenimiento();
+        }
 
         // CONTROLERS DE CLIENTES
         function cargarClienteEnFormulario(i) {
@@ -1462,9 +1826,485 @@ async function borrarCuenta(i) {
         // Cerrar sidebar al seleccionar una vista en móvil
         const _origSwitch = typeof switchView !== 'undefined' ? switchView : null;
 
+
+        // ── Cargos adicionales ─────────────────────────────────────
+        let cargosAdicionales = [];
+
+        function agregarCargo() {
+            const concepto = document.getElementById('cargo-concepto').value.trim();
+            const tipo     = document.getElementById('cargo-tipo').value;
+            const valor    = parseFloat(document.getElementById('cargo-valor').value);
+            if (!concepto) return alert('Escribe el nombre del cargo (ej: Trabajo en alturas).');
+            if (isNaN(valor) || valor <= 0) return alert('Ingresa un valor mayor a 0.');
+            cargosAdicionales.push({ concepto, tipo, valor });
+            document.getElementById('cargo-concepto').value = '';
+            document.getElementById('cargo-valor').value    = '';
+            renderCargoUI();
+            actualizarContenedorCotizacion();
+        }
+
+        function eliminarCargo(idx) {
+            cargosAdicionales.splice(idx, 1);
+            renderCargoUI();
+            actualizarContenedorCotizacion();
+        }
+
+        function renderCargoUI() {
+            const lista = document.getElementById('cargo-lista');
+            if (!lista) return;
+            lista.innerHTML = cargosAdicionales.length === 0 ? '' :
+                cargosAdicionales.map((c, i) => `
+                    <div class="cargo-tag">
+                        <span class="cargo-tag-label">
+                            ${c.tipo === 'pct'
+                                ? `<b>${c.valor}%</b> — ${c.concepto}`
+                                : `${c.concepto}`}
+                        </span>
+                        <span class="cargo-tag-val">
+                            ${c.tipo === 'pct' ? c.valor + '%' : 'S/ ' + c.valor.toFixed(2)}
+                        </span>
+                        <button class="cargo-tag-del" onclick="eliminarCargo(${i})">✕</button>
+                    </div>`).join('');
+        }
+
+        function calcularTotalCargos(base) {
+            return cargosAdicionales.reduce((sum, c) =>
+                sum + (c.tipo === 'pct' ? base * c.valor / 100 : c.valor), 0);
+        }
+
         window.onload = function() {
             cargarDatosDesdeNube(); 
         };
+
+        // ── Toast de notificaciones (reemplaza alert) ──────────────────
+        function mostrarToast(mensaje, tipo) {
+            let toast = document.getElementById('cot-toast');
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.id = 'cot-toast';
+                toast.style.cssText = `
+                    position:fixed; bottom:24px; right:24px; z-index:9999;
+                    padding:12px 20px; border-radius:8px; font-size:14px; font-weight:600;
+                    box-shadow:0 4px 16px rgba(0,0,0,.18); max-width:360px;
+                    transition:opacity .3s; opacity:0; pointer-events:none;`;
+                document.body.appendChild(toast);
+            }
+            const colores = {
+                success: { bg:'#dcfce7', color:'#15803d', border:'#bbf7d0' },
+                warning: { bg:'#fef3c7', color:'#92400e', border:'#fbbf24' },
+                danger:  { bg:'#fee2e2', color:'#b91c1c', border:'#fca5a5' },
+                info:    { bg:'#dbeafe', color:'#1d4ed8', border:'#bfdbfe' }
+            };
+            const c = colores[tipo] || colores.info;
+            toast.style.background = c.bg;
+            toast.style.color = c.color;
+            toast.style.border = `1.5px solid ${c.border}`;
+            toast.textContent = mensaje;
+            toast.style.opacity = '1';
+            clearTimeout(toast._t);
+            toast._t = setTimeout(() => { toast.style.opacity = '0'; }, 3500);
+        }
+
+        // ── FASES 2, 3: Módulo Historial de Cotizaciones ──────────────
+
+        function inicializarFiltrosHistorial() {
+            // Años únicos
+            const anios = [...new Set(memoriaCotizaciones.map(c => {
+                const f = c.fecha || c.timestamp || '';
+                const m = f.match(/(\d{4})/g);
+                return m ? m[m.length-1] : null;
+            }).filter(Boolean))].sort((a,b) => b-a);
+            const selAnio = document.getElementById('cot-filtro-anio');
+            selAnio.innerHTML = '<option value="">Todos los años</option>';
+            anios.forEach(a => selAnio.innerHTML += `<option value="${a}">${a}</option>`);
+
+            // Clientes únicos
+            const clientes = [...new Set(memoriaCotizaciones.map(c => c.cliente).filter(Boolean))].sort();
+            const selCli = document.getElementById('cot-filtro-cliente');
+            selCli.innerHTML = '<option value="">Todos los clientes</option>';
+            clientes.forEach(cl => selCli.innerHTML += `<option value="${cl}">${cl}</option>`);
+        }
+
+        function getCotizacionesFiltradas() {
+            const q       = (document.getElementById('cot-buscador')?.value || '').toLowerCase().trim();
+            const estado  = document.getElementById('cot-filtro-estado')?.value || '';
+            const mes     = document.getElementById('cot-filtro-mes')?.value || '';
+            const anio    = document.getElementById('cot-filtro-anio')?.value || '';
+            const cliente = document.getElementById('cot-filtro-cliente')?.value || '';
+
+            return memoriaCotizaciones.filter((c, idx) => {
+                // Filtro estado
+                const estadoCot = c.estado || 'BORRADOR';
+                if (estado && estadoCot !== estado) return false;
+
+                // Filtro cliente
+                if (cliente && c.cliente !== cliente) return false;
+
+                // Filtro mes/año desde fecha
+                if (mes || anio) {
+                    const fechaStr = c.fecha || '';
+                    // Soporta formatos: DD/MM/YYYY, YYYY-MM-DD, timestamp ISO
+                    let fechaObj = null;
+                    if (fechaStr.match(/^\d{1,2}\/\d{1,2}\/\d{4}$/)) {
+                        const [d,mo,y] = fechaStr.split('/');
+                        fechaObj = new Date(y, mo-1, d);
+                    } else if (fechaStr.match(/^\d{4}-\d{2}-\d{2}/)) {
+                        fechaObj = new Date(fechaStr);
+                    } else if (c.timestamp) {
+                        fechaObj = new Date(c.timestamp);
+                    }
+                    if (fechaObj) {
+                        const m2 = String(fechaObj.getMonth()+1).padStart(2,'0');
+                        const y2 = String(fechaObj.getFullYear());
+                        if (mes && m2 !== mes) return false;
+                        if (anio && y2 !== anio) return false;
+                    }
+                }
+
+                // Búsqueda de texto (parcial, múltiples campos)
+                if (q) {
+                    const haystack = [
+                        c.numero, c.cliente, c.fecha, c.ruc,
+                        c.subtotal, c.igv, c.total,
+                        c.observaciones, c.estado,
+                        c.telefono, c.correo
+                    ].join(' ').toLowerCase();
+                    if (!haystack.includes(q)) return false;
+                }
+                return true;
+            });
+        }
+
+        function renderTablaHistorial() {
+            const filtradas = getCotizacionesFiltradas();
+            const tbody = document.getElementById('tabla-historial-body');
+            if (!tbody) return;
+
+            // Actualizar estadísticas (sobre el total, no filtrado)
+            const total = memoriaCotizaciones.length;
+            const aprobadas = memoriaCotizaciones.filter(c => c.estado === 'APROBADA').length;
+            const pendientes = memoriaCotizaciones.filter(c => (c.estado||'BORRADOR') === 'BORRADOR' || c.estado === 'ENVIADA').length;
+            const montoTotal = memoriaCotizaciones.reduce((s,c) => s + parseFloat(c.total||0), 0);
+            const el = id => document.getElementById(id);
+            if(el('cst-total'))     el('cst-total').textContent = total;
+            if(el('cst-aprobadas')) el('cst-aprobadas').textContent = aprobadas;
+            if(el('cst-pendientes'))el('cst-pendientes').textContent = pendientes;
+            if(el('cst-monto'))     el('cst-monto').textContent = montoTotal.toFixed(2);
+
+            if (filtradas.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" class="cot-empty">
+                    📭 No se encontraron cotizaciones con esos filtros.</td></tr>`;
+                return;
+            }
+
+            // Obtener índice real en memoriaCotizaciones para cada filtrada
+            tbody.innerHTML = filtradas.map(c => {
+                const idx = memoriaCotizaciones.indexOf(c);
+                const estado = c.estado || 'BORRADOR';
+                return `<tr>
+                    <td><b>${c.numero || '---'}</b></td>
+                    <td>${c.cliente || '---'}</td>
+                    <td>${c.fecha || '---'}</td>
+                    <td style="text-align:right;">S/ ${parseFloat(c.subtotal||0).toFixed(2)}</td>
+                    <td style="text-align:right;">S/ ${parseFloat(c.igv||0).toFixed(2)}</td>
+                    <td style="text-align:right;font-weight:700;">S/ ${parseFloat(c.total||0).toFixed(2)}</td>
+                    <td>
+                        <select class="badge-estado badge-${estado}" onchange="cambiarEstadoCotizacion(${idx}, this.value)"
+                            style="border:none;cursor:pointer;font-weight:700;font-size:11px;padding:3px 8px;border-radius:12px;">
+                            <option value="BORRADOR"  ${estado==='BORRADOR' ?'selected':''}>📝 BORRADOR</option>
+                            <option value="ENVIADA"   ${estado==='ENVIADA'  ?'selected':''}>📤 ENVIADA</option>
+                            <option value="APROBADA"  ${estado==='APROBADA' ?'selected':''}>✅ APROBADA</option>
+                            <option value="RECHAZADA" ${estado==='RECHAZADA'?'selected':''}>❌ RECHAZADA</option>
+                            <option value="ANULADA"   ${estado==='ANULADA'  ?'selected':''}>🚫 ANULADA</option>
+                        </select>
+                    </td>
+                    <td>
+                        <div style="display:flex;gap:4px;flex-wrap:wrap;">
+                            <button class="btn-abrir" onclick="abrirCotizacion(${idx})" title="Abrir y editar">✏️ Abrir</button>
+                            <button class="btn-dup"   onclick="duplicarCotizacion(${idx})" title="Duplicar">📋 Dup.</button>
+                            <button class="btn-pdf"   onclick="generarPdfCotizacion(${idx})" title="Imprimir PDF">🖨️ PDF</button>
+                            <button class="btn-del"   onclick="eliminarCotizacion(${idx})" title="Eliminar">🗑️</button>
+                        </div>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+
+        // FASE 12: Cambiar estado de cotización
+        async function cambiarEstadoCotizacion(idx, nuevoEstado) {
+            if (!memoriaCotizaciones[idx]) return;
+            memoriaCotizaciones[idx].estado = nuevoEstado;
+            memoriaCotizaciones[idx].ultimaModificacion = new Date().toISOString();
+            await guardarEnNube("Cotizaciones", memoriaCotizaciones);
+            renderTablaHistorial();
+            mostrarToast(`✅ Estado actualizado a ${nuevoEstado}`, "success");
+        }
+
+        // FASE 5: Abrir cotización para editar
+        function abrirCotizacion(indice) {
+            const cot = memoriaCotizaciones[indice];
+            if (!cot) return mostrarToast("⚠️ Cotización no encontrada.", "warning");
+
+            modoEdicion = true;
+            indiceEdicion = indice;
+            cotizacionEditando = { ...cot };
+
+            switchView('nueva-cotizacion');
+
+            setTimeout(() => {
+                cargarCotizacion(cot);
+            }, 100);
+        }
+
+        // FASE 6: Cargar cotización completa en el formulario
+        function cargarCotizacion(cot) {
+            // Limpiar estado actual sin confirmar
+            seccionesCotizacion = [{ nombre: 'GENERAL', items: [] }];
+            seccionActualIdx = 0;
+            cargosAdicionales = [];
+
+            // Cargar número (bloqueado en modo edición - FASE 7)
+            const numInput = document.getElementById('cot-numero');
+            numInput.value = cot.numero || '';
+            numInput.setAttribute('readonly', true);
+            numInput.style.background = '#f1f5f9';
+            numInput.style.cursor = 'not-allowed';
+            document.getElementById('lbl-num').innerText = cot.numero || '';
+
+            // Fecha
+            document.getElementById('cot-fecha').value = cot.fecha || '';
+            document.getElementById('lbl-fecha').innerText = cot.fecha || '';
+
+            // Impuesto
+            document.getElementById('cot-impuesto-config').value = cot.impuesto || 'NO';
+
+            // Observaciones
+            document.getElementById('cot-observaciones').value = cot.observaciones || '';
+            document.getElementById('lbl-observaciones').innerText = cot.observaciones || '';
+
+            // Cargos adicionales
+            if (cot.cargos) {
+                try { cargosAdicionales = JSON.parse(cot.cargos); } catch(e) { cargosAdicionales = []; }
+            }
+            renderCargoUI();
+
+            // Secciones e ítems
+            if (cot.secciones) {
+                try {
+                    const secs = JSON.parse(cot.secciones);
+                    if (Array.isArray(secs) && secs.length > 0) {
+                        seccionesCotizacion = secs;
+                    }
+                } catch(e) {}
+            }
+            seccionActualIdx = 0;
+
+            // Cliente: buscar por clienteId o por nombre
+            const cmbCli = document.getElementById('cot-cliente');
+            let clienteEncontrado = false;
+            if (cot.clienteId !== undefined && cot.clienteId !== null && cot.clienteId !== '') {
+                // Verificar que el índice sigue siendo válido y es el mismo cliente
+                const idx = parseInt(cot.clienteId);
+                if (!isNaN(idx) && memoriaClientes[idx] && memoriaClientes[idx].nombre === cot.cliente) {
+                    cmbCli.value = String(idx);
+                    clienteEncontrado = true;
+                }
+            }
+            if (!clienteEncontrado) {
+                // Buscar por nombre
+                for (let i = 0; i < memoriaClientes.length; i++) {
+                    if (memoriaClientes[i].nombre === cot.cliente) {
+                        cmbCli.value = String(i);
+                        clienteEncontrado = true;
+                        break;
+                    }
+                }
+            }
+            if (clienteEncontrado) {
+                const idxCli = parseInt(cmbCli.value);
+                document.getElementById('lbl-cliente').innerText   = memoriaClientes[idxCli]?.nombre || cot.cliente || '---';
+                document.getElementById('lbl-doc').innerText       = memoriaClientes[idxCli]?.doc    || cot.ruc || '---';
+                document.getElementById('lbl-direccion').innerText = memoriaClientes[idxCli]?.dir    || '---';
+            } else {
+                // Mostrar aunque no esté en la lista
+                document.getElementById('lbl-cliente').innerText   = cot.cliente || '---';
+                document.getElementById('lbl-doc').innerText       = cot.ruc || '---';
+                document.getElementById('lbl-direccion').innerText = '---';
+            }
+
+            // Renderizar secciones e ítems
+            renderizarChipsSecciones();
+            actualizarContenedorCotizacion();
+            renderizarCuentasDocumento();
+
+            // Mostrar banner modo edición
+            const banner = document.getElementById('cot-edicion-banner');
+            const label  = document.getElementById('cot-edicion-label');
+            if (banner) {
+                label.textContent = `Editando cotización ${cot.numero} — ${cot.cliente}`;
+                banner.classList.add('visible');
+            }
+
+            // Actualizar título
+            document.getElementById('screen-title-panel').innerText = `✏️ Editando: ${cot.numero}`;
+            document.getElementById('screen-title-panel').style.color = '#92400e';
+
+            mostrarToast(`📂 Cotización ${cot.numero} cargada para edición.`, "info");
+        }
+
+        // Cancelar modo edición sin limpiar
+        function cancelarModoEdicion() {
+            if (!confirm("¿Cancelar la edición? Los cambios no guardados se perderán.")) return;
+            modoEdicion = false;
+            indiceEdicion = -1;
+            cotizacionEditando = null;
+            const banner = document.getElementById('cot-edicion-banner');
+            if (banner) banner.classList.remove('visible');
+            // Limpiar y preparar nueva cotización
+            seccionesCotizacion = [{ nombre: 'GENERAL', items: [] }];
+            seccionActualIdx = 0;
+            cargosAdicionales = [];
+            renderCargoUI();
+            renderizarChipsSecciones();
+            actualizarContenedorCotizacion();
+            document.getElementById('cot-cliente').value = "";
+            document.getElementById('cot-observaciones').value = "";
+            document.getElementById('lbl-observaciones').innerText = "";
+            document.getElementById('cot-impuesto-config').value = "NO";
+            document.getElementById('lbl-cliente').innerText = "-- Seleccione Cliente --";
+            document.getElementById('lbl-doc').innerText = "---";
+            document.getElementById('lbl-direccion').innerText = "---";
+            const numInput = document.getElementById('cot-numero');
+            numInput.removeAttribute('readonly');
+            numInput.style.background = '';
+            numInput.style.cursor = '';
+            const nuevoNum = "PRE-" + ("000" + correlativoActual).slice(-4);
+            numInput.value = nuevoNum;
+            document.getElementById('lbl-num').innerText = nuevoNum;
+            document.getElementById('cot-fecha').value = new Date().toLocaleDateString('es-PE');
+            document.getElementById('lbl-fecha').innerText = document.getElementById('cot-fecha').value;
+            document.getElementById('screen-title-panel').innerText = "Panel de Creación de Presupuestos";
+            document.getElementById('screen-title-panel').style.color = "var(--primary)";
+            mostrarToast("Edición cancelada.", "info");
+        }
+
+        // FASE 8: Duplicar cotización
+        function duplicarCotizacion(indice) {
+            const cot = memoriaCotizaciones[indice];
+            if (!cot) return mostrarToast("⚠️ Cotización no encontrada.", "warning");
+
+            const nuevaNum = "PRE-" + ("000" + correlativoActual).slice(-4);
+            const copia = {
+                ...cot,
+                numero:    nuevaNum,
+                fecha:     new Date().toLocaleDateString('es-PE'),
+                estado:    'BORRADOR',
+                timestamp: new Date().toISOString(),
+                ultimaModificacion: new Date().toISOString(),
+                version:   1
+            };
+
+            // No modo edición, abrir como nueva con datos precargados
+            modoEdicion = false;
+            indiceEdicion = -1;
+            cotizacionEditando = null;
+
+            switchView('nueva-cotizacion');
+            setTimeout(() => {
+                // Cargar sin bloquear el número
+                cargarCotizacion(copia);
+                // Liberar el número para que sea editable
+                const numInput = document.getElementById('cot-numero');
+                numInput.removeAttribute('readonly');
+                numInput.style.background = '';
+                numInput.style.cursor = '';
+                numInput.value = nuevaNum;
+                document.getElementById('lbl-num').innerText = nuevaNum;
+                // Ocultar banner (no es edición)
+                const banner = document.getElementById('cot-edicion-banner');
+                if (banner) banner.classList.remove('visible');
+                document.getElementById('screen-title-panel').innerText = `📋 Duplicado de ${cot.numero}`;
+                document.getElementById('screen-title-panel').style.color = '#0369a1';
+                mostrarToast(`📋 Duplicado de ${cot.numero}. Ajusta los datos y guarda.`, "info");
+            }, 100);
+        }
+
+        // FASE 9: Eliminar cotización
+        async function eliminarCotizacion(indice) {
+            const cot = memoriaCotizaciones[indice];
+            if (!cot) return;
+            if (!confirm(`¿Eliminar la cotización ${cot.numero} de ${cot.cliente}?\n\nEsta acción no se puede deshacer.`)) return;
+            memoriaCotizaciones.splice(indice, 1);
+            await guardarEnNube("Cotizaciones", memoriaCotizaciones);
+            renderTablaHistorial();
+            mostrarToast(`🗑️ Cotización ${cot.numero} eliminada.`, "danger");
+        }
+
+        // FASE 10: Generar/reimprimir PDF sin modificar la cotización
+        function generarPdfCotizacion(indice) {
+            const cot = memoriaCotizaciones[indice];
+            if (!cot) return mostrarToast("⚠️ Cotización no encontrada.", "warning");
+
+            // Cargar temporalmente en el formulario para imprimir sin entrar en modo edición
+            const modoAnterior = modoEdicion;
+            const indiceAnterior = indiceEdicion;
+            const cotAnterior = cotizacionEditando;
+
+            // Guardar estado actual del formulario
+            const estadoFormulario = {
+                numero: document.getElementById('cot-numero').value,
+                fecha:  document.getElementById('cot-fecha').value,
+                cliente: document.getElementById('cot-cliente').value,
+                obs:    document.getElementById('cot-observaciones').value,
+                impuesto: document.getElementById('cot-impuesto-config').value,
+                secciones: JSON.parse(JSON.stringify(seccionesCotizacion)),
+                cargos: JSON.parse(JSON.stringify(cargosAdicionales))
+            };
+
+            // Cargar cotización en el formulario para impresión
+            modoEdicion = false; // temporal: no bloquear número
+            cargarCotizacion(cot);
+            // Liberar número (solo impresión)
+            document.getElementById('cot-numero').removeAttribute('readonly');
+            document.getElementById('cot-numero').style.background = '';
+
+            // Ocultar banner
+            const banner = document.getElementById('cot-edicion-banner');
+            if (banner) banner.classList.remove('visible');
+
+            // Imprimir
+            const tituloOriginal = document.title;
+            const nombreLimpio = (cot.cliente||'').replace(/[^a-zA-Z0-9 ]/g,'').trim().replace(/\s+/g,'_');
+            document.title = `Presupuesto_${cot.numero}_${nombreLimpio}`;
+
+            setTimeout(() => {
+                window.print();
+                document.title = tituloOriginal;
+
+                // Restaurar estado anterior del formulario
+                setTimeout(() => {
+                    seccionesCotizacion = estadoFormulario.secciones;
+                    seccionActualIdx = 0;
+                    cargosAdicionales = estadoFormulario.cargos;
+                    modoEdicion = modoAnterior;
+                    indiceEdicion = indiceAnterior;
+                    cotizacionEditando = cotAnterior;
+                    renderCargoUI();
+                    renderizarChipsSecciones();
+                    actualizarContenedorCotizacion();
+                    document.getElementById('cot-numero').value = estadoFormulario.numero;
+                    document.getElementById('cot-fecha').value  = estadoFormulario.fecha;
+                    document.getElementById('cot-cliente').value = estadoFormulario.cliente;
+                    document.getElementById('cot-observaciones').value = estadoFormulario.obs;
+                    document.getElementById('cot-impuesto-config').value = estadoFormulario.impuesto;
+                    if (modoAnterior) {
+                        document.getElementById('cot-numero').setAttribute('readonly', true);
+                        document.getElementById('cot-numero').style.background = '#f1f5f9';
+                        if (banner) banner.classList.add('visible');
+                    }
+                }, 800);
+            }, 200);
+        }
     </script>
 </body>
 </html>
