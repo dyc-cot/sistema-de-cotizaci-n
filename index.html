@@ -69,6 +69,7 @@
         .invoice-meta h3 { font-size: 22px; color: var(--primary); margin-bottom: 5px; letter-spacing: 1px; }
         
         .invoice-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px; padding: 15px 0; border-top: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; }
+        .invoice-doc-title { font-size: 19px; font-weight: 800; color: var(--primary); text-align: center; text-transform: uppercase; letter-spacing: 0.5px; margin: -8px 0 18px 0; padding-bottom: 12px; border-bottom: 2px solid var(--accent); }
         
         /* Bloque de Totales */
         .invoice-summary-block {
@@ -432,6 +433,66 @@
                 grid-template-columns: 1fr 1fr !important;
                 gap: 10px !important;
             }
+
+            /* ── REPORTE DE OBRA: impresión ──
+               Solo se fuerza salto de página entre una obra y la siguiente (clase añadida por JS
+               a partir de la 2da obra). La primera obra NUNCA lleva esta clase, así que continúa
+               justo después del encabezado sin dejar una página en blanco. */
+            .rep-salto-pagina { page-break-before: always; }
+            .rep-foto-item { page-break-inside: avoid; }
+            .rep-foto-item .rep-foto-controles { display: none !important; }
+            .rep-foto-item img { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        }
+
+        /* ═══════════════ REPORTE DE OBRA ═══════════════ */
+        .rep-obra-bloque-controles { border-left: 3px solid var(--accent); }
+        .rep-obra-bloque { border: 1px solid #e2e8f0; border-radius: 8px; padding: 18px; margin-bottom: 24px; background: #fff; }
+        .rep-obra-cabecera { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid #e2e8f0; flex-wrap: wrap; }
+        .rep-obra-cabecera h3 { color: var(--primary); font-size: 17px; }
+        .rep-obra-meta p { font-size: 12px; color: #475569; margin: 2px 0; }
+        .rep-etapa { margin-top: 16px; }
+        .rep-etapa-titulo { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: #fff; padding: 5px 14px; border-radius: 4px; margin-bottom: 8px; letter-spacing: 0.6px; text-transform: uppercase; }
+        .rep-etapa-titulo.inicio { background: var(--accent); }
+        .rep-etapa-titulo.proceso { background: var(--warning); }
+        .rep-etapa-titulo.finalizado { background: var(--success); }
+        .rep-etapa-desc { font-size: 13px; color: var(--text); margin: 6px 0 10px 0; white-space: pre-line; }
+        .rep-foto-grid { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-start; }
+        .rep-foto-item { border: 1px solid #e2e8f0; border-radius: 6px; padding: 6px; background: #f8fafc; }
+        .rep-foto-img-wrap { position: relative; width: 100%; overflow: hidden; border-radius: 4px; background: #e2e8f0; }
+        .rep-foto-img-wrap img { display: block; width: 100%; height: 100%; object-fit: cover; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        .rep-foto-item.foto-horizontal .rep-foto-img-wrap { aspect-ratio: 4 / 3; }
+        .rep-foto-item.foto-vertical   .rep-foto-img-wrap { aspect-ratio: 3 / 4; }
+        .rep-foto-tag { position: absolute; top: 6px; left: 6px; color: #fff; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; letter-spacing: 0.3px; text-transform: uppercase; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        .rep-foto-caption { font-size: 11px; color: #475569; text-align: center; margin-top: 4px; white-space: pre-line; }
+        .rep-foto-controles { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; align-items: center; justify-content: center; }
+        .rep-foto-controles select, .rep-foto-controles button { font-size: 10px; padding: 3px 6px; }
+        .rep-foto-controles input[type="text"] { font-size: 11px; padding: 3px 5px; width: 100%; margin-top: 4px; border: 1px solid #cbd5e1; border-radius: 4px; }
+        .rep-obra-modo-tag { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 12px; background: #f0f9ff; color: #0369a1; border: 1px solid #bae6fd; }
+        .rep-referencia-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+        .rep-guardados-lista { display: flex; flex-direction: column; gap: 6px; max-height: 220px; overflow-y: auto; }
+        .rep-guardado-item { display: flex; justify-content: space-between; align-items: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px 12px; font-size: 13px; }
+        @media (max-width: 700px) {
+            .rep-referencia-row { grid-template-columns: 1fr; }
+            .rep-foto-item { width: calc(50% - 6px) !important; }
+        }
+
+        /* ═══════════════ GALERÍA FOTOGRÁFICA ═══════════════ */
+        .gal-grupo-titulo { font-size: 14px; font-weight: 700; color: var(--primary); margin: 22px 0 10px 0; padding-bottom: 6px; border-bottom: 2px solid #e2e8f0; }
+        .gal-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 16px; }
+        .gal-card { background: white; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.04); display: flex; flex-direction: column; }
+        .gal-card-img-wrap { position: relative; width: 100%; aspect-ratio: 4/3; background: #e2e8f0; overflow: hidden; }
+        .gal-card-img-wrap.gal-vertical { aspect-ratio: 3/4; }
+        .gal-card-img-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .gal-card-body { padding: 10px 12px 12px 12px; }
+        .gal-card-codigo { font-size: 12px; font-weight: 700; color: var(--primary); margin-bottom: 4px; }
+        .gal-card-desc { font-size: 12px; color: #64748b; margin: 4px 0; }
+        .gal-card-meta { font-size: 11px; color: #94a3b8; margin-bottom: 8px; }
+        .gal-empty { text-align: center; padding: 40px 20px; color: #94a3b8; font-size: 14px; }
+        .gal-comparativo-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 22px; }
+        .gal-comparativo-col h4 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; margin-bottom: 8px; }
+        @media (max-width: 700px) {
+            .gal-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+            .gal-comparativo-row { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -453,6 +514,9 @@
         <h2>ALEXANDER D&C</h2>
         <button class="menu-btn active" onclick="switchView('nueva-cotizacion')">📄 Nueva Cotización</button>
         <button class="menu-btn" onclick="switchView('cotizaciones')">📂 Cotizaciones</button>
+        <button class="menu-btn" onclick="switchView('requerimiento')">🧾 Requerimiento de Compras</button>
+        <button class="menu-btn" onclick="switchView('reporte-obra')">📸 Reporte de Obra</button>
+        <button class="menu-btn" onclick="switchView('galeria')">🖼️ Galería Fotográfica</button>
         <button class="menu-btn" onclick="switchView('catalogo')">📦 Catálogo de Costos</button>
         <button class="menu-btn" onclick="switchView('clientes')">👥 Base de Clientes</button>
         <button class="menu-btn" onclick="switchView('cuentas')">🏦 Cuentas Bancarias</button>
@@ -495,6 +559,10 @@
                             <option value="SI">Aplicar IGV (+18%)</option>
                         </select>
                     </div>
+                </div>
+                <div class="form-group" style="margin-top:12px; margin-bottom:4px; background:#f0f9ff; padding:10px 12px; border-radius:6px; border:1px dashed #bae6fd;">
+                    <label style="color:#0369a1;">🏷️ Título general del documento (ej: "Habilitación de Almacén", "Adicionales", "Mantenimiento de Red")</label>
+                    <input type="text" id="cot-titulo-doc" placeholder="Escribe el título con el que se identificará esta cotización..." oninput="sincronizarCamposCabecera()">
                 </div>
                 <hr style="margin:20px 0; border:0; border-top:1px solid #e2e8f0;">
 
@@ -672,6 +740,8 @@
                     </div>
                 </div>
 
+                <h2 id="lbl-titulo-doc-preview" class="invoice-doc-title" style="display:none;"></h2>
+
                 <div class="invoice-info-grid">
                     <div>
                         <h4 style="color:var(--accent); margin-bottom:5px; font-size:11px; letter-spacing:0.5px;">CLIENTE / DESTINATARIO:</h4>
@@ -762,6 +832,240 @@
                 <button class="btn btn-success" onclick="finalizarEImprimir()" style="flex:1; min-width:220px;">🖨️ IMPRIMIR / GUARDAR EN PDF</button>
                 <button class="btn no-print" onclick="limpiarCotizacion()" style="flex:1; min-width:180px; background:#f1f5f9; color:#334155; border:1.5px solid #cbd5e1; font-size:15px; padding:14px; border-radius:6px; cursor:pointer; font-weight:600;">🗑️ Nueva Cotización</button>
             </div>
+        </div>
+
+
+        <!-- VISTA: REQUERIMIENTO DE COMPRAS -->
+        <div id="requerimiento" class="view">
+            <h1 class="no-print">🧾 Requerimiento de Compras</h1>
+
+            <div class="card no-print" style="border:2px solid #0284c7; background:#f0f9ff; margin-bottom:20px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <h3 style="color:#0369a1; font-size:15px;">🤖 Asistente IA — Generar lista de materiales</h3>
+                    <button class="btn" onclick="configurarApiKeyIA()" style="background:#e0f2fe; color:#0369a1; font-size:12px; padding:6px 10px;">⚙️ API Key</button>
+                </div>
+                <div class="form-group" style="margin-bottom:10px;">
+                    <label>Describe el trabajo (la IA arma la lista de materiales con especificaciones, unidad y cantidad — sin precios)</label>
+                    <textarea id="ia-req-descripcion" rows="3" placeholder="Ej: Instalación de red de agua para 2 baños y una cocina, con tuberías PVC, llaves de paso y accesorios."></textarea>
+                </div>
+                <div class="form-group" style="margin-bottom:10px;">
+                    <label>📎 Adjuntar fotos o documentos de referencia (planos, fichas técnicas — imágenes o PDF)</label>
+                    <input type="file" id="ia-req-archivos" accept="image/*,application/pdf" multiple
+                           onchange="manejarArchivosReqIA(this.files)" style="border:none; padding:5px 0; background:transparent;">
+                    <div id="ia-req-archivos-lista" style="display:flex; flex-wrap:wrap; gap:6px; margin-top:6px;"></div>
+                </div>
+                <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                    <button class="btn btn-primary" id="btn-ia-req-generar" onclick="generarRequerimientoIA()">🔍 Generar lista con IA</button>
+                    <span id="ia-req-status" style="font-size:13px; color:#0369a1;"></span>
+                </div>
+                <p style="font-size:11px; color:#64748b; margin-top:8px;">La IA busca especificaciones técnicas reales (medidas, tipos, calibres) para precisar la lista. No incluye precios. Revisa siempre antes de imprimir.</p>
+            </div>
+
+            <div class="card no-print" style="margin-bottom:20px;">
+                <div class="grid-form" style="grid-template-columns: 1fr 1fr; margin-bottom:10px;">
+                    <div class="form-group">
+                        <label>Obra / Proyecto</label>
+                        <input type="text" id="req-obra" placeholder="Ej: Remodelación baño - Sr. Pérez" oninput="sincronizarCabeceraRequerimiento()">
+                    </div>
+                    <div class="form-group">
+                        <label>Solicitado por</label>
+                        <input type="text" id="req-solicitante" placeholder="Nombre del responsable" oninput="sincronizarCabeceraRequerimiento()">
+                    </div>
+                </div>
+
+                <div class="grid-form" style="grid-template-columns: 2fr 1fr 1fr auto; margin-bottom:5px;">
+                    <div class="form-group">
+                        <label>Material / Ítem requerido</label>
+                        <input type="text" id="req-item" list="lista-items-modulo" placeholder="Ej: Cemento Sol tipo I"
+                               onkeydown="if(event.key==='Enter'){event.preventDefault();agregarItemRequerimiento();}">
+                    </div>
+                    <div class="form-group">
+                        <label>Unidad</label>
+                        <select id="req-unidad">
+                            <option value="Und">Und</option><option value="Bolsa">Bolsa</option>
+                            <option value="Saco">Saco</option><option value="kg">kg</option>
+                            <option value="m²">m²</option><option value="ml">ml</option>
+                            <option value="m³">m³</option><option value="Galón">Galón</option>
+                            <option value="Caja">Caja</option><option value="Pto">Pto</option>
+                            <option value="Global">Global</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Cantidad</label>
+                        <input type="number" id="req-cantidad" min="0.01" step="0.01" placeholder="1"
+                               onkeydown="if(event.key==='Enter'){event.preventDefault();agregarItemRequerimiento();}">
+                    </div>
+                    <div class="form-group" style="justify-content:flex-end;">
+                        <button class="btn btn-primary" onclick="agregarItemRequerimiento()">+ Añadir</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Observación del ítem (opcional)</label>
+                    <input type="text" id="req-obs-item" placeholder="Ej: marca específica, urgente, proveedor sugerido...">
+                </div>
+                <div class="form-group" style="margin-top:10px;">
+                    <label>Notas generales del requerimiento (editable — se muestra en el documento, déjalo vacío si no quieres nota)</label>
+                    <textarea id="req-notas-editable" rows="2" placeholder="Ej: supuestos de cálculo, condiciones de entrega, etc." oninput="sincronizarNotasRequerimiento()"></textarea>
+                </div>
+            </div>
+
+            <!-- VISTA PREVIA DEL DOCUMENTO -->
+            <div class="invoice-box">
+                <div class="invoice-header">
+                    <div class="company-logo-area">
+                        <img id="req-logo" src="" alt="Logo">
+                        <div class="company-details">
+                            <h2>Alexander Diseño & Construcción</h2>
+                            <span>Servicios Generales • Drywall • Estructuras • Remodelaciones</span>
+                            <p style="font-size:12px; color:#64748b; margin-top:2px;">Chiclayo, Lambayeque</p>
+                        </div>
+                    </div>
+                    <div class="invoice-meta">
+                        <h3>REQUERIMIENTO DE COMPRA</h3>
+                        <p><strong>N°:</strong> <span id="req-lbl-num">REQ-0001</span></p>
+                        <p><strong>Fecha:</strong> <span id="req-lbl-fecha">--/--/----</span></p>
+                    </div>
+                </div>
+
+                <div class="invoice-info-grid">
+                    <div>
+                        <p><strong>Obra / Proyecto:</strong> <span id="req-lbl-obra">---</span></p>
+                        <p><strong>Solicitado por:</strong> <span id="req-lbl-solicitante">---</span></p>
+                    </div>
+                    <div style="text-align: right;">
+                        <p>Documento de control interno.</p>
+                        <p>No incluye precios ni valores de costo.</p>
+                    </div>
+                </div>
+
+                <div class="table-scroll"><table>
+                    <thead>
+                        <tr>
+                            <th style="width:32px;text-align:center;">#</th>
+                            <th style="width:auto;">Material / Ítem</th>
+                            <th style="width:70px;text-align:center;">Unid.</th>
+                            <th style="width:70px;text-align:right;">Cant.</th>
+                            <th style="width:auto;">Observaciones</th>
+                            <th class="no-print" style="width:40px;"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-requerimiento-body"></tbody>
+                </table></div>
+
+                <div class="notes-footer" id="req-lbl-notas-ia"></div>
+
+                <div class="notes-footer" style="margin-top:20px;">
+                    Firma de recepción / responsable de almacén: ______________________________
+                </div>
+            </div>
+
+            <div class="no-print" style="display:flex; gap:12px; max-width:640px; margin:30px auto 0 auto; flex-wrap:wrap;">
+                <button class="btn btn-success" onclick="imprimirRequerimiento()" style="flex:1; min-width:220px;">🖨️ IMPRIMIR / GUARDAR EN PDF</button>
+                <button class="btn" onclick="limpiarRequerimiento()" style="flex:1; min-width:180px; background:#f1f5f9; color:#334155; border:1.5px solid #cbd5e1; font-size:15px; padding:14px; border-radius:6px; cursor:pointer; font-weight:600;">🗑️ Nuevo Requerimiento</button>
+            </div>
+        </div>
+
+
+        <!-- VISTA: REPORTE DE OBRA -->
+        <div id="reporte-obra" class="view">
+            <div class="no-print" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:10px;">
+                <h1 style="margin-bottom:0;">📸 Reporte de Obra</h1>
+                <button class="btn" onclick="configurarApiKeyIA()" style="background:#e0f2fe; color:#0369a1; font-size:12px; padding:6px 10px;">⚙️ API Key IA</button>
+            </div>
+
+            <div class="card no-print" style="margin-bottom:20px;">
+                <p style="font-size:12px; color:#64748b; margin-bottom:12px;">
+                    Arma un reporte fotográfico de obra. Puedes usarlo en modo completo (Inicio / Proceso / Finalizado)
+                    o en modo rápido (solo Avance de Obra), y agregar varias obras dentro de un mismo documento
+                    para imprimirlas o guardarlas juntas en PDF. Los datos de Cliente y Cotización se toman
+                    como referencia desde tu información ya sincronizada en la nube (no se modifican desde aquí).
+                    En cada descripción encontrarás un botón 🤖 <strong>Redactar con IA</strong> que convierte tus notas
+                    sueltas en un texto redactado de forma profesional.
+                </p>
+                <div class="form-group" style="margin-bottom:10px;">
+                    <label>Título del documento</label>
+                    <input type="text" id="rep-titulo-doc" value="REPORTE DE AVANCE DE OBRA" oninput="actualizarTituloReporte(this.value)">
+                </div>
+                <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                    <button class="btn btn-primary" onclick="agregarObraReporte('completo')">➕ Agregar obra (Inicio / Proceso / Finalizado)</button>
+                    <button class="btn btn-primary" style="background:#0369a1;" onclick="agregarObraReporte('avance')">➕ Agregar obra (solo Avance)</button>
+                </div>
+            </div>
+
+            <div class="card no-print" id="rep-guardados-card" style="margin-bottom:20px;">
+                <h3 style="font-size:14px; color:var(--primary); margin-bottom:10px;">💾 Reportes guardados en este dispositivo</h3>
+                <div class="rep-guardados-lista" id="rep-guardados-lista"></div>
+            </div>
+
+            <div id="rep-obras-controles"></div>
+
+            <!-- VISTA PREVIA / DOCUMENTO IMPRIMIBLE -->
+            <div class="invoice-box" id="rep-preview">
+                <div class="invoice-header">
+                    <div class="company-logo-area">
+                        <img id="rep-logo" src="" alt="Logo">
+                        <div class="company-details">
+                            <h2>Alexander Diseño & Construcción</h2>
+                            <span>Servicios Generales • Drywall • Estructuras • Remodelaciones</span>
+                            <p style="font-size:12px; color:#64748b; margin-top:2px;">Chiclayo, Lambayeque</p>
+                        </div>
+                    </div>
+                    <div class="invoice-meta">
+                        <h3 id="rep-lbl-titulo">REPORTE DE AVANCE DE OBRA</h3>
+                        <p><strong>Fecha de emisión:</strong> <span id="rep-lbl-fecha-emision">--/--/----</span></p>
+                    </div>
+                </div>
+
+                <div id="rep-obras-preview"></div>
+
+                <p class="no-print" id="rep-preview-vacio" style="text-align:center; color:#94a3b8; padding:30px 0;">
+                    Agrega una obra arriba para empezar a construir el reporte.
+                </p>
+            </div>
+
+            <div class="no-print" style="display:flex; gap:12px; max-width:640px; margin:30px auto 0 auto; flex-wrap:wrap;">
+                <button class="btn btn-success" onclick="imprimirReporteObra()" style="flex:1; min-width:220px;">🖨️ IMPRIMIR / GUARDAR EN PDF</button>
+                <button class="btn" onclick="guardarReporteObra()" style="flex:1; min-width:180px; background:#e0f2fe; color:#0369a1; border:1.5px solid #7dd3fc; font-size:15px; padding:14px; border-radius:6px; cursor:pointer; font-weight:600;">💾 Guardar reporte</button>
+                <button class="btn" onclick="nuevoReporteObra()" style="flex:1; min-width:180px; background:#f1f5f9; color:#334155; border:1.5px solid #cbd5e1; font-size:15px; padding:14px; border-radius:6px; cursor:pointer; font-weight:600;">🗑️ Nuevo Reporte</button>
+            </div>
+        </div>
+
+
+        <!-- VISTA: GALERÍA FOTOGRÁFICA -->
+        <div id="galeria" class="view">
+            <h1>🖼️ Galería Fotográfica</h1>
+
+            <div class="card no-print" style="margin-bottom:20px;">
+                <p style="font-size:12px; color:#64748b; margin-bottom:14px;">
+                    Aquí encontrarás automáticamente todas las fotos que agregues en tus Reportes de Obra
+                    (guardados o en el reporte actual sin guardar), organizadas por obra y por etiqueta.
+                    Cada foto nueva se intenta respaldar automáticamente en Google Drive.
+                </p>
+                <div class="grid-form" style="grid-template-columns: 1fr 1fr; margin-bottom:0;">
+                    <div class="form-group">
+                        <label>Filtrar por obra</label>
+                        <select id="gal-filtro-obra" onchange="renderGaleria()">
+                            <option value="">-- Todas las obras --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Filtrar por categoría</label>
+                        <select id="gal-filtro-categoria" onchange="renderGaleria()">
+                            <option value="">-- Todas las categorías --</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid-form" style="grid-template-columns: 1fr auto; margin-top:10px; margin-bottom:0; align-items:flex-end;">
+                    <div class="form-group">
+                        <label>Buscar por ubicación de la foto</label>
+                        <input type="text" id="gal-filtro-ubicacion" placeholder="Ej: Baño 2do piso, Almacén..." oninput="renderGaleria()">
+                    </div>
+                    <button class="btn" id="gal-btn-comparativo" onclick="toggleComparativoGaleria()"
+                        style="background:#0369a1; color:white; white-space:nowrap;">⇄ Ver comparativo Antes / Después</button>
+                </div>
+            </div>
+
+            <div id="gal-contenido"></div>
         </div>
 
 
@@ -910,7 +1214,7 @@
                 <!-- Barra de búsqueda y filtros -->
                 <div class="cot-toolbar">
                     <input type="text" class="cot-search" id="cot-buscador"
-                        placeholder="🔍 Buscar por número, cliente, RUC, importe, observaciones..."
+                        placeholder="🔍 Buscar por número, título, cliente, RUC, importe, observaciones..."
                         oninput="renderTablaHistorial()">
                     <select id="cot-filtro-estado" onchange="renderTablaHistorial()">
                         <option value="">Todos los estados</option>
@@ -942,6 +1246,7 @@
                         <thead>
                             <tr>
                                 <th>N°</th>
+                                <th>Título</th>
                                 <th>Cliente</th>
                                 <th>Fecha</th>
                                 <th style="text-align:right;">Subtotal</th>
@@ -961,7 +1266,7 @@
 
     <script>
         // NUEVA INICIALIZACIÓN CON LA NUBE
-const URL_GAS = "https://script.google.com/macros/s/AKfycbxO_uQRSBKbbaQ8RC0noy36VqR8GlrD03dZecPII_Hww371tt2MgLLLcBVCbUYW0npz/exec";
+const URL_GAS = "https://script.google.com/macros/s/AKfycbxAu4J1aIxjGfH8RTTRKQ9vERhy86Tim0epokOgw3sdYj9Duf8bM_KDsz_HeTNl26hp/exec";
 
 let memoriaCatalogo = [];
 let memoriaClientes = [];
@@ -1234,6 +1539,9 @@ ${catalogoResumen || '(catálogo vacío)'}`;
         let indiceEdicion = -1;
         let cotizacionEditando = null;
 
+        let itemsRequerimiento = [];
+        let correlativoRequerimiento = parseInt(localStorage.getItem('correlativo-requerimiento') || '1', 10);
+
         function switchView(viewId) {
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
             document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('active'));
@@ -1244,6 +1552,9 @@ ${catalogoResumen || '(catálogo vacío)'}`;
             inicializarModulos();
             if (viewId === 'guia-precios') { guiaRenderFiltros(); guiaRender(); }
             if (viewId === 'cotizaciones') { inicializarFiltrosHistorial(); renderTablaHistorial(); }
+            if (viewId === 'requerimiento') { inicializarRequerimiento(); }
+            if (viewId === 'reporte-obra') { inicializarReporteObra(); }
+            if (viewId === 'galeria') { inicializarGaleria(); }
         }
 
         function inicializarModulos() {
@@ -1278,10 +1589,1299 @@ ${catalogoResumen || '(catálogo vacío)'}`;
         function sincronizarCamposCabecera() {
             document.getElementById('lbl-num').innerText = document.getElementById('cot-numero').value;
             document.getElementById('lbl-fecha').innerText = document.getElementById('cot-fecha').value;
+            const tituloDoc = document.getElementById('cot-titulo-doc').value.trim();
+            const lblTitulo = document.getElementById('lbl-titulo-doc-preview');
+            if (tituloDoc) {
+                lblTitulo.innerText = tituloDoc;
+                lblTitulo.style.display = 'block';
+            } else {
+                lblTitulo.style.display = 'none';
+            }
         }
 
         function sincronizarNotas() {
             document.getElementById('lbl-observaciones').innerText = document.getElementById('cot-observaciones').value;
+        }
+
+        // ═══════════════ REQUERIMIENTO DE COMPRAS (sin costos) ═══════════════
+        function inicializarRequerimiento() {
+            const numEl = document.getElementById('req-lbl-num');
+            if (!numEl.dataset.set) {
+                numEl.innerText = "REQ-" + ("000" + correlativoRequerimiento).slice(-4);
+                numEl.dataset.set = '1';
+            }
+            document.getElementById('req-lbl-fecha').innerText = new Date().toLocaleDateString('es-PE');
+
+            const logo = localStorage.getItem('logo-empresa');
+            if (logo) {
+                const img = document.getElementById('req-logo');
+                if (img) { img.src = logo; img.style.display = 'block'; }
+            }
+
+            sincronizarCabeceraRequerimiento();
+            sincronizarNotasRequerimiento();
+            renderRequerimiento();
+        }
+
+        function sincronizarCabeceraRequerimiento() {
+            document.getElementById('req-lbl-obra').innerText = document.getElementById('req-obra').value.trim() || '---';
+            document.getElementById('req-lbl-solicitante').innerText = document.getElementById('req-solicitante').value.trim() || '---';
+        }
+
+        function sincronizarNotasRequerimiento() {
+            const texto = document.getElementById('req-notas-editable').value.trim();
+            document.getElementById('req-lbl-notas-ia').innerText = texto;
+        }
+
+        function agregarItemRequerimiento() {
+            const desc     = document.getElementById('req-item').value.trim();
+            const unidad   = document.getElementById('req-unidad').value;
+            const cantidad = parseFloat(document.getElementById('req-cantidad').value);
+            const obs      = document.getElementById('req-obs-item').value.trim();
+
+            if (!desc) return mostrarToast("⚠️ Escribe el material o ítem requerido.", "warning");
+            if (isNaN(cantidad) || cantidad <= 0) return mostrarToast("⚠️ Ingresa una cantidad válida.", "warning");
+
+            itemsRequerimiento.push({ desc, unidad, cantidad, obs });
+
+            document.getElementById('req-item').value = '';
+            document.getElementById('req-cantidad').value = '';
+            document.getElementById('req-obs-item').value = '';
+            document.getElementById('req-item').focus();
+
+            renderRequerimiento();
+        }
+
+        const UNIDADES_REQUERIMIENTO = ['Und','Bolsa','Saco','kg','m²','ml','m³','Galón','Caja','Pto','Global'];
+        let filaReqEditando = null; // índice del ítem en edición
+
+        function eliminarItemRequerimiento(idx) {
+            itemsRequerimiento.splice(idx, 1);
+            if (filaReqEditando === idx) filaReqEditando = null;
+            renderRequerimiento();
+        }
+
+        function editarItemRequerimiento(idx) {
+            filaReqEditando = idx;
+            renderRequerimiento();
+        }
+
+        function cancelarEdicionReq() {
+            filaReqEditando = null;
+            renderRequerimiento();
+        }
+
+        function guardarEdicionReq(idx) {
+            const desc     = document.getElementById(`edit-req-desc-${idx}`).value.trim();
+            const unidad   = document.getElementById(`edit-req-unidad-${idx}`).value;
+            const cantidad = parseFloat(document.getElementById(`edit-req-cant-${idx}`).value);
+            const obs      = document.getElementById(`edit-req-obs-${idx}`).value.trim();
+
+            if (!desc || isNaN(cantidad) || cantidad <= 0) {
+                return mostrarToast("⚠️ Revisa el material y la cantidad.", "warning");
+            }
+
+            itemsRequerimiento[idx] = { desc, unidad, cantidad, obs };
+            filaReqEditando = null;
+            renderRequerimiento();
+            mostrarToast("✅ Ítem actualizado.", "success");
+        }
+
+        function renderRequerimiento() {
+            const tbody = document.getElementById('tabla-requerimiento-body');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            if (itemsRequerimiento.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" style="color:#94a3b8;font-style:italic;font-size:12px;padding:10px 12px;">
+                    Aún no has agregado materiales. Usa el formulario de arriba para añadirlos.</td></tr>`;
+                return;
+            }
+
+            const opcionesUnidadReq = (seleccionada) => UNIDADES_REQUERIMIENTO
+                .map(u => `<option value="${u}" ${u === seleccionada ? 'selected' : ''}>${u}</option>`).join('');
+
+            itemsRequerimiento.forEach((it, i) => {
+                if (filaReqEditando === i) {
+                    tbody.innerHTML += `<tr style="background:#f0f9ff;">
+                        <td style="text-align:center;color:#94a3b8;">${i + 1}</td>
+                        <td><input type="text" id="edit-req-desc-${i}" value="${(it.desc || '').replace(/"/g,'&quot;')}"
+                                   style="width:100%;padding:7px;border:1.5px solid #93c5fd;border-radius:6px;"></td>
+                        <td><select id="edit-req-unidad-${i}" style="width:100%;padding:7px;border:1.5px solid #93c5fd;border-radius:6px;">${opcionesUnidadReq(it.unidad)}</select></td>
+                        <td><input type="number" id="edit-req-cant-${i}" value="${it.cantidad}" step="0.01"
+                                   style="width:75px;text-align:right;padding:7px;border:1.5px solid #93c5fd;border-radius:6px;"></td>
+                        <td><input type="text" id="edit-req-obs-${i}" value="${(it.obs || '').replace(/"/g,'&quot;')}"
+                                   style="width:100%;padding:7px;border:1.5px solid #93c5fd;border-radius:6px;font-size:12px;"></td>
+                        <td class="no-print" style="white-space:nowrap;">
+                            <button class="btn btn-success" onclick="guardarEdicionReq(${i})" style="padding:3px 7px;font-size:11px;">💾</button>
+                            <button class="btn" onclick="cancelarEdicionReq()" style="padding:3px 7px;font-size:11px;background:#e2e8f0;color:#334155;">✕</button>
+                        </td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML += `<tr>
+                    <td style="text-align:center;color:#94a3b8;">${i + 1}</td>
+                    <td><b>${it.desc}</b></td>
+                    <td style="text-align:center;">${it.unidad}</td>
+                    <td style="text-align:right;">${it.cantidad}</td>
+                    <td style="font-size:12px;color:#64748b;">${it.obs || ''}</td>
+                    <td class="no-print" style="white-space:nowrap;">
+                        <button class="btn btn-edit" onclick="editarItemRequerimiento(${i})"
+                                style="padding:3px 7px;font-size:11px;">✎</button>
+                        <button class="btn btn-danger" onclick="eliminarItemRequerimiento(${i})"
+                                style="padding:3px 7px;font-size:11px;">✕</button>
+                    </td></tr>`;
+            });
+        }
+
+        // ── Adjuntos de referencia para la IA del requerimiento (imágenes / PDF) ──
+        let iaReqArchivosState = []; // [{name, mimeType, base64, sizeKB}]
+
+        function manejarArchivosReqIA(fileList) {
+            const permitidos = ['image/', 'application/pdf'];
+            Array.from(fileList).forEach(file => {
+                const esValido = permitidos.some(p => file.type.startsWith(p));
+                if (!esValido) {
+                    mostrarToast(`⚠️ "${file.name}" no es imagen ni PDF, se ignoró.`, "warning");
+                    return;
+                }
+                if (file.size > 15 * 1024 * 1024) {
+                    mostrarToast(`⚠️ "${file.name}" pesa demasiado (máx. 15MB).`, "warning");
+                    return;
+                }
+                const lector = new FileReader();
+                lector.onload = (e) => {
+                    const base64 = e.target.result.split(',')[1];
+                    iaReqArchivosState.push({
+                        name: file.name,
+                        mimeType: file.type,
+                        base64: base64,
+                        sizeKB: Math.round(file.size / 1024)
+                    });
+                    renderArchivosReqIA();
+                };
+                lector.readAsDataURL(file);
+            });
+            document.getElementById('ia-req-archivos').value = "";
+        }
+
+        function quitarArchivoReqIA(idx) {
+            iaReqArchivosState.splice(idx, 1);
+            renderArchivosReqIA();
+        }
+
+        function renderArchivosReqIA() {
+            const cont = document.getElementById('ia-req-archivos-lista');
+            if (!cont) return;
+            cont.innerHTML = iaReqArchivosState.map((a, i) => {
+                const icono = a.mimeType === 'application/pdf' ? '📄' : '🖼️';
+                return `<span style="display:inline-flex; align-items:center; gap:6px; background:white; border:1px solid #bae6fd; border-radius:20px; padding:4px 10px; font-size:12px; color:#0369a1;">
+                    ${icono} ${a.name} <span style="color:#94a3b8;">(${a.sizeKB}KB)</span>
+                    <button onclick="quitarArchivoReqIA(${i})" style="background:none; border:none; color:#94a3b8; cursor:pointer; font-size:13px; padding:0;">✕</button>
+                </span>`;
+            }).join('');
+        }
+
+        async function generarRequerimientoIA() {
+            const descripcion = document.getElementById('ia-req-descripcion').value.trim();
+            const statusEl = document.getElementById('ia-req-status');
+            const btn = document.getElementById('btn-ia-req-generar');
+
+            if (!descripcion && iaReqArchivosState.length === 0) {
+                return mostrarToast("⚠️ Describe el trabajo o adjunta al menos una imagen/documento.", "warning");
+            }
+            if (!GEMINI_API_KEY) {
+                mostrarToast("⚠️ Configura primero tu API Key (botón ⚙️ API Key).", "warning");
+                return configurarApiKeyIA();
+            }
+
+            btn.disabled = true;
+            statusEl.textContent = iaReqArchivosState.length > 0
+                ? `🔎 Analizando ${iaReqArchivosState.length} adjunto(s) y armando la lista...`
+                : "🔎 Buscando especificaciones técnicas y armando la lista...";
+
+            const systemPrompt =
+`Eres un asistente técnico para "Alexander Diseño & Construcción", empresa de construcción, drywall, estructuras y remodelaciones en Chiclayo, Perú.
+Se te da la descripción de un trabajo y, opcionalmente, imágenes o documentos de referencia (fotos del lugar, planos, fichas técnicas) que debes usar para precisar medidas, materiales y cantidades.
+Tu tarea es armar un REQUERIMIENTO DE COMPRA DE MATERIALES, es decir, una lista de materiales necesarios para ejecutar el trabajo — SIN precios, SIN mano de obra, solo materiales físicos a comprar.
+Reglas:
+1. Si se adjuntaron imágenes o documentos, analízalos primero para precisar medidas, cantidades y tipos de material.
+2. Usa la herramienta de búsqueda web cuando sea necesario para precisar especificaciones técnicas reales (ej. diámetros de tubería, calibres de cable, tipos de cemento, presentaciones comerciales típicas en Perú), de modo que el material quede bien especificado y fácil de pedir en una ferretería.
+3. Cada ítem debe tener una descripción específica y comprable (ej. "Cemento Sol tipo I x 42.5kg", no solo "cemento").
+4. Calcula cantidades razonables según el trabajo descrito (con un margen prudente de desperdicio si aplica), y explica supuestos relevantes en las notas.
+5. NUNCA incluyas precios, costos, ni mano de obra. Solo materiales.
+
+Responde ÚNICAMENTE con un JSON válido, sin texto adicional, sin markdown, con esta forma exacta:
+{"items":[{"desc":"Descripción específica del material","unidad":"Und|Bolsa|Saco|kg|m²|ml|m³|Galón|Caja|Pto|Global","cantidad":1,"obs":"observación breve opcional, ej. especificación técnica o supuesto de cálculo"}],"notas":"breve nota general sobre supuestos o fuentes técnicas usadas"}`;
+
+            const userParts = [];
+            userParts.push({ text: descripcion || "Analiza los archivos adjuntos y arma la lista de materiales correspondiente." });
+            iaReqArchivosState.forEach(a => {
+                userParts.push({ inline_data: { mime_type: a.mimeType, data: a.base64 } });
+            });
+
+            try {
+                const response = await fetch(
+                    `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODELO}:generateContent`,
+                    {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "x-goog-api-key": GEMINI_API_KEY
+                        },
+                        body: JSON.stringify({
+                            system_instruction: { parts: [{ text: systemPrompt }] },
+                            contents: [{ role: "user", parts: userParts }],
+                            tools: [{ google_search: {} }]
+                        })
+                    }
+                );
+
+                const data = await response.json();
+                if (data.error) throw new Error(data.error.message || "Error de la API");
+
+                const partes = (data.candidates && data.candidates[0] && data.candidates[0].content
+                    ? data.candidates[0].content.parts : []) || [];
+                const textoCompleto = partes.filter(p => p.text).map(p => p.text).join("\n");
+
+                const limpio = textoCompleto.replace(/```json|```/g, "").trim();
+                const jsonMatch = limpio.match(/\{[\s\S]*\}/);
+                if (!jsonMatch) throw new Error("La IA no devolvió un JSON reconocible.");
+
+                const resultado = JSON.parse(jsonMatch[0]);
+                const nuevos = resultado.items || [];
+
+                nuevos.forEach(it => {
+                    const cantidad = parseFloat(it.cantidad) || 1;
+                    itemsRequerimiento.push({
+                        desc: it.desc || 'Material',
+                        unidad: it.unidad || 'Und',
+                        cantidad: cantidad,
+                        obs: it.obs || ''
+                    });
+                });
+
+                if (resultado.notas) {
+                    const notasTextarea = document.getElementById('req-notas-editable');
+                    if (notasTextarea) {
+                        const notaTexto = resultado.notas.trim();
+                        notasTextarea.value = notasTextarea.value
+                            ? (notasTextarea.value + "\n" + notaTexto)
+                            : notaTexto;
+                        sincronizarNotasRequerimiento();
+                    }
+                }
+
+                renderRequerimiento();
+                statusEl.textContent = "";
+                document.getElementById('ia-req-descripcion').value = "";
+                iaReqArchivosState = [];
+                renderArchivosReqIA();
+                mostrarToast(`✅ Se agregaron ${nuevos.length} materiales a la lista. Revísalos antes de imprimir.`, "success");
+
+            } catch (err) {
+                console.error(err);
+                statusEl.textContent = "";
+                mostrarToast("❌ Error del asistente IA: " + err.message, "danger");
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        function imprimirRequerimiento() {
+            if (itemsRequerimiento.length === 0) {
+                return mostrarToast("⚠️ Agrega al menos un material antes de imprimir.", "warning");
+            }
+            correlativoRequerimiento++;
+            localStorage.setItem('correlativo-requerimiento', String(correlativoRequerimiento));
+
+            const tituloOriginal = document.title;
+            const numero = document.getElementById('req-lbl-num').innerText;
+            document.title = `Requerimiento_${numero}`;
+            window.print();
+            setTimeout(() => { document.title = tituloOriginal; }, 500);
+        }
+
+        function limpiarRequerimiento() {
+            if (itemsRequerimiento.length > 0 && !confirm("¿Vaciar la lista de materiales actual?")) return;
+
+            itemsRequerimiento = [];
+            filaReqEditando = null;
+            document.getElementById('req-obra').value = '';
+            document.getElementById('req-solicitante').value = '';
+            document.getElementById('req-item').value = '';
+            document.getElementById('req-cantidad').value = '';
+            document.getElementById('req-obs-item').value = '';
+
+            const numEl = document.getElementById('req-lbl-num');
+            numEl.innerText = "REQ-" + ("000" + correlativoRequerimiento).slice(-4);
+            numEl.dataset.set = '1';
+            document.getElementById('req-lbl-fecha').innerText = new Date().toLocaleDateString('es-PE');
+            const notasEl = document.getElementById('req-lbl-notas-ia');
+            if (notasEl) notasEl.innerText = '';
+            const notasTextarea = document.getElementById('req-notas-editable');
+            if (notasTextarea) notasTextarea.value = '';
+
+            sincronizarCabeceraRequerimiento();
+            renderRequerimiento();
+        }
+
+        // ═══════════════ REPORTE DE OBRA (fotográfico, por etapas o avance) ═══════════════
+        let reporteObraState = { obras: [] };
+        let reporteObraGuardadoId = null; // si no es null, "Guardar" sobreescribe ese reporte guardado
+
+        const REP_ETIQUETAS_FOTO = [
+            { valor: '', label: '— Sin etiqueta —' },
+            { valor: 'inicio', label: 'Inicio' },
+            { valor: 'proceso', label: 'Proceso' },
+            { valor: 'final', label: 'Final' },
+            { valor: 'antes', label: 'Antes' },
+            { valor: 'despues', label: 'Después' },
+            { valor: 'seguridad', label: 'Seguridad' },
+            { valor: 'material', label: 'Material' },
+            { valor: 'personal', label: 'Personal' },
+            { valor: 'equipos', label: 'Equipos' },
+            { valor: 'incidente', label: 'Incidente / Problema' }
+        ];
+        const REP_ETIQUETA_COLOR = {
+            inicio: '#0284c7', proceso: '#ea580c', final: '#16a34a',
+            antes: '#64748b', despues: '#0891b2', seguridad: '#dc2626',
+            material: '#9333ea', personal: '#ca8a04', equipos: '#0f766e',
+            incidente: '#be123c'
+        };
+
+        function inicializarReporteObra() {
+            const logo = localStorage.getItem('logo-empresa');
+            if (logo) {
+                const img = document.getElementById('rep-logo');
+                img.src = logo; img.style.display = 'block';
+            }
+            document.getElementById('rep-lbl-fecha-emision').innerText = new Date().toLocaleDateString('es-PE');
+            renderListaReportesGuardados();
+            renderReporteObra();
+        }
+
+        function crearObraReporteVacia(modo) {
+            return {
+                id: 'obra_' + Date.now() + '_' + Math.floor(Math.random() * 10000),
+                modo: modo, // 'completo' | 'avance'
+                nombreObra: '',
+                cliente: '',
+                direccion: '',
+                responsable: '',
+                fecha: new Date().toLocaleDateString('es-PE'),
+                descripcion: '',
+                porcentajeAvanceGeneral: 0,
+                actividades: '',
+                materiales: '',
+                incidentes: '',
+                etapas: {
+                    inicio:      { descripcion: '', fecha: '', fotos: [] },
+                    proceso:     { descripcion: '', fecha: '', fotos: [] },
+                    finalizado:  { descripcion: '', fecha: '', fotos: [] }
+                },
+                avance: { porcentaje: 0, descripcion: '', fecha: new Date().toLocaleDateString('es-PE'), fotos: [] }
+            };
+        }
+
+        function agregarObraReporte(modo) {
+            reporteObraState.obras.push(crearObraReporteVacia(modo));
+            renderReporteObra();
+            mostrarToast('✅ Obra agregada al reporte.', 'success');
+        }
+
+        function eliminarObraReporte(idObra) {
+            if (!confirm('¿Quitar esta obra del reporte?')) return;
+            reporteObraState.obras = reporteObraState.obras.filter(o => o.id !== idObra);
+            renderReporteObra();
+        }
+
+        function obtenerObraReporte(idObra) {
+            return reporteObraState.obras.find(o => o.id === idObra);
+        }
+
+        function actualizarTituloReporte(valor) {
+            document.getElementById('rep-lbl-titulo').innerText = valor || 'REPORTE DE AVANCE DE OBRA';
+        }
+
+        // Campos que se editan con onchange (al salir del campo) SÍ pueden refrescar todo sin problema,
+        // porque el usuario ya no está escribiendo dentro del input en ese momento.
+        function actualizarCampoObra(idObra, campo, valor) {
+            const obra = obtenerObraReporte(idObra);
+            if (!obra) return;
+            obra[campo] = valor;
+            renderReporteObra();
+        }
+
+        // Campos de texto largo (textareas) usan oninput: NUNCA deben disparar un re-render completo,
+        // porque eso destruye y recrea el textarea mientras el usuario escribe (pierde el foco tras 1 letra).
+        // En su lugar, solo actualizamos el estado + el nodo de la vista previa correspondiente.
+        function actualizarTextoLive(idObra, campo, valor, previewElId) {
+            const obra = obtenerObraReporte(idObra);
+            if (!obra) return;
+            obra[campo] = valor;
+            const prev = document.getElementById(previewElId);
+            if (prev) prev.textContent = valor;
+        }
+
+        function actualizarTextoEtapaLive(idObra, etapaKey, valor, previewElId) {
+            const obra = obtenerObraReporte(idObra);
+            if (!obra) return;
+            const destino = etapaKey === 'avance' ? obra.avance : obra.etapas[etapaKey];
+            if (!destino) return;
+            destino.descripcion = valor;
+            const prev = document.getElementById(previewElId);
+            if (prev) prev.textContent = valor;
+        }
+
+        function cambiarModoObra(idObra, modo) {
+            const obra = obtenerObraReporte(idObra);
+            if (!obra) return;
+            obra.modo = modo;
+            renderReporteObra();
+        }
+
+        function aplicarReferenciaCotizacion(idObra, cotIdx) {
+            const obra = obtenerObraReporte(idObra);
+            if (!obra || cotIdx === '') return;
+            const cot = memoriaCotizaciones[parseInt(cotIdx, 10)];
+            if (!cot) return;
+            obra.nombreObra = obra.nombreObra || `Obra - Cotización ${cot.numero}`;
+            obra.cliente = cot.cliente || obra.cliente;
+            const cli = memoriaClientes.find(c => c.nombre === cot.cliente);
+            if (cli) obra.direccion = cli.dir || obra.direccion;
+            renderReporteObra();
+            mostrarToast('📎 Datos de la cotización aplicados como referencia.', 'success');
+        }
+
+        function aplicarReferenciaCliente(idObra, cliIdx) {
+            const obra = obtenerObraReporte(idObra);
+            if (!obra || cliIdx === '') return;
+            const cli = memoriaClientes[parseInt(cliIdx, 10)];
+            if (!cli) return;
+            obra.cliente = cli.nombre || obra.cliente;
+            obra.direccion = cli.dir || obra.direccion;
+            renderReporteObra();
+        }
+
+        function actualizarCampoEtapa(idObra, etapaKey, campo, valor) {
+            const obra = obtenerObraReporte(idObra);
+            if (!obra) return;
+            const destino = etapaKey === 'avance' ? obra.avance : obra.etapas[etapaKey];
+            if (!destino) return;
+            destino[campo] = valor;
+            renderReporteObra();
+        }
+
+        // Porcentaje de avance: se actualiza en vivo mientras se arrastra el slider, sin re-render completo
+        function actualizarPorcentajeAvanceLive(idObra, valor) {
+            const obra = obtenerObraReporte(idObra);
+            if (!obra) return;
+            obra.avance.porcentaje = parseInt(valor, 10);
+            const lblControl = document.getElementById('rep-pct-lbl-' + idObra);
+            if (lblControl) lblControl.textContent = valor + '%';
+            const lblPreview = document.getElementById('rep-pct-preview-' + idObra);
+            if (lblPreview) lblPreview.textContent = valor + '%';
+        }
+
+        // Comprime y redimensiona la imagen antes de guardarla (evita reportes demasiado pesados)
+        function comprimirImagenReporte(file, maxDim = 1280, calidad = 0.72) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const anchoOriginal = img.width, altoOriginal = img.height;
+                        let { width, height } = img;
+                        if (width > maxDim || height > maxDim) {
+                            const ratio = Math.min(maxDim / width, maxDim / height);
+                            width = Math.round(width * ratio);
+                            height = Math.round(height * ratio);
+                        }
+                        const canvas = document.createElement('canvas');
+                        canvas.width = width; canvas.height = height;
+                        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+                        resolve({ src: canvas.toDataURL('image/jpeg', calidad), width: anchoOriginal, height: altoOriginal });
+                    };
+                    img.onerror = reject;
+                    img.src = e.target.result;
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        async function manejarFotosEtapa(idObra, etapaKey, fileList) {
+            const obra = obtenerObraReporte(idObra);
+            if (!obra || !fileList || fileList.length === 0) return;
+            const destino = etapaKey === 'avance' ? obra.avance : obra.etapas[etapaKey];
+            mostrarToast('⏳ Procesando fotos...', 'success');
+            for (const file of Array.from(fileList)) {
+                if (!file.type.startsWith('image/')) continue;
+                try {
+                    const resultado = await comprimirImagenReporte(file);
+                    const orientacionAuto = resultado.height > resultado.width ? 'vertical' : 'horizontal';
+                    const nuevaFoto = { src: resultado.src, caption: '', widthPct: orientacionAuto === 'vertical' ? 25 : 33, etiqueta: '', ubicacion: '', orientacion: orientacionAuto };
+                    destino.fotos.push(nuevaFoto);
+                    sincronizarFotoConDrive(obra, etapaKey, nuevaFoto);
+                } catch (err) {
+                    console.error('Error procesando foto:', err);
+                }
+            }
+            renderReporteObra();
+        }
+
+        function eliminarFotoReporte(idObra, etapaKey, idx) {
+            const obra = obtenerObraReporte(idObra);
+            if (!obra) return;
+            const destino = etapaKey === 'avance' ? obra.avance : obra.etapas[etapaKey];
+            destino.fotos.splice(idx, 1);
+            renderReporteObra();
+        }
+
+        function actualizarCaptionFoto(idObra, etapaKey, idx, valor) {
+            const obra = obtenerObraReporte(idObra);
+            if (!obra) return;
+            const destino = etapaKey === 'avance' ? obra.avance : obra.etapas[etapaKey];
+            if (destino.fotos[idx]) destino.fotos[idx].caption = valor;
+            // Actualización en vivo sin destruir el input: solo tocamos el texto de la vista impresa (si existe)
+            const prev = document.getElementById(`rep-foto-cap-print-${idObra}-${etapaKey}-${idx}`);
+            if (prev) prev.textContent = valor;
+            programarSincronizacionFoto(idObra, etapaKey, idx);
+        }
+
+        function actualizarUbicacionFoto(idObra, etapaKey, idx, valor) {
+            const obra = obtenerObraReporte(idObra);
+            if (!obra) return;
+            const destino = etapaKey === 'avance' ? obra.avance : obra.etapas[etapaKey];
+            if (destino.fotos[idx]) destino.fotos[idx].ubicacion = valor;
+            const prev = document.getElementById(`rep-foto-ubi-print-${idObra}-${etapaKey}-${idx}`);
+            if (prev) prev.textContent = valor ? ('📍 ' + valor) : '';
+            programarSincronizacionFoto(idObra, etapaKey, idx);
+        }
+
+        function actualizarEtiquetaFoto(idObra, etapaKey, idx, valor) {
+            const obra = obtenerObraReporte(idObra);
+            if (!obra) return;
+            const destino = etapaKey === 'avance' ? obra.avance : obra.etapas[etapaKey];
+            if (destino.fotos[idx]) destino.fotos[idx].etiqueta = valor;
+            renderReporteObra();
+            programarSincronizacionFoto(idObra, etapaKey, idx, 300);
+        }
+
+        function actualizarTamanoFoto(idObra, etapaKey, idx, valor) {
+            const obra = obtenerObraReporte(idObra);
+            if (!obra) return;
+            const destino = etapaKey === 'avance' ? obra.avance : obra.etapas[etapaKey];
+            if (destino.fotos[idx]) destino.fotos[idx].widthPct = parseInt(valor, 10);
+            renderReporteObra();
+        }
+
+        function actualizarOrientacionFoto(idObra, etapaKey, idx, valor) {
+            const obra = obtenerObraReporte(idObra);
+            if (!obra) return;
+            const destino = etapaKey === 'avance' ? obra.avance : obra.etapas[etapaKey];
+            if (destino.fotos[idx]) destino.fotos[idx].orientacion = valor;
+            renderReporteObra();
+        }
+
+        // Gira la imagen "de verdad" (redibujándola en un canvas), en vez de solo aplicar una
+        // transformación CSS — así no se descuadra el diseño ni se sale del recuadro al imprimir.
+        function rotarFotoReporte(idObra, etapaKey, idx) {
+            const obra = obtenerObraReporte(idObra);
+            if (!obra) return;
+            const destino = etapaKey === 'avance' ? obra.avance : obra.etapas[etapaKey];
+            const foto = destino.fotos[idx];
+            if (!foto) return;
+
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                // Al girar 90°, el ancho y el alto se intercambian
+                canvas.width = img.height;
+                canvas.height = img.width;
+                const ctx = canvas.getContext('2d');
+                ctx.translate(canvas.width / 2, canvas.height / 2);
+                ctx.rotate(90 * Math.PI / 180);
+                ctx.drawImage(img, -img.width / 2, -img.height / 2);
+                foto.src = canvas.toDataURL('image/jpeg', 0.85);
+                // Al girar 90° la foto cambia de horizontal a vertical (o viceversa)
+                foto.orientacion = foto.orientacion === 'vertical' ? 'horizontal' : 'vertical';
+                renderReporteObra();
+                // La imagen cambió: sube la versión girada a Drive y borra la anterior
+                sincronizarFotoConDrive(obra, etapaKey, foto);
+            };
+            img.src = foto.src;
+        }
+
+        function htmlSelectorCotizaciones(idObra) {
+            const opciones = (memoriaCotizaciones || []).map((c, i) =>
+                `<option value="${i}">${c.numero} — ${c.cliente || 'Sin cliente'}</option>`).join('');
+            return `<select onchange="aplicarReferenciaCotizacion('${idObra}', this.value)">
+                        <option value="">-- Referencia: Cotización --</option>${opciones}
+                    </select>`;
+        }
+
+        function htmlSelectorClientes(idObra) {
+            const opciones = (memoriaClientes || []).map((c, i) =>
+                `<option value="${i}">${c.nombre}</option>`).join('');
+            return `<select onchange="aplicarReferenciaCliente('${idObra}', this.value)">
+                        <option value="">-- Referencia: Cliente --</option>${opciones}
+                    </select>`;
+        }
+
+        function htmlSelectorEtiquetaFoto(idObra, etapaKey, idx, valorActual) {
+            const opciones = REP_ETIQUETAS_FOTO.map(t =>
+                `<option value="${t.valor}" ${t.valor === (valorActual||'') ? 'selected' : ''}>${t.label}</option>`).join('');
+            return `<select onchange="actualizarEtiquetaFoto('${idObra}','${etapaKey}',${idx}, this.value)">${opciones}</select>`;
+        }
+
+        function htmlBadgeEtiquetaFoto(etiqueta) {
+            if (!etiqueta) return '';
+            const info = REP_ETIQUETAS_FOTO.find(t => t.valor === etiqueta);
+            const color = REP_ETIQUETA_COLOR[etiqueta] || '#475569';
+            return `<span class="rep-foto-tag" style="background:${color};">${info ? info.label : etiqueta}</span>`;
+        }
+
+        function htmlControlesFotos(idObra, etapaKey, fotos) {
+            if (!fotos || fotos.length === 0) return '';
+            return `<div class="rep-foto-grid">` + fotos.map((f, idx) => `
+                <div class="rep-foto-item foto-${f.orientacion === 'vertical' ? 'vertical' : 'horizontal'}" style="width:calc(${f.widthPct}% - 12px);">
+                    <div class="rep-foto-img-wrap">
+                        <img src="${f.src}">
+                        ${htmlBadgeEtiquetaFoto(f.etiqueta)}
+                    </div>
+                    <div id="rep-foto-cap-print-${idObra}-${etapaKey}-${idx}" class="rep-foto-caption">${f.caption || ''}</div>
+                    <div id="rep-foto-ubi-print-${idObra}-${etapaKey}-${idx}" class="rep-foto-caption" style="color:#0369a1;">${f.ubicacion ? '📍 ' + f.ubicacion : ''}</div>
+                    <div class="rep-foto-controles no-print">
+                        <input type="text" placeholder="Descripción de la foto"
+                            value="${(f.caption || '').replace(/"/g, '&quot;')}"
+                            oninput="actualizarCaptionFoto('${idObra}','${etapaKey}',${idx}, this.value)">
+                        <input type="text" placeholder="Ubicación (ej: Baño 2do piso)"
+                            value="${(f.ubicacion || '').replace(/"/g, '&quot;')}"
+                            oninput="actualizarUbicacionFoto('${idObra}','${etapaKey}',${idx}, this.value)">
+                        <div style="display:flex; gap:4px; width:100%; justify-content:center; flex-wrap:wrap; margin-top:4px;">
+                            ${htmlSelectorEtiquetaFoto(idObra, etapaKey, idx, f.etiqueta)}
+                            <select onchange="actualizarTamanoFoto('${idObra}','${etapaKey}',${idx}, this.value)">
+                                <option value="25" ${f.widthPct==25?'selected':''}>Pequeña</option>
+                                <option value="33" ${f.widthPct==33?'selected':''}>Mediana</option>
+                                <option value="50" ${f.widthPct==50?'selected':''}>Grande</option>
+                                <option value="100" ${f.widthPct==100?'selected':''}>Ancho completo</option>
+                            </select>
+                            <select onchange="actualizarOrientacionFoto('${idObra}','${etapaKey}',${idx}, this.value)" title="Formato de la foto">
+                                <option value="horizontal" ${f.orientacion!=='vertical'?'selected':''}>▭ Horizontal</option>
+                                <option value="vertical" ${f.orientacion==='vertical'?'selected':''}>▯ Vertical</option>
+                            </select>
+                            <button class="btn" onclick="rotarFotoReporte('${idObra}','${etapaKey}',${idx})" style="padding:3px 8px;">↻ Girar</button>
+                            <button class="btn btn-danger" onclick="eliminarFotoReporte('${idObra}','${etapaKey}',${idx})" style="padding:3px 8px;">✕</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('') + `</div>`;
+        }
+
+        function htmlControlEtapaPanel(idObra, etapaKey, etapa, label, colorClase) {
+            const previewElId = `rep-prev-etapa-${idObra}-${etapaKey}`;
+            return `
+                <div class="form-group" style="margin-top:14px; border-top:1px dashed #e2e8f0; padding-top:12px;">
+                    <label style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:6px;">
+                        <span class="rep-etapa-titulo ${colorClase}" style="display:inline-block;">${label}</span>
+                        <button type="button" class="btn" onclick="redactarConIA('${idObra}','${etapaKey}')" style="background:#e0f2fe; color:#0369a1; font-size:11px; padding:4px 10px;">🤖 Redactar con IA</button>
+                    </label>
+                    <textarea rows="2" placeholder="Notas rápidas o palabras clave (la IA puede redactarlo por ti)..."
+                        oninput="actualizarTextoEtapaLive('${idObra}','${etapaKey}', this.value, '${previewElId}')">${etapa.descripcion}</textarea>
+                    <div class="grid-form" style="grid-template-columns: 1fr 2fr; margin-top:6px;">
+                        <input type="text" placeholder="Fecha" value="${etapa.fecha}"
+                            onchange="actualizarCampoEtapa('${idObra}','${etapaKey}','fecha', this.value)">
+                        <input type="file" accept="image/*" multiple
+                            onchange="manejarFotosEtapa('${idObra}','${etapaKey}', this.files)">
+                    </div>
+                    ${etapa.fotos.length ? `<p style="font-size:11px; color:#64748b; margin-top:6px;">${etapa.fotos.length} foto(s) agregada(s) — ajústalas en la vista previa de abajo.</p>` : ''}
+                </div>
+            `;
+        }
+
+        function renderPanelObraControles(obra) {
+            const esCompleto = obra.modo === 'completo';
+            const previewDescId = `rep-prev-desc-${obra.id}`;
+            const previewActId = `rep-prev-act-${obra.id}`;
+            const previewMatId = `rep-prev-mat-${obra.id}`;
+            const previewIncId = `rep-prev-inc-${obra.id}`;
+            const previewAvanceDescId = `rep-prev-avance-desc-${obra.id}`;
+            return `
+            <div class="card no-print rep-obra-bloque-controles" style="margin-bottom:16px;">
+                <div class="rep-obra-cabecera">
+                    <h3>🏗️ ${obra.nombreObra || 'Obra sin nombre'}</h3>
+                    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                        <select onchange="cambiarModoObra('${obra.id}', this.value)">
+                            <option value="completo" ${esCompleto?'selected':''}>Reporte completo (Inicio/Proceso/Fin)</option>
+                            <option value="avance" ${!esCompleto?'selected':''}>Solo avance de obra</option>
+                        </select>
+                        <button class="btn btn-danger" onclick="eliminarObraReporte('${obra.id}')" style="padding:6px 12px; font-size:12px;">✕ Quitar obra</button>
+                    </div>
+                </div>
+
+                <div class="rep-referencia-row">
+                    ${htmlSelectorCotizaciones(obra.id)}
+                    ${htmlSelectorClientes(obra.id)}
+                </div>
+
+                <div class="grid-form" style="grid-template-columns: 1fr 1fr;">
+                    <div class="form-group">
+                        <label>Obra / Proyecto</label>
+                        <input type="text" value="${(obra.nombreObra||'').replace(/"/g,'&quot;')}" placeholder="Ej: Remodelación baño - Sr. Pérez"
+                            onchange="actualizarCampoObra('${obra.id}','nombreObra', this.value)">
+                    </div>
+                    <div class="form-group">
+                        <label>Cliente</label>
+                        <input type="text" value="${(obra.cliente||'').replace(/"/g,'&quot;')}" placeholder="Nombre del cliente"
+                            onchange="actualizarCampoObra('${obra.id}','cliente', this.value)">
+                    </div>
+                    <div class="form-group">
+                        <label>Dirección / Ubicación</label>
+                        <input type="text" value="${(obra.direccion||'').replace(/"/g,'&quot;')}" placeholder="Dirección de la obra"
+                            onchange="actualizarCampoObra('${obra.id}','direccion', this.value)">
+                    </div>
+                    <div class="form-group">
+                        <label>Responsable / Supervisor</label>
+                        <input type="text" value="${(obra.responsable||'').replace(/"/g,'&quot;')}" placeholder="Nombre del responsable"
+                            onchange="actualizarCampoObra('${obra.id}','responsable', this.value)">
+                    </div>
+                    <div class="form-group">
+                        <label>Fecha del reporte</label>
+                        <input type="text" value="${obra.fecha}" onchange="actualizarCampoObra('${obra.id}','fecha', this.value)">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label style="display:flex; align-items:center; justify-content:space-between;">
+                        <span>Descripción general de la obra (opcional)</span>
+                        <button type="button" class="btn" onclick="redactarConIA('${obra.id}','descripcion')" style="background:#e0f2fe; color:#0369a1; font-size:11px; padding:4px 10px;">🤖 Redactar con IA</button>
+                    </label>
+                    <textarea rows="2" placeholder="Alcance del trabajo, contexto general..."
+                        oninput="actualizarTextoLive('${obra.id}','descripcion', this.value, '${previewDescId}')">${obra.descripcion}</textarea>
+                </div>
+
+                ${esCompleto ? `
+                    ${htmlControlEtapaPanel(obra.id, 'inicio', obra.etapas.inicio, 'INICIO DE OBRA', 'inicio')}
+                    ${htmlControlEtapaPanel(obra.id, 'proceso', obra.etapas.proceso, 'PROCESO CONSTRUCTIVO', 'proceso')}
+                    ${htmlControlEtapaPanel(obra.id, 'finalizado', obra.etapas.finalizado, 'OBRA FINALIZADA / ENTREGA', 'finalizado')}
+                ` : `
+                    <div class="form-group">
+                        <label style="display:flex; align-items:center; justify-content:space-between;">
+                            <span>Descripción del avance</span>
+                            <button type="button" class="btn" onclick="redactarConIA('${obra.id}','avance')" style="background:#e0f2fe; color:#0369a1; font-size:11px; padding:4px 10px;">🤖 Redactar con IA</button>
+                        </label>
+                        <textarea rows="2" placeholder="Describe el avance actual de la obra..."
+                            oninput="actualizarTextoEtapaLive('${obra.id}','avance', this.value, '${previewAvanceDescId}')">${obra.avance.descripcion}</textarea>
+                    </div>
+                    <div class="grid-form" style="grid-template-columns: 1fr 2fr;">
+                        <input type="text" value="${obra.avance.fecha}" placeholder="Fecha"
+                            onchange="actualizarCampoEtapa('${obra.id}','avance','fecha', this.value)">
+                        <input type="file" accept="image/*" multiple
+                            onchange="manejarFotosEtapa('${obra.id}','avance', this.files)">
+                    </div>
+                `}
+
+                <div class="form-group" style="margin-top:16px; border-top:1px dashed #e2e8f0; padding-top:12px;">
+                    <label style="display:flex; align-items:center; justify-content:space-between;">
+                        <span>🔨 Actividades realizadas</span>
+                        <button type="button" class="btn" onclick="redactarConIA('${obra.id}','actividades')" style="background:#e0f2fe; color:#0369a1; font-size:11px; padding:4px 10px;">🤖 Redactar con IA</button>
+                    </label>
+                    <textarea rows="2" placeholder="Ej: Tarrajeo de muros, instalación de tuberías..."
+                        oninput="actualizarTextoLive('${obra.id}','actividades', this.value, '${previewActId}')">${obra.actividades}</textarea>
+                </div>
+                <div class="form-group">
+                    <label>📦 Materiales utilizados</label>
+                    <textarea rows="2" placeholder="Ej: Cemento, arena, tuberías PVC 1/2..."
+                        oninput="actualizarTextoLive('${obra.id}','materiales', this.value, '${previewMatId}')">${obra.materiales}</textarea>
+                </div>
+                <div class="form-group">
+                    <label>⚠️ Incidentes o problemas en la obra</label>
+                    <textarea rows="2" placeholder="Ej: Retraso por lluvia, filtración detectada..."
+                        oninput="actualizarTextoLive('${obra.id}','incidentes', this.value, '${previewIncId}')">${obra.incidentes}</textarea>
+                </div>
+            </div>`;
+        }
+
+        function renderPanelObraPreview(obra, esPrimera) {
+            const esCompleto = obra.modo === 'completo';
+            const claseSalto = esPrimera ? '' : ' rep-salto-pagina';
+            return `
+            <div class="rep-obra-bloque${claseSalto}">
+                <div class="rep-obra-cabecera">
+                    <div>
+                        <h3>${obra.nombreObra || 'Obra sin nombre'}</h3>
+                        <div class="rep-obra-meta">
+                            <p><strong>Cliente:</strong> ${obra.cliente || '---'}</p>
+                            <p><strong>Dirección:</strong> ${obra.direccion || '---'}</p>
+                            <p><strong>Responsable:</strong> ${obra.responsable || '---'} &nbsp;|&nbsp; <strong>Fecha:</strong> ${obra.fecha}</p>
+                        </div>
+                    </div>
+                    <span class="rep-obra-modo-tag">${esCompleto ? 'REPORTE POR ETAPAS' : 'AVANCE DE OBRA'}</span>
+                </div>
+                <p id="rep-prev-desc-${obra.id}" class="rep-etapa-desc" style="${obra.descripcion?'':'display:none;'}">${obra.descripcion || ''}</p>
+
+                ${esCompleto ? `
+                    ${renderEtapaPreview(obra.id, 'inicio', obra.etapas.inicio, 'INICIO DE OBRA', 'inicio')}
+                    ${renderEtapaPreview(obra.id, 'proceso', obra.etapas.proceso, 'PROCESO CONSTRUCTIVO', 'proceso')}
+                    ${renderEtapaPreview(obra.id, 'finalizado', obra.etapas.finalizado, 'OBRA FINALIZADA / ENTREGA', 'finalizado')}
+                ` : `
+                    <div class="rep-etapa">
+                        <span class="rep-etapa-titulo inicio">AVANCE DE OBRA ${obra.avance.fecha ? '— ' + obra.avance.fecha : ''}</span>
+                        <p id="rep-prev-avance-desc-${obra.id}" class="rep-etapa-desc" style="${obra.avance.descripcion?'':'display:none;'}">${obra.avance.descripcion || ''}</p>
+                        ${htmlControlesFotos(obra.id, 'avance', obra.avance.fotos)}
+                    </div>
+                `}
+
+                ${(obra.actividades || obra.materiales || obra.incidentes) ? `
+                <div class="rep-etapa" style="border-top:1px dashed #e2e8f0; padding-top:10px;">
+                    <span class="rep-etapa-titulo" style="background:#475569;">RESUMEN DE OBRA</span>
+                    <div id="rep-prev-act-${obra.id}" class="rep-etapa-desc" style="${obra.actividades?'':'display:none;'}"><strong>Actividades realizadas:</strong> ${obra.actividades || ''}</div>
+                    <div id="rep-prev-mat-${obra.id}" class="rep-etapa-desc" style="${obra.materiales?'':'display:none;'}"><strong>Materiales utilizados:</strong> ${obra.materiales || ''}</div>
+                    <div id="rep-prev-inc-${obra.id}" class="rep-etapa-desc" style="${obra.incidentes?'':'display:none;'}"><strong>Incidentes / problemas:</strong> ${obra.incidentes || ''}</div>
+                </div>` : `
+                <div id="rep-prev-act-${obra.id}" style="display:none;"></div>
+                <div id="rep-prev-mat-${obra.id}" style="display:none;"></div>
+                <div id="rep-prev-inc-${obra.id}" style="display:none;"></div>
+                `}
+            </div>`;
+        }
+
+        function renderEtapaPreview(idObra, etapaKey, etapa, label, colorClase) {
+            const previewElId = `rep-prev-etapa-${idObra}-${etapaKey}`;
+            if (!etapa.descripcion && etapa.fotos.length === 0 && !etapa.fecha) {
+                return `<div id="${previewElId}" style="display:none;"></div>`;
+            }
+            return `
+                <div class="rep-etapa">
+                    <span class="rep-etapa-titulo ${colorClase}">${label} ${etapa.fecha ? '— ' + etapa.fecha : ''}</span>
+                    <p id="${previewElId}" class="rep-etapa-desc" style="${etapa.descripcion?'':'display:none;'}">${etapa.descripcion || ''}</p>
+                    ${htmlControlesFotos(idObra, etapaKey, etapa.fotos)}
+                </div>
+            `;
+        }
+
+        function renderReporteObra() {
+            actualizarTituloReporte(document.getElementById('rep-titulo-doc').value);
+
+            const controlesEl = document.getElementById('rep-obras-controles');
+            const previewEl = document.getElementById('rep-obras-preview');
+            const vacioEl = document.getElementById('rep-preview-vacio');
+
+            controlesEl.innerHTML = reporteObraState.obras.map(renderPanelObraControles).join('');
+            previewEl.innerHTML = reporteObraState.obras.map((o, i) => renderPanelObraPreview(o, i === 0)).join('');
+            vacioEl.style.display = reporteObraState.obras.length === 0 ? 'block' : 'none';
+        }
+
+        function imprimirReporteObra() {
+            if (reporteObraState.obras.length === 0) {
+                return mostrarToast('⚠️ Agrega al menos una obra antes de imprimir.', 'warning');
+            }
+            const tituloOriginal = document.title;
+            document.title = (document.getElementById('rep-titulo-doc').value || 'Reporte_de_Obra').replace(/\s+/g, '_');
+            window.print();
+            setTimeout(() => { document.title = tituloOriginal; }, 500);
+        }
+
+        // ── Asistente IA: redacta o mejora los textos del reporte a partir de notas sueltas ──
+        async function redactarConIA(idObra, campo) {
+            const obra = obtenerObraReporte(idObra);
+            if (!obra) return;
+            if (!GEMINI_API_KEY) {
+                mostrarToast('⚠️ Configura primero tu API Key (botón ⚙️ API Key IA).', 'warning');
+                return configurarApiKeyIA();
+            }
+
+            let etiquetaCampo, notaActual, esEtapa = false, etapaKey = null;
+            if (campo === 'descripcion') { etiquetaCampo = 'descripción general de la obra'; notaActual = obra.descripcion; }
+            else if (campo === 'actividades') { etiquetaCampo = 'actividades realizadas'; notaActual = obra.actividades; }
+            else if (campo === 'avance') { etiquetaCampo = 'descripción del avance de obra'; notaActual = obra.avance.descripcion; esEtapa = true; etapaKey = 'avance'; }
+            else { etiquetaCampo = 'descripción de la etapa de ' + campo; notaActual = obra.etapas[campo].descripcion; esEtapa = true; etapaKey = campo; }
+
+            if (!notaActual || !notaActual.trim()) {
+                mostrarToast('⚠️ Escribe algunas notas o palabras clave primero, y la IA las redactará.', 'warning');
+                return;
+            }
+
+            mostrarToast('🤖 Redactando con IA...', 'success');
+
+            const contexto = `Obra: ${obra.nombreObra || 'sin nombre'}. Cliente: ${obra.cliente || '---'}. ` +
+                `Dirección: ${obra.direccion || '---'}. Responsable: ${obra.responsable || '---'}.` +
+                (obra.actividades ? ` Actividades realizadas: ${obra.actividades}.` : '') +
+                (obra.materiales ? ` Materiales utilizados: ${obra.materiales}.` : '') +
+                (obra.incidentes ? ` Incidentes reportados: ${obra.incidentes}.` : '');
+
+            const systemPrompt =
+`Eres un asistente que redacta reportes de obra para "Alexander Diseño & Construcción", empresa de construcción, drywall, estructuras y remodelaciones en Chiclayo, Perú.
+Se te dan notas sueltas o palabras clave escritas por el supervisor de obra y debes convertirlas en un texto breve, profesional y claro para un ${etiquetaCampo}, tal como aparecería en un reporte formal entregado a un cliente.
+Reglas:
+- Responde ÚNICAMENTE con el texto redactado, sin comillas, sin markdown, sin explicaciones adicionales.
+- Máximo 3-4 oraciones, tono técnico pero cercano, en español, tiempo pasado o presente según corresponda.
+- No inventes datos que no estén sugeridos en las notas ni en el contexto entregado.
+Contexto de la obra: ${contexto}`;
+
+            try {
+                const response = await fetch(
+                    `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODELO}:generateContent`,
+                    {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "x-goog-api-key": GEMINI_API_KEY
+                        },
+                        body: JSON.stringify({
+                            system_instruction: { parts: [{ text: systemPrompt }] },
+                            contents: [{ role: "user", parts: [{ text: "Notas del supervisor: " + notaActual }] }]
+                        })
+                    }
+                );
+                const data = await response.json();
+                if (data.error) throw new Error(data.error.message || "Error de la API");
+
+                const partes = (data.candidates && data.candidates[0] && data.candidates[0].content
+                    ? data.candidates[0].content.parts : []) || [];
+                const textoIA = partes.filter(p => p.text).map(p => p.text).join("\n").trim();
+                if (!textoIA) throw new Error("La IA no devolvió texto.");
+
+                if (esEtapa) {
+                    const destino = etapaKey === 'avance' ? obra.avance : obra.etapas[etapaKey];
+                    destino.descripcion = textoIA;
+                } else {
+                    obra[campo] = textoIA;
+                }
+                renderReporteObra();
+                mostrarToast('✅ Texto redactado con IA.', 'success');
+            } catch (err) {
+                console.error(err);
+                mostrarToast('❌ Error del asistente IA: ' + err.message, 'danger');
+            }
+        }
+
+        // ── Guardado local de reportes (los datos de referencia -cotizaciones/clientes- vienen de la nube; ──
+        // ── el reporte en sí, con las fotos, se guarda en este dispositivo por el tamaño de las imágenes) ──
+        function obtenerReportesGuardados() {
+            try { return JSON.parse(localStorage.getItem('reportes-obra-guardados') || '[]'); }
+            catch (e) { return []; }
+        }
+
+        function guardarReporteObra() {
+            if (reporteObraState.obras.length === 0) {
+                return mostrarToast('⚠️ Agrega al menos una obra antes de guardar.', 'warning');
+            }
+            const guardados = obtenerReportesGuardados();
+            const nombreSugerido = document.getElementById('rep-titulo-doc').value || 'Reporte de Obra';
+            const registro = {
+                id: reporteObraGuardadoId || ('rep_' + Date.now()),
+                nombre: nombreSugerido + ' — ' + new Date().toLocaleDateString('es-PE'),
+                fechaGuardado: new Date().toISOString(),
+                titulo: document.getElementById('rep-titulo-doc').value,
+                obras: reporteObraState.obras
+            };
+            const idxExistente = guardados.findIndex(r => r.id === registro.id);
+            try {
+                if (idxExistente >= 0) guardados[idxExistente] = registro; else guardados.push(registro);
+                localStorage.setItem('reportes-obra-guardados', JSON.stringify(guardados));
+                reporteObraGuardadoId = registro.id;
+                renderListaReportesGuardados();
+                mostrarToast('✅ Reporte guardado en este dispositivo.', 'success');
+            } catch (err) {
+                console.error(err);
+                mostrarToast('❌ No se pudo guardar: el reporte es muy pesado (demasiadas fotos en alta cantidad). Reduce fotos o imprime directamente a PDF.', 'danger');
+            }
+        }
+
+        function cargarReporteObraGuardado(id) {
+            const guardados = obtenerReportesGuardados();
+            const reg = guardados.find(r => r.id === id);
+            if (!reg) return;
+            reporteObraState = { obras: reg.obras };
+            reporteObraGuardadoId = reg.id;
+            document.getElementById('rep-titulo-doc').value = reg.titulo || 'REPORTE DE AVANCE DE OBRA';
+            renderReporteObra();
+            mostrarToast('📂 Reporte cargado. Puedes seguir editándolo.', 'success');
+        }
+
+        function eliminarReporteObraGuardado(id) {
+            if (!confirm('¿Eliminar este reporte guardado? Esta acción no se puede deshacer.')) return;
+            let guardados = obtenerReportesGuardados();
+            guardados = guardados.filter(r => r.id !== id);
+            localStorage.setItem('reportes-obra-guardados', JSON.stringify(guardados));
+            if (reporteObraGuardadoId === id) reporteObraGuardadoId = null;
+            renderListaReportesGuardados();
+        }
+
+        function renderListaReportesGuardados() {
+            const cont = document.getElementById('rep-guardados-lista');
+            if (!cont) return;
+            const guardados = obtenerReportesGuardados();
+            if (guardados.length === 0) {
+                cont.innerHTML = '<p style="font-size:12px; color:#94a3b8;">Aún no has guardado ningún reporte.</p>';
+                return;
+            }
+            cont.innerHTML = guardados.slice().reverse().map(r => `
+                <div class="rep-guardado-item">
+                    <span>📄 ${r.nombre} <span style="color:#94a3b8;">(${r.obras.length} obra${r.obras.length===1?'':'s'})</span></span>
+                    <div style="display:flex; gap:6px;">
+                        <button class="btn btn-primary" style="padding:4px 10px; font-size:11px;" onclick="cargarReporteObraGuardado('${r.id}')">Abrir</button>
+                        <button class="btn btn-danger" style="padding:4px 10px; font-size:11px;" onclick="eliminarReporteObraGuardado('${r.id}')">✕</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function nuevoReporteObra() {
+            if (reporteObraState.obras.length > 0 && !confirm('¿Vaciar el reporte actual? Si no lo has guardado, se perderá.')) return;
+            reporteObraState = { obras: [] };
+            reporteObraGuardadoId = null;
+            document.getElementById('rep-titulo-doc').value = 'REPORTE DE AVANCE DE OBRA';
+            renderReporteObra();
+        }
+
+        // ═══════════════ GALERÍA FOTOGRÁFICA ═══════════════
+        // Recopila automáticamente TODAS las fotos que existen dentro de los reportes de obra:
+        // tanto el reporte que se está editando ahora mismo (aún no guardado) como todos los
+        // reportes ya guardados en este dispositivo. No hay una copia paralela de las fotos:
+        // siempre se lee directo de la fuente, así que borrar aquí borra también del reporte.
+        let galeriaModoComparativo = false;
+
+        function recopilarFotosGaleria() {
+            const items = [];
+
+            function agregarDeObra(obra, reporteId, reporteNombre) {
+                const empujarEtapa = (etapaKey, etapa, etapaLabel) => {
+                    (etapa.fotos || []).forEach((foto, idx) => {
+                        items.push({
+                            reporteId, reporteNombre,
+                            obraId: obra.id,
+                            obraNombre: obra.nombreObra || 'Obra sin nombre',
+                            etapaKey, etapaLabel,
+                            idx, foto
+                        });
+                    });
+                };
+                if (obra.modo === 'completo') {
+                    empujarEtapa('inicio', obra.etapas.inicio, 'Inicio');
+                    empujarEtapa('proceso', obra.etapas.proceso, 'Proceso');
+                    empujarEtapa('finalizado', obra.etapas.finalizado, 'Finalizado');
+                } else {
+                    empujarEtapa('avance', obra.avance, 'Avance');
+                }
+            }
+
+            // Reporte actual (en edición, aún no guardado)
+            (reporteObraState.obras || []).forEach(obra => agregarDeObra(obra, '__actual__', '📝 Reporte actual (sin guardar)'));
+
+            // Reportes guardados en este dispositivo
+            obtenerReportesGuardados().forEach(reg => {
+                (reg.obras || []).forEach(obra => agregarDeObra(obra, reg.id, reg.nombre));
+            });
+
+            return items;
+        }
+
+        function inicializarGaleria() {
+            renderFiltrosGaleria();
+            renderGaleria();
+        }
+
+        function renderFiltrosGaleria() {
+            const items = recopilarFotosGaleria();
+
+            // Filtro por obra: combinaciones únicas obra+reporte
+            const selObra = document.getElementById('gal-filtro-obra');
+            const valorPrevioObra = selObra.value;
+            const vistos = new Set();
+            let opcionesObra = '<option value="">-- Todas las obras --</option>';
+            items.forEach(it => {
+                const clave = it.reporteId + '||' + it.obraId;
+                if (vistos.has(clave)) return;
+                vistos.add(clave);
+                opcionesObra += `<option value="${clave}">${it.obraNombre} (${it.reporteNombre.replace(/"/g,'')})</option>`;
+            });
+            selObra.innerHTML = opcionesObra;
+            if (vistos.has(valorPrevioObra)) selObra.value = valorPrevioObra;
+
+            // Filtro por categoría (usa las mismas etiquetas de las fotos)
+            const selCat = document.getElementById('gal-filtro-categoria');
+            const valorPrevioCat = selCat.value;
+            selCat.innerHTML = '<option value="">-- Todas las categorías --</option>' +
+                REP_ETIQUETAS_FOTO.filter(t => t.valor).map(t => `<option value="${t.valor}">${t.label}</option>`).join('') +
+                '<option value="__sin_etiqueta__">— Sin etiqueta —</option>';
+            selCat.value = valorPrevioCat || '';
+        }
+
+        function toggleComparativoGaleria() {
+            galeriaModoComparativo = !galeriaModoComparativo;
+            const btn = document.getElementById('gal-btn-comparativo');
+            if (btn) btn.style.background = galeriaModoComparativo ? '#0f172a' : '#0369a1';
+            renderGaleria();
+        }
+
+        function renderGaleria() {
+            const cont = document.getElementById('gal-contenido');
+            if (!cont) return;
+
+            const filtroObra = document.getElementById('gal-filtro-obra').value;
+            const filtroCategoria = document.getElementById('gal-filtro-categoria').value;
+            const filtroUbicacion = (document.getElementById('gal-filtro-ubicacion').value || '').toLowerCase().trim();
+
+            let items = recopilarFotosGaleria();
+
+            if (filtroObra) {
+                items = items.filter(it => (it.reporteId + '||' + it.obraId) === filtroObra);
+            }
+            if (filtroCategoria) {
+                if (filtroCategoria === '__sin_etiqueta__') items = items.filter(it => !it.foto.etiqueta);
+                else items = items.filter(it => it.foto.etiqueta === filtroCategoria);
+            }
+            if (filtroUbicacion) {
+                items = items.filter(it => (it.foto.ubicacion || '').toLowerCase().includes(filtroUbicacion));
+            }
+
+            if (galeriaModoComparativo) {
+                const antes = items.filter(it => it.foto.etiqueta === 'antes');
+                const despues = items.filter(it => it.foto.etiqueta === 'despues');
+                if (antes.length === 0 && despues.length === 0) {
+                    cont.innerHTML = `<p class="gal-empty">📭 No hay fotos etiquetadas como "Antes" o "Después" con los filtros actuales.<br>Etiqueta tus fotos en el Reporte de Obra para verlas aquí comparadas.</p>`;
+                    return;
+                }
+                cont.innerHTML = `
+                    <div class="gal-comparativo-row">
+                        <div class="gal-comparativo-col">
+                            <h4>◀ Antes</h4>
+                            <div class="gal-grid">${antes.map((it,i) => htmlGalCard(it, i)).join('') || '<p class="gal-empty">Sin fotos "Antes".</p>'}</div>
+                        </div>
+                        <div class="gal-comparativo-col">
+                            <h4>Después ▶</h4>
+                            <div class="gal-grid">${despues.map((it,i) => htmlGalCard(it, i)).join('') || '<p class="gal-empty">Sin fotos "Después".</p>'}</div>
+                        </div>
+                    </div>`;
+                return;
+            }
+
+            if (items.length === 0) {
+                cont.innerHTML = `<p class="gal-empty">📭 No se encontraron fotos con esos filtros.<br>Agrega fotos desde Reporte de Obra y aparecerán aquí automáticamente.</p>`;
+                return;
+            }
+
+            // Agrupar por obra para mostrarlas ordenadas
+            const grupos = {};
+            items.forEach(it => {
+                const clave = it.reporteId + '||' + it.obraId;
+                if (!grupos[clave]) grupos[clave] = { nombre: it.obraNombre, reporte: it.reporteNombre, items: [] };
+                grupos[clave].items.push(it);
+            });
+
+            cont.innerHTML = Object.values(grupos).map(g => `
+                <div class="gal-grupo-titulo">🏗️ ${g.nombre} <span style="font-weight:400;color:#94a3b8;">— ${g.reporte}</span></div>
+                <div class="gal-grid">${g.items.map((it,i) => htmlGalCard(it, i)).join('')}</div>
+            `).join('');
+        }
+
+        function htmlGalCard(it, i) {
+            const foto = it.foto;
+            const codigo = `${it.obraId.slice(-4).toUpperCase()}-${String(it.idx+1).padStart(3,'0')}`;
+            const esVertical = foto.orientacion === 'vertical';
+            const infoEtiqueta = REP_ETIQUETAS_FOTO.find(t => t.valor === foto.etiqueta);
+            const colorEtiqueta = REP_ETIQUETA_COLOR[foto.etiqueta] || '#64748b';
+            return `
+                <div class="gal-card">
+                    <div class="gal-card-img-wrap ${esVertical ? 'gal-vertical' : ''}">
+                        <img src="${foto.src}" loading="lazy">
+                    </div>
+                    <div class="gal-card-body">
+                        <div class="gal-card-codigo">${codigo}</div>
+                        <span class="rep-foto-tag" style="position:static;display:inline-block;background:${colorEtiqueta};margin-bottom:6px;">${infoEtiqueta ? infoEtiqueta.label : 'Sin etiqueta'}</span>
+                        <div class="gal-card-desc">${foto.caption || 'Sin descripción'}</div>
+                        <div class="gal-card-meta">${foto.ubicacion ? '📍 ' + foto.ubicacion + ' · ' : ''}${it.etapaLabel}</div>
+                        ${foto.driveUrl ? `<a href="${foto.driveUrl}" target="_blank" rel="noopener" style="display:block;font-size:11px;color:#16a34a;font-weight:600;margin-bottom:6px;text-decoration:none;">☁️ Ver en Drive</a>` : `<div style="font-size:11px;color:#94a3b8;margin-bottom:6px;">☁️ Aún no respaldada</div>`}
+                        <button class="btn btn-danger" style="width:100%;justify-content:center;" onclick="eliminarFotoDeGaleria('${it.reporteId}','${it.obraId}','${it.etapaKey}',${it.idx})">🗑️ Eliminar</button>
+                    </div>
+                </div>`;
+        }
+
+        function eliminarFotoDeGaleria(reporteId, obraId, etapaKey, idx) {
+            if (!confirm('¿Eliminar esta foto de la galería? Esta acción también la quita del reporte de obra.')) return;
+
+            const quitarDeObra = (obra) => {
+                const destino = etapaKey === 'avance' ? obra.avance : obra.etapas[etapaKey];
+                if (destino && destino.fotos[idx] !== undefined) destino.fotos.splice(idx, 1);
+            };
+
+            if (reporteId === '__actual__') {
+                const obra = reporteObraState.obras.find(o => o.id === obraId);
+                if (obra) quitarDeObra(obra);
+                renderReporteObra();
+            } else {
+                const guardados = obtenerReportesGuardados();
+                const reg = guardados.find(r => r.id === reporteId);
+                if (reg) {
+                    const obra = (reg.obras || []).find(o => o.id === obraId);
+                    if (obra) quitarDeObra(obra);
+                    localStorage.setItem('reportes-obra-guardados', JSON.stringify(guardados));
+                }
+            }
+            renderFiltrosGaleria();
+            renderGaleria();
+            mostrarToast('🗑️ Foto eliminada de la galería.', 'danger');
+        }
+
+        // Intenta respaldar automáticamente cada foto nueva en Google Drive, usando el mismo
+        // backend (Apps Script) que ya guarda los PDF de cotizaciones. Si el backend aún no
+        // tiene la acción "guardarFotoGaleria" implementada, esto simplemente falla en silencio
+        // sin afectar el uso normal de la app (ver nota para el desarrollador más abajo).
+        // Sube (o reemplaza) la foto en Drive. Si la foto ya tenía una copia respaldada
+        // (foto.driveFileId), le pedimos al backend que borre esa copia vieja justo antes
+        // de crear la nueva, para que en Drive quede siempre una sola versión por foto.
+        async function sincronizarFotoConDrive(obra, etapaKey, foto) {
+            try {
+                const respuesta = await fetch(URL_GAS, {
+                    method: "POST",
+                    redirect: "follow",
+                    headers: { "Content-Type": "text/plain;charset=utf-8" },
+                    body: JSON.stringify({
+                        tipo: "guardarFotoGaleria",
+                        obraId: obra.id,
+                        obraNombre: obra.nombreObra || 'Obra sin nombre',
+                        cliente: obra.cliente || '',
+                        etapa: etapaKey,
+                        etiqueta: foto.etiqueta || '',
+                        ubicacion: foto.ubicacion || '',
+                        caption: foto.caption || '',
+                        fecha: new Date().toISOString(),
+                        imagenBase64: foto.src,
+                        fileIdAnterior: foto.driveFileId || ''
+                    })
+                });
+                const resultado = await respuesta.json();
+                if (resultado && resultado.ok && resultado.url) {
+                    foto.driveUrl = resultado.url;
+                    foto.driveFileId = resultado.fileId || null;
+                    // Refresca la galería si es la vista activa, para mostrar el indicador ☁️
+                    const vistaGaleria = document.getElementById('galeria');
+                    if (vistaGaleria && vistaGaleria.classList.contains('active')) renderGaleria();
+                } else if (resultado && resultado.error) {
+                    console.warn('⚠️ Error al respaldar foto en Drive:', resultado.error);
+                }
+            } catch (e) {
+                console.warn('⚠️ No se pudo respaldar la foto en Drive (revisa el backend de Apps Script).', e);
+            }
+        }
+
+        // Evita subir una copia nueva por cada letra que el usuario escribe en descripción/ubicación:
+        // esperamos un momento de pausa antes de sincronizar con Drive.
+        const fotoSyncTimers = {};
+        function programarSincronizacionFoto(idObra, etapaKey, idx, demoraMs = 1200) {
+            const key = idObra + '|' + etapaKey + '|' + idx;
+            if (fotoSyncTimers[key]) clearTimeout(fotoSyncTimers[key]);
+            fotoSyncTimers[key] = setTimeout(() => {
+                delete fotoSyncTimers[key];
+                const obra = obtenerObraReporte(idObra);
+                if (!obra) return;
+                const destino = etapaKey === 'avance' ? obra.avance : obra.etapas[etapaKey];
+                const foto = destino && destino.fotos[idx];
+                if (foto) sincronizarFotoConDrive(obra, etapaKey, foto);
+            }, demoraMs);
         }
 
         document.getElementById('cot-cliente').addEventListener('change', function() {
@@ -1750,6 +3350,8 @@ function cancelarEdicionItemCot() {
 
             // Resetear campos del formulario
             document.getElementById('cot-cliente').value           = "";
+            document.getElementById('cot-titulo-doc').value        = "";
+            document.getElementById('lbl-titulo-doc-preview').style.display = 'none';
             document.getElementById('cot-observaciones').value     = "";
             document.getElementById('lbl-observaciones').innerText = "";
             document.getElementById('cot-impuesto-config').value   = "NO";
@@ -1875,6 +3477,7 @@ async function finalizarEImprimir() {
     const cotizacion = {
         numero:          numCotizacion,
         fecha:           document.getElementById('cot-fecha').value,
+        tituloDoc:       document.getElementById('cot-titulo-doc').value.trim(),
         cliente:         nombreCliente,
         clienteId:       clienteIdx,
         ruc:             clienteData.doc || "",
@@ -2499,7 +4102,7 @@ async function borrarCuenta(i) {
                 // Búsqueda de texto (parcial, múltiples campos)
                 if (q) {
                     const haystack = [
-                        c.numero, c.cliente, c.fecha, c.ruc,
+                        c.numero, c.cliente, c.fecha, c.ruc, c.tituloDoc,
                         c.subtotal, c.igv, c.total,
                         c.observaciones, c.estado,
                         c.telefono, c.correo
@@ -2527,7 +4130,7 @@ async function borrarCuenta(i) {
             if(el('cst-monto'))     el('cst-monto').textContent = montoTotal.toFixed(2);
 
             if (filtradas.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="8" class="cot-empty">
+                tbody.innerHTML = `<tr><td colspan="9" class="cot-empty">
                     📭 No se encontraron cotizaciones con esos filtros.</td></tr>`;
                 return;
             }
@@ -2538,6 +4141,7 @@ async function borrarCuenta(i) {
                 const estado = c.estado || 'BORRADOR';
                 return `<tr>
                     <td><b>${c.numero || '---'}</b></td>
+                    <td>${c.tituloDoc ? `<span style="color:#0369a1;font-weight:600;">${c.tituloDoc}</span>` : '<span style="color:#94a3b8;">—</span>'}</td>
                     <td>${c.cliente || '---'}</td>
                     <td>${c.fecha || '---'}</td>
                     <td style="text-align:right;">S/ ${parseFloat(c.subtotal||0).toFixed(2)}</td>
@@ -2611,6 +4215,12 @@ async function borrarCuenta(i) {
             // Fecha
             document.getElementById('cot-fecha').value = cot.fecha || '';
             document.getElementById('lbl-fecha').innerText = cot.fecha || '';
+
+            // Título general del documento
+            document.getElementById('cot-titulo-doc').value = cot.tituloDoc || '';
+            const lblTituloDocPrev = document.getElementById('lbl-titulo-doc-preview');
+            if (cot.tituloDoc) { lblTituloDocPrev.innerText = cot.tituloDoc; lblTituloDocPrev.style.display = 'block'; }
+            else { lblTituloDocPrev.style.display = 'none'; }
 
             // Impuesto
             document.getElementById('cot-impuesto-config').value = cot.impuesto || 'NO';
@@ -2705,6 +4315,8 @@ async function borrarCuenta(i) {
             renderizarChipsSecciones();
             actualizarContenedorCotizacion();
             document.getElementById('cot-cliente').value = "";
+            document.getElementById('cot-titulo-doc').value = "";
+            document.getElementById('lbl-titulo-doc-preview').style.display = 'none';
             document.getElementById('cot-observaciones').value = "";
             document.getElementById('lbl-observaciones').innerText = "";
             document.getElementById('cot-impuesto-config').value = "NO";
@@ -2791,6 +4403,7 @@ async function borrarCuenta(i) {
             const estadoFormulario = {
                 numero: document.getElementById('cot-numero').value,
                 fecha:  document.getElementById('cot-fecha').value,
+                tituloDoc: document.getElementById('cot-titulo-doc').value,
                 cliente: document.getElementById('cot-cliente').value,
                 obs:    document.getElementById('cot-observaciones').value,
                 impuesto: document.getElementById('cot-impuesto-config').value,
@@ -2831,6 +4444,9 @@ async function borrarCuenta(i) {
                     actualizarContenedorCotizacion();
                     document.getElementById('cot-numero').value = estadoFormulario.numero;
                     document.getElementById('cot-fecha').value  = estadoFormulario.fecha;
+                    document.getElementById('cot-titulo-doc').value = estadoFormulario.tituloDoc;
+                    document.getElementById('lbl-titulo-doc-preview').style.display = estadoFormulario.tituloDoc ? 'block' : 'none';
+                    if (estadoFormulario.tituloDoc) document.getElementById('lbl-titulo-doc-preview').innerText = estadoFormulario.tituloDoc;
                     document.getElementById('cot-cliente').value = estadoFormulario.cliente;
                     document.getElementById('cot-observaciones').value = estadoFormulario.obs;
                     document.getElementById('cot-impuesto-config').value = estadoFormulario.impuesto;
