@@ -854,7 +854,8 @@
             </div>
 
             <div class="no-print" style="display:flex; gap:12px; max-width:640px; margin:30px auto 0 auto; flex-wrap:wrap;">
-                <button class="btn btn-success" onclick="finalizarEImprimir()" style="flex:1; min-width:220px;">🖨️ IMPRIMIR / GUARDAR EN PDF</button>
+                <button class="btn btn-primary" onclick="guardarCotizacion()" style="flex:1; min-width:200px;">💾 GUARDAR COTIZACIÓN</button>
+                <button class="btn btn-success" onclick="imprimirCotizacionActual()" style="flex:1; min-width:200px;">🖨️ IMPRIMIR / PDF</button>
                 <button class="btn no-print" onclick="limpiarCotizacion()" style="flex:1; min-width:180px; background:#f1f5f9; color:#334155; border:1.5px solid #cbd5e1; font-size:15px; padding:14px; border-radius:6px; cursor:pointer; font-weight:600;">🗑️ Nueva Cotización</button>
             </div>
         </div>
@@ -3312,12 +3313,12 @@ function cancelarEdicionItemCot() {
                     const secIgv   = igvOn ? secSubtotal * 0.18 : 0;
                     const secTotal = secSubtotal + secIgv;
                     granTotal += secTotal;
-                    const igvTxt = igvOn
-                        ? `&nbsp;+&nbsp;IGV&nbsp;S/&nbsp;${formatMonto(secIgv)}&nbsp;=&nbsp;<b>S/ ${formatMonto(secTotal)}</b>`
+                    const totalTxt = igvOn
+                        ? `S/ ${formatMonto(secSubtotal)}&nbsp;+&nbsp;IGV&nbsp;S/&nbsp;${formatMonto(secIgv)}&nbsp;=&nbsp;<b>S/ ${formatMonto(secTotal)}</b>`
                         : `<b>S/ ${formatMonto(secTotal)}</b>`;
                     tbody.innerHTML += `<tr class="tr-sec-subtotal">
                         <td colspan="4" style="text-align:right;">
-                            Total ${sec.nombre}: S/ ${formatMonto(secSubtotal)} ${igvTxt}
+                            Total: ${totalTxt}
                         </td>
                         <td></td><td class="no-print"></td></tr>`;
                 }
@@ -3505,7 +3506,7 @@ ${invoiceClone.outerHTML}
 }
 
 // 2. LUEGO VA ESTA FUNCIÓN
-async function finalizarEImprimir() {
+async function guardarCotizacion() {
     if(document.getElementById('cot-cliente').value === "") return mostrarToast("⚠️ Seleccione un cliente.", "warning");
     const totalItems = seccionesCotizacion.reduce((s, sec) => s + sec.items.length, 0);
     if(totalItems === 0) return mostrarToast("⚠️ Añada al menos un ítem.", "warning");
@@ -3557,21 +3558,8 @@ async function finalizarEImprimir() {
     // Guardar en Sheets
     await guardarEnNube("Cotizaciones", memoriaCotizaciones);
     await guardarEnNube("Config", [{ key: "correlativo", value: correlativoActual }]);
-    
-    // Imprimir PRIMERO (sin que el toast de Drive interfiera)
-    // Nota: en navegadores móviles (Android/iOS) el diálogo de "Guardar como PDF" a veces
-    // toma el document.title ANTES de que el navegador repinte el cambio, y termina
-    // sugiriendo el nombre genérico del sistema. Dándole un pequeño respiro (setTimeout)
-    // antes de llamar a window.print() asegura que el título ya esté actualizado.
-    const tituloOriginal = document.title;
-    const nombreLimpio = nombreCliente.replace(/[^a-zA-Z0-9 ]/g, "").trim().replace(/\s+/g, "_");
-    document.title = `Cotizacion_${numCotizacion}_${nombreLimpio}`;
-    setTimeout(() => {
-        window.print();
-        document.title = tituloOriginal;
-    }, 100);
 
-    // Generar PDF en Drive DESPUÉS de imprimir
+    // Generar PDF en Drive (respaldo en la nube, sin abrir el diálogo de impresión)
     crearPdfEnDrive(cotizacion);
 
     // Si estábamos en modo edición, salir de él
@@ -3585,6 +3573,30 @@ async function finalizarEImprimir() {
     } else {
         mostrarToast("✅ Cotización guardada correctamente.", "success");
     }
+}
+
+// Solo imprime / genera el PDF de lo que se ve en pantalla en este momento,
+// sin volver a guardar el registro (usa "💾 Guardar" para eso).
+function imprimirCotizacionActual() {
+    if(document.getElementById('cot-cliente').value === "") return mostrarToast("⚠️ Seleccione un cliente.", "warning");
+    const totalItems = seccionesCotizacion.reduce((s, sec) => s + sec.items.length, 0);
+    if(totalItems === 0) return mostrarToast("⚠️ Añada al menos un ítem.", "warning");
+
+    const clienteIdx    = document.getElementById('cot-cliente').value;
+    const nombreCliente = memoriaClientes[clienteIdx]?.nombre || "Cliente";
+    const numCotizacion = document.getElementById('cot-numero').value;
+
+    // Nota: en navegadores móviles (Android/iOS) el diálogo de "Guardar como PDF" a veces
+    // toma el document.title ANTES de que el navegador repinte el cambio, y termina
+    // sugiriendo el nombre genérico del sistema. Dándole un pequeño respiro (setTimeout)
+    // antes de llamar a window.print() asegura que el título ya esté actualizado.
+    const tituloOriginal = document.title;
+    const nombreLimpio = nombreCliente.replace(/[^a-zA-Z0-9 ]/g, "").trim().replace(/\s+/g, "_");
+    document.title = `Cotizacion_${numCotizacion}_${nombreLimpio}`;
+    setTimeout(() => {
+        window.print();
+        document.title = tituloOriginal;
+    }, 100);
 }
 
         function renderizarTablasMantenimiento() {
