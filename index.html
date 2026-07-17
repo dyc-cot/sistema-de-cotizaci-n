@@ -208,6 +208,16 @@
         .guia-note { font-size:12px; color:#64748b; padding:10px 14px; background:#f8fafc;
             border-radius:6px; margin-top:14px; border-left:3px solid #0284c7; }
 
+        /* ── Variante del catálogo propio: misma vista, columna de acciones más ancha ── */
+        .cat-inline-select { font-size:11px; padding:4px 5px; border-radius:6px; border:1px solid #93c5fd; background:#eff6ff; color:#1e40af; max-width:130px; }
+        .cat-col-header { display:grid; grid-template-columns:1fr 65px 95px 150px;
+            gap:8px; padding:4px 12px; font-size:11px; color:#94a3b8; font-weight:600; text-transform:uppercase; letter-spacing:.4px; }
+        .cat-item-row { display:grid; grid-template-columns:1fr 65px 95px 150px; gap:8px; align-items:center;
+            padding:8px 12px; background:white; border:1px solid #f1f5f9; border-radius:6px; font-size:13px;
+            transition:.15s; }
+        .cat-item-row:hover { border-color:#bae6fd; background:#f0f9ff; }
+        .cat-item-actions { display:flex; gap:5px; justify-content:center; flex-wrap:wrap; }
+
         /* ══════════════════════════════════════════════
            RESPONSIVE MÓVIL — breakpoint 768px
         ══════════════════════════════════════════════ */
@@ -474,6 +484,9 @@
         .rep-foto-img-wrap img { display: block; width: 100%; height: 100%; object-fit: cover; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         .rep-foto-item.foto-horizontal .rep-foto-img-wrap { aspect-ratio: 4 / 3; }
         .rep-foto-item.foto-vertical   .rep-foto-img-wrap { aspect-ratio: 3 / 4; }
+        /* Foto completa: sin recorte forzado, se respeta la proporción real de la imagen (panorámicas, detalles, etc.) */
+        .rep-foto-item.foto-completa .rep-foto-img-wrap { aspect-ratio: auto; background: transparent; }
+        .rep-foto-item.foto-completa .rep-foto-img-wrap img { height: auto; object-fit: contain; }
         .rep-foto-tag { position: absolute; top: 6px; left: 6px; color: #fff; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; letter-spacing: 0.3px; text-transform: uppercase; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         .rep-foto-caption { font-size: 11px; color: #475569; text-align: center; margin-top: 4px; white-space: pre-line; }
         .rep-foto-controles { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; align-items: center; justify-content: center; }
@@ -746,7 +759,7 @@
                         </div>
                     </div>
                     <div class="invoice-meta">
-                        <h3>PRESUPUESTO</h3>
+                        <h3>COTIZACIÓN</h3>
                         <p><strong>Número:</strong> <span id="lbl-num">COT-0001</span></p>
                         <p><strong>Fecha:</strong> <span id="lbl-fecha">--/--/----</span></p>
                     </div>
@@ -764,7 +777,7 @@
                     <div style="text-align: right;">
                         <h4 style="color:var(--accent); margin-bottom:5px; font-size:11px; letter-spacing:0.5px;">CONDICIONES GENERALES:</h4>
                         <p>Precios expresados en Soles (S/).</p>
-                        <p>Validez del presupuesto: 15 días calendario.</p>
+                        <p>Validez de la cotización: 15 días calendario.</p>
                     </div>
                 </div>
 
@@ -784,7 +797,7 @@
 
                 <!-- Panel cargos adicionales (oculto en impresión, refleja en totales) -->
                 <div class="cargos-panel no-print">
-                    <div class="cargos-panel-title">➕ Cargos adicionales al presupuesto</div>
+                    <div class="cargos-panel-title">➕ Cargos adicionales a la cotización</div>
                     <div class="cargos-form">
                         <div class="form-group" style="flex:2;min-width:150px;">
                             <label>Concepto</label>
@@ -1083,7 +1096,7 @@
 
         <!-- VISTA: CATALOGO -->
         <div id="catalogo" class="view">
-            <h1>Catálogo General de Precios de Referencia</h1>
+            <h1>📦 Catálogo General de Precios de Referencia</h1>
             <div class="card">
                 <h3 id="form-catalogo-titulo">Agregar Nuevo Producto o Servicio</h3>
                 <div class="grid-form" style="margin-top:10px;">
@@ -1099,30 +1112,26 @@
                 </div>
             </div>
 
-            <div class="card no-print">
-                <div class="grid-form" style="grid-template-columns: 2fr 1fr; gap:10px; margin-bottom:12px;">
-                    <div class="form-group">
-                        <label>🔍 Buscar por descripción o rubro</label>
-                        <input type="text" id="cat-busqueda" placeholder="Ej: cemento, drywall, pintura..." oninput="renderizarTablaCatalogo()">
-                    </div>
-                    <div class="form-group">
-                        <label>Filtrar por categoría</label>
-                        <select id="cat-filtro-categoria" onchange="renderizarTablaCatalogo()">
-                            <option value="">Todas las categorías</option>
-                        </select>
-                    </div>
+            <div class="card">
+                <div class="guia-search-bar">
+                    <span style="font-size:18px;">🔍</span>
+                    <input type="text" id="cat-search" placeholder="Buscar concepto, rubro o descripción..." oninput="catRender()">
                 </div>
-                <div id="cat-categorias-chips" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:8px;"></div>
-                <div id="cat-contador-resultados" style="font-size:12px; color:#64748b;"></div>
-            </div>
-
-            <div class="card"><div class="table-scroll">
-                <table>
-                    <thead>
-                        <tr><th>Rubro</th><th>Descripción</th><th>Unidad</th><th>Precio Base</th><th>Acciones</th></tr>
-                    </thead>
-                    <tbody id="tabla-catalogo-body"></tbody>
-                </table></div>
+                <div class="guia-filters" id="cat-filters"></div>
+                <div class="guia-stats">
+                    <div class="guia-stat"><div class="guia-stat-label">Ítems visibles</div><div class="guia-stat-val" id="cs-total">0</div></div>
+                    <div class="guia-stat"><div class="guia-stat-label">Rubros activos</div><div class="guia-stat-val" id="cs-rubros">0</div></div>
+                    <div class="guia-stat"><div class="guia-stat-label">Precio mínimo</div><div class="guia-stat-val" id="cs-min">S/0</div></div>
+                </div>
+                <div class="cat-col-header">
+                    <span>Descripción</span><span style="text-align:center">Unidad</span>
+                    <span style="text-align:right">Precio Base</span><span style="text-align:center">Acciones</span>
+                </div>
+                <div id="cat-catalog"></div>
+                <div class="guia-note" id="cat-empty-note" style="display:none;">
+                    📌 Aún no hay ítems en tu catálogo. Agrega el primero desde el formulario de arriba —
+                    se agrupará automáticamente por rubro y aparecerá aquí con su ícono correspondiente.
+                </div>
             </div>
         </div>
 
@@ -1451,10 +1460,10 @@ async function guardarEnNube(nombreTabla, datosArray) {
             ).join('\n');
 
             const systemPrompt =
-`Eres un asistente de presupuestos para "Alexander Diseño & Construcción", empresa de construcción, drywall, estructuras y remodelaciones en Chiclayo, Perú.
+`Eres un asistente de cotizaciones para "Alexander Diseño & Construcción", empresa de construcción, drywall, estructuras y remodelaciones en Chiclayo, Perú.
 Se te da la descripción de un trabajo, un catálogo de precios ya guardados por la empresa y, opcionalmente, imágenes o documentos (fotos del lugar, planos, cotizaciones previas, fichas técnicas) que debes usar como referencia principal para precisar medidas, materiales, cantidades y acabados.
 Tu tarea:
-1. Si se adjuntaron imágenes o documentos, analízalos primero: identifica ambientes, medidas aproximadas, materiales visibles, cantidades y cualquier dato de precio que ya aparezca en ellos, y úsalos para afinar el presupuesto.
+1. Si se adjuntaron imágenes o documentos, analízalos primero: identifica ambientes, medidas aproximadas, materiales visibles, cantidades y cualquier dato de precio que ya aparezca en ellos, y úsalos para afinar la cotización.
 2. Descompón el trabajo en ítems concretos (materiales y mano de obra) agrupados en secciones lógicas (ej: DEMOLICIÓN, GASFITERÍA, ACABADOS, MANO DE OBRA).
 3. Si un ítem coincide con algo del catálogo, usa ese precio en soles (S/).
 4. Si un ítem NO está en el catálogo ni en los adjuntos, usa la herramienta de búsqueda web para encontrar un precio de mercado actual y razonable en Perú, en soles, y úsalo.
@@ -1582,6 +1591,7 @@ ${catalogoResumen || '(catálogo vacío)'}`;
             }
             inicializarModulos();
             if (viewId === 'guia-precios') { guiaRenderFiltros(); guiaRender(); }
+            if (viewId === 'catalogo') { catRenderFiltros(); catRender(); }
             if (viewId === 'cotizaciones') { inicializarFiltrosHistorial(); renderTablaHistorial(); }
             if (viewId === 'requerimiento') { inicializarRequerimiento(); }
             if (viewId === 'reporte-obra') { inicializarReporteObra(); }
@@ -1929,8 +1939,10 @@ Responde ÚNICAMENTE con un JSON válido, sin texto adicional, sin markdown, con
             const tituloOriginal = document.title;
             const numero = document.getElementById('req-lbl-num').innerText;
             document.title = `Requerimiento_${numero}`;
-            window.print();
-            setTimeout(() => { document.title = tituloOriginal; }, 500);
+            setTimeout(() => {
+                window.print();
+                document.title = tituloOriginal;
+            }, 100);
         }
 
         function limpiarRequerimiento() {
@@ -2277,7 +2289,7 @@ Responde ÚNICAMENTE con un JSON válido, sin texto adicional, sin markdown, con
         function htmlControlesFotos(idObra, etapaKey, fotos) {
             if (!fotos || fotos.length === 0) return '';
             return `<div class="rep-foto-grid">` + fotos.map((f, idx) => `
-                <div class="rep-foto-item foto-${f.orientacion === 'vertical' ? 'vertical' : 'horizontal'}" style="width:calc(${f.widthPct}% - 12px);">
+                <div class="rep-foto-item foto-${f.orientacion === 'vertical' ? 'vertical' : f.orientacion === 'completa' ? 'completa' : 'horizontal'}" style="width:calc(${f.widthPct}% - 12px);">
                     <div class="rep-foto-img-wrap">
                         <img src="${f.src}">
                         ${htmlBadgeEtiquetaFoto(f.etiqueta)}
@@ -2300,8 +2312,9 @@ Responde ÚNICAMENTE con un JSON válido, sin texto adicional, sin markdown, con
                                 <option value="100" ${f.widthPct==100?'selected':''}>Ancho completo</option>
                             </select>
                             <select onchange="actualizarOrientacionFoto('${idObra}','${etapaKey}',${idx}, this.value)" title="Formato de la foto">
-                                <option value="horizontal" ${f.orientacion!=='vertical'?'selected':''}>▭ Horizontal</option>
+                                <option value="horizontal" ${f.orientacion!=='vertical' && f.orientacion!=='completa'?'selected':''}>▭ Horizontal</option>
                                 <option value="vertical" ${f.orientacion==='vertical'?'selected':''}>▯ Vertical</option>
+                                <option value="completa" ${f.orientacion==='completa'?'selected':''}>🖼️ Foto completa</option>
                             </select>
                             <button class="btn" onclick="rotarFotoReporte('${idObra}','${etapaKey}',${idx})" style="padding:3px 8px;">↻ Girar</button>
                             <button class="btn btn-danger" onclick="eliminarFotoReporte('${idObra}','${etapaKey}',${idx})" style="padding:3px 8px;">✕</button>
@@ -2510,8 +2523,10 @@ Responde ÚNICAMENTE con un JSON válido, sin texto adicional, sin markdown, con
             }
             const tituloOriginal = document.title;
             document.title = (document.getElementById('rep-titulo-doc').value || 'Reporte_de_Obra').replace(/\s+/g, '_');
-            window.print();
-            setTimeout(() => { document.title = tituloOriginal; }, 500);
+            setTimeout(() => {
+                window.print();
+                document.title = tituloOriginal;
+            }, 100);
         }
 
         // ── Asistente IA: redacta o mejora los textos del reporte a partir de notas sueltas ──
@@ -3544,11 +3559,17 @@ async function finalizarEImprimir() {
     await guardarEnNube("Config", [{ key: "correlativo", value: correlativoActual }]);
     
     // Imprimir PRIMERO (sin que el toast de Drive interfiera)
+    // Nota: en navegadores móviles (Android/iOS) el diálogo de "Guardar como PDF" a veces
+    // toma el document.title ANTES de que el navegador repinte el cambio, y termina
+    // sugiriendo el nombre genérico del sistema. Dándole un pequeño respiro (setTimeout)
+    // antes de llamar a window.print() asegura que el título ya esté actualizado.
     const tituloOriginal = document.title;
     const nombreLimpio = nombreCliente.replace(/[^a-zA-Z0-9 ]/g, "").trim().replace(/\s+/g, "_");
     document.title = `Cotizacion_${numCotizacion}_${nombreLimpio}`;
-    window.print();
-    setTimeout(() => { document.title = tituloOriginal; }, 500);
+    setTimeout(() => {
+        window.print();
+        document.title = tituloOriginal;
+    }, 100);
 
     // Generar PDF en Drive DESPUÉS de imprimir
     crearPdfEnDrive(cotizacion);
@@ -3567,7 +3588,8 @@ async function finalizarEImprimir() {
 }
 
         function renderizarTablasMantenimiento() {
-            renderizarTablaCatalogo();
+            catRenderFiltros();
+            catRender();
 
             const tCli = document.getElementById('tabla-clientes-body'); tCli.innerHTML = '';
             memoriaClientes.forEach((c, i) => {
@@ -3580,93 +3602,228 @@ async function finalizarEImprimir() {
             });
         }
 
-        // ── Catálogo: categorías dinámicas (filtro select + datalist + chips) ──
+        // ═══════════════ CATÁLOGO DE COSTOS: vista tipo Guía de Precios (rubros + íconos) ═══════════════
         function obtenerCategoriasCatalogo() {
             return [...new Set(memoriaCatalogo.map(i => (i.tipo || '').trim()).filter(Boolean))]
                 .sort((a, b) => a.localeCompare(b, 'es'));
         }
 
-        function poblarSelectoresCategoriaCatalogo() {
-            const categorias = obtenerCategoriasCatalogo();
+        // Asigna un ícono automáticamente según palabras clave del rubro (no requiere configurarlo a mano)
+        function iconoParaRubro(rubro) {
+            const r = (rubro || '').toLowerCase();
+            const mapa = [
+                [/drywall|tabiquer|dry\s*wall/, '🧱'],
+                [/estructura|metalmec|soldad|acero|fierro|estructural/, '🏗️'],
+                [/electric|eléctric|luminari/, '🔌'],
+                [/gasfiter|sanitari|desag[uü]e|agua\b/, '🚰'],
+                [/pintura|acabad/, '🎨'],
+                [/piso|porcelanato|mayolica|mayólica|revestim|ceramic/, '🏠'],
+                [/aire acondicionado|climatiz|split/, '❄️'],
+                [/red(es)?\b|internet|cctv|c[aá]mara|cableado/, '📡'],
+                [/comput|soporte t[eé]cnico|laptop|inform[aá]tic/, '💻'],
+                [/mueble|melamina|carpinter/, '🪑'],
+                [/techo|cobertura|policarbonato|calamina/, '🏚️'],
+                [/vidrio|aluminio|ventana/, '🪟'],
+                [/limpieza/, '🧹'],
+                [/jard[ií]n|[aá]rea(s)? verde/, '🌿'],
+                [/cerraj|cerradura|seguridad/, '🔒'],
+                [/\bgas\b|glp/, '🔥'],
+                [/transporte|flete|movilidad/, '🚚'],
+                [/civil|alba[ñn]il|construcci[oó]n/, '🏛️'],
+                [/mano de obra|servicio/, '🛠️'],
+                [/material|insumo|ferreter[ií]a/, '📦'],
+            ];
+            for (const [regex, icon] of mapa) if (regex.test(r)) return icon;
+            return '🔧';
+        }
 
-            const sel = document.getElementById('cat-filtro-categoria');
-            if (sel) {
-                const valorActual = sel.value;
-                sel.innerHTML = '<option value="">Todas las categorías</option>' +
-                    categorias.map(c => `<option value="${c}">${c}</option>`).join('');
-                if (categorias.includes(valorActual)) sel.value = valorActual;
-            }
-
+        function poblarDatalistCategoriasCatalogo() {
             const dl = document.getElementById('dl-categorias-catalogo');
-            if (dl) dl.innerHTML = categorias.map(c => `<option value="${c}"></option>`).join('');
+            if (dl) dl.innerHTML = obtenerCategoriasCatalogo().map(c => `<option value="${c}"></option>`).join('');
         }
 
-        function renderizarChipsCategoriasCatalogo() {
-            const cont = document.getElementById('cat-categorias-chips');
+        let catRubroActivo = "Todos";
+
+        function catRenderFiltros() {
+            poblarDatalistCategoriasCatalogo();
+            const cont = document.getElementById("cat-filters");
             if (!cont) return;
-            const categorias = obtenerCategoriasCatalogo();
-            const actual = document.getElementById('cat-filtro-categoria')?.value || '';
-
-            const chip = (valor, label, activo) => `<button type="button" class="chip-categoria ${activo ? 'activo' : ''}"
-                onclick="seleccionarCategoriaCatalogo('${valor.replace(/'/g, "\\'")}')">${label}</button>`;
-
-            cont.innerHTML = chip('', `Todas (${memoriaCatalogo.length})`, actual === '') +
-                categorias.map(c => {
-                    const n = memoriaCatalogo.filter(i => (i.tipo || '').trim() === c).length;
-                    return chip(c, `${c} (${n})`, actual === c);
-                }).join('');
+            const rubros = ["Todos", ...obtenerCategoriasCatalogo()];
+            if (!rubros.includes(catRubroActivo)) catRubroActivo = "Todos";
+            cont.innerHTML = rubros.map(r =>
+                `<button class="guia-filter-btn ${r === catRubroActivo ? 'active' : ''}" onclick="catSetFiltro('${r.replace(/'/g, "\\'")}')">${r}</button>`
+            ).join("");
         }
 
-        function seleccionarCategoriaCatalogo(categoria) {
-            const sel = document.getElementById('cat-filtro-categoria');
-            if (sel) sel.value = categoria;
-            renderizarTablaCatalogo();
+        function catSetFiltro(r) {
+            catRubroActivo = r;
+            catRenderFiltros();
+            catRender();
         }
 
-        function renderizarTablaCatalogo() {
-            const tCat = document.getElementById('tabla-catalogo-body');
-            if (!tCat) return;
+        function catGetAgrupado() {
+            const q = (document.getElementById("cat-search") || { value: "" }).value.toLowerCase();
+            const grupos = {};
+            memoriaCatalogo.forEach((item, i) => {
+                const rubro = (item.tipo || 'Sin categoría').trim() || 'Sin categoría';
+                if (!grupos[rubro]) grupos[rubro] = [];
+                grupos[rubro].push({ ...item, _idx: i });
+            });
+            return Object.keys(grupos).sort((a, b) => a.localeCompare(b, 'es')).map(rubro => {
+                if (catRubroActivo !== "Todos" && rubro !== catRubroActivo) return null;
+                const items = grupos[rubro].filter(it =>
+                    it.desc.toLowerCase().includes(q) || rubro.toLowerCase().includes(q)
+                );
+                return items.length ? { rubro, icon: iconoParaRubro(rubro), items } : null;
+            }).filter(Boolean);
+        }
 
-            poblarSelectoresCategoriaCatalogo();
-            renderizarChipsCategoriasCatalogo();
+        function catRender() {
+            const filtered = catGetAgrupado();
+            const allItems = filtered.flatMap(g => g.items);
 
-            const texto = (document.getElementById('cat-busqueda')?.value || '').trim().toLowerCase();
-            const categoria = document.getElementById('cat-filtro-categoria')?.value || '';
+            const totalEl = document.getElementById("cs-total");
+            const rubrosEl = document.getElementById("cs-rubros");
+            const minEl = document.getElementById("cs-min");
+            if (totalEl) totalEl.textContent = allItems.length;
+            if (rubrosEl) rubrosEl.textContent = filtered.length;
+            if (minEl) minEl.textContent = allItems.length ? "S/ " + formatMonto(Math.min(...allItems.map(i => i.precio))) : "S/0";
 
-            const filtrados = memoriaCatalogo
-                .map((item, i) => ({ item, i }))
-                .filter(({ item }) => {
-                    const coincideTexto = !texto ||
-                        item.desc.toLowerCase().includes(texto) ||
-                        (item.tipo || '').toLowerCase().includes(texto);
-                    const coincideCategoria = !categoria || (item.tipo || '').trim() === categoria;
-                    return coincideTexto && coincideCategoria;
-                });
+            const cont = document.getElementById("cat-catalog");
+            const notaVacio = document.getElementById("cat-empty-note");
+            if (!cont) return;
 
-            const contador = document.getElementById('cat-contador-resultados');
-            if (contador) {
-                contador.textContent = (texto || categoria)
-                    ? `Mostrando ${filtrados.length} de ${memoriaCatalogo.length} ítems`
-                    : `${memoriaCatalogo.length} ítem${memoriaCatalogo.length === 1 ? '' : 's'} en el catálogo`;
+            if (memoriaCatalogo.length === 0) {
+                cont.innerHTML = "";
+                if (notaVacio) notaVacio.style.display = "block";
+                return;
             }
+            if (notaVacio) notaVacio.style.display = "none";
 
-            if (filtrados.length === 0) {
-                tCat.innerHTML = `<tr><td colspan="5" style="text-align:center;color:#94a3b8;font-style:italic;padding:16px;">
-                    ${memoriaCatalogo.length === 0
-                        ? 'Aún no hay ítems en el catálogo.'
-                        : 'No se encontraron ítems con esos filtros.'}</td></tr>`;
+            if (filtered.length === 0) {
+                cont.innerHTML = `<div class="guia-note">No se encontraron ítems con esos filtros.</div>`;
                 return;
             }
 
-            tCat.innerHTML = filtrados.map(({ item, i }) => `<tr>
-                <td><span class="cat-badge">${item.tipo}</span></td>
-                <td>${item.desc}</td>
-                <td>${item.unid}</td>
-                <td>S/ ${formatMonto(item.precio)}</td>
-                <td class="actions-cell">
-                    <button class="btn btn-edit" onclick="cargarItemEnFormulario(${i})">Editar</button>
-                    <button class="btn btn-danger" onclick="borrarDelCatalogo(${i})">Eliminar</button>
-                </td></tr>`).join('');
+            cont.innerHTML = filtered.map((g, gi) => `
+                <div class="guia-group">
+                    <div class="guia-group-header" onclick="catToggleGrupo(${gi})">
+                        <span class="guia-group-icon">${g.icon}</span>
+                        <span class="guia-group-title">${g.rubro}</span>
+                        <span class="guia-group-count">${g.items.length} ítem${g.items.length === 1 ? '' : 's'}</span>
+                        <span class="guia-group-arrow open" id="cat-arrow-${gi}">▼</span>
+                    </div>
+                    <div class="guia-items open" id="cat-items-${gi}">
+                        ${g.items.map(it => `
+                        <div class="cat-item-row">
+                            <div class="guia-item-desc">${it.desc}</div>
+                            <div class="guia-item-unid">${it.unid}</div>
+                            <div class="guia-item-price">S/ ${formatMonto(it.precio)}</div>
+                            <div class="cat-item-actions">
+                                <button class="btn btn-edit" onclick="cargarItemEnFormulario(${it._idx})" style="padding:4px 8px;font-size:11px;" title="Editar">✎</button>
+                                <button class="btn btn-danger" onclick="borrarDelCatalogo(${it._idx})" style="padding:4px 8px;font-size:11px;" title="Eliminar">✕</button>
+                                <button class="guia-btn-usar" onclick="catUsarPrecio(${it._idx})" style="width:auto;padding:4px 9px;" title="Usar en cotización">➕ Usar</button>
+                                <button class="btn" onclick="mostrarSelectorRubroCatalogo(event, ${it._idx})" style="padding:4px 8px;font-size:11px;background:#eff6ff;color:#1e40af;" title="Cambiar rubro">📂</button>
+                                <button class="btn" onclick="mostrarSelectorUnidadCatalogo(event, ${it._idx})" style="padding:4px 8px;font-size:11px;background:#eff6ff;color:#1e40af;" title="Cambiar unidad">📏</button>
+                            </div>
+                        </div>`).join("")}
+                    </div>
+                </div>`).join("");
+        }
+
+        function catToggleGrupo(gi) {
+            const items = document.getElementById("cat-items-" + gi);
+            const arrow = document.getElementById("cat-arrow-" + gi);
+            if (!items) return;
+            const isOpen = items.classList.toggle("open");
+            if (arrow) arrow.style.transform = isOpen ? "" : "rotate(-90deg)";
+        }
+
+        function catUsarPrecio(idx) {
+            const it = memoriaCatalogo[idx];
+            if (!it) return;
+            switchView('nueva-cotizacion');
+            setTimeout(function () {
+                const itemInput   = document.getElementById('cot-item');
+                const unidSel     = document.getElementById('cot-unidad');
+                const precioInput = document.getElementById('cot-precio');
+                if (itemInput)   itemInput.value   = it.desc;
+                if (precioInput) precioInput.value = it.precio.toFixed(2);
+                if (unidSel) {
+                    for (let opt of unidSel.options) {
+                        if (opt.value === it.unid) { unidSel.value = it.unid; break; }
+                    }
+                }
+                if (itemInput) itemInput.focus();
+            }, 100);
+        }
+
+        // Despliega un <select> en el propio ítem para moverlo a otro rubro sin
+        // pasar por el formulario de edición de arriba.
+        function mostrarSelectorRubroCatalogo(ev, idx) {
+            ev.stopPropagation();
+            const cont = ev.target.closest('.cat-item-actions');
+            if (!cont || cont.querySelector('.cat-inline-select')) return;
+
+            const item = memoriaCatalogo[idx];
+            if (!item) return;
+            const rubros = obtenerCategoriasCatalogo();
+            const sel = document.createElement('select');
+            sel.className = 'cat-inline-select';
+            sel.innerHTML = rubros.map(r =>
+                `<option value="${r.replace(/"/g, '&quot;')}" ${r === item.tipo ? 'selected' : ''}>${r}</option>`
+            ).join('') + `<option value="__nuevo__">➕ Nuevo rubro...</option>`;
+
+            sel.onclick = e => e.stopPropagation();
+            sel.onchange = async () => {
+                let nuevoValor = sel.value;
+                if (nuevoValor === '__nuevo__') {
+                    nuevoValor = prompt('Nombre del nuevo rubro:', item.tipo || '');
+                    if (!nuevoValor || !nuevoValor.trim()) { catRender(); return; }
+                    nuevoValor = nuevoValor.trim();
+                }
+                item.tipo = nuevoValor;
+                await guardarEnNube("Catalogo", memoriaCatalogo);
+                catRenderFiltros();
+                catRender();
+                mostrarToast(`✅ Ítem movido al rubro "${nuevoValor}"`, "success");
+            };
+            cont.appendChild(sel);
+            sel.focus();
+        }
+
+        // Igual que arriba, pero para cambiar la unidad de medida del ítem.
+        function mostrarSelectorUnidadCatalogo(ev, idx) {
+            ev.stopPropagation();
+            const cont = ev.target.closest('.cat-item-actions');
+            if (!cont || cont.querySelector('.cat-inline-select')) return;
+
+            const item = memoriaCatalogo[idx];
+            if (!item) return;
+            const estandar = ["m²", "ml", "Pto", "Und", "Global", "m³"];
+            const usadas = [...new Set(memoriaCatalogo.map(i => (i.unid || '').trim()).filter(Boolean))];
+            const unidades = [...new Set([...estandar, ...usadas])];
+            const sel = document.createElement('select');
+            sel.className = 'cat-inline-select';
+            sel.innerHTML = unidades.map(u =>
+                `<option value="${u.replace(/"/g, '&quot;')}" ${u === item.unid ? 'selected' : ''}>${u}</option>`
+            ).join('') + `<option value="__nueva__">➕ Nueva unidad...</option>`;
+
+            sel.onclick = e => e.stopPropagation();
+            sel.onchange = async () => {
+                let nuevoValor = sel.value;
+                if (nuevoValor === '__nueva__') {
+                    nuevoValor = prompt('Nueva unidad de medida:', item.unid || '');
+                    if (!nuevoValor || !nuevoValor.trim()) { catRender(); return; }
+                    nuevoValor = nuevoValor.trim();
+                }
+                item.unid = nuevoValor;
+                await guardarEnNube("Catalogo", memoriaCatalogo);
+                catRender();
+                mostrarToast(`✅ Unidad actualizada a "${nuevoValor}"`, "success");
+            };
+            cont.appendChild(sel);
+            sel.focus();
         }
 
         // ── Catálogo CRUD ──────────────────────────────
