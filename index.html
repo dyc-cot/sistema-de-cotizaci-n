@@ -1937,13 +1937,8 @@ Responde ÚNICAMENTE con un JSON válido, sin texto adicional, sin markdown, con
             correlativoRequerimiento++;
             localStorage.setItem('correlativo-requerimiento', String(correlativoRequerimiento));
 
-            const tituloOriginal = document.title;
             const numero = document.getElementById('req-lbl-num').innerText;
-            document.title = `Requerimiento_${numero}`;
-            setTimeout(() => {
-                window.print();
-                document.title = tituloOriginal;
-            }, 100);
+            imprimirConTitulo(`Requerimiento_${numero}`);
         }
 
         function limpiarRequerimiento() {
@@ -2522,12 +2517,8 @@ Responde ÚNICAMENTE con un JSON válido, sin texto adicional, sin markdown, con
             if (reporteObraState.obras.length === 0) {
                 return mostrarToast('⚠️ Agrega al menos una obra antes de imprimir.', 'warning');
             }
-            const tituloOriginal = document.title;
-            document.title = (document.getElementById('rep-titulo-doc').value || 'Reporte_de_Obra').replace(/\s+/g, '_');
-            setTimeout(() => {
-                window.print();
-                document.title = tituloOriginal;
-            }, 100);
+            const tituloDoc = (document.getElementById('rep-titulo-doc').value || 'Reporte_de_Obra').replace(/\s+/g, '_');
+            imprimirConTitulo(tituloDoc);
         }
 
         // ── Asistente IA: redacta o mejora los textos del reporte a partir de notas sueltas ──
@@ -3575,6 +3566,41 @@ async function guardarCotizacion() {
     }
 }
 
+// Cambia el título del documento, imprime, y SOLO restaura el título original
+// cuando el usuario realmente regresa a la pestaña (evento focus/visibilitychange).
+// En celular, window.print() no espera a que cierres el diálogo antes de seguir
+// ejecutando código, así que restaurar el título justo después de print() hacía
+// que el sistema operativo alcanzara a leer el nombre genérico en vez del nuestro.
+// Con este cambio, el título correcto sigue puesto mientras el diálogo de
+// guardar/compartir esté abierto.
+function imprimirConTitulo(tituloTemporal, despuesDeImprimir) {
+    const tituloOriginal = document.title;
+    document.title = tituloTemporal;
+
+    let yaRestaurado = false;
+    function restaurarTitulo() {
+        if (yaRestaurado) return;
+        yaRestaurado = true;
+        document.title = tituloOriginal;
+        window.removeEventListener('focus', restaurarTitulo);
+        document.removeEventListener('visibilitychange', alCambiarVisibilidad);
+        if (despuesDeImprimir) despuesDeImprimir();
+    }
+    function alCambiarVisibilidad() {
+        if (document.visibilityState === 'visible') restaurarTitulo();
+    }
+
+    window.addEventListener('focus', restaurarTitulo);
+    document.addEventListener('visibilitychange', alCambiarVisibilidad);
+
+    setTimeout(() => {
+        window.print();
+        // Salvavidas: si por algún motivo el navegador no dispara focus/visibilitychange,
+        // no dejamos el título cambiado para siempre.
+        setTimeout(restaurarTitulo, 5000);
+    }, 100);
+}
+
 // Solo imprime / genera el PDF de lo que se ve en pantalla en este momento,
 // sin volver a guardar el registro (usa "💾 Guardar" para eso).
 function imprimirCotizacionActual() {
@@ -3586,17 +3612,8 @@ function imprimirCotizacionActual() {
     const nombreCliente = memoriaClientes[clienteIdx]?.nombre || "Cliente";
     const numCotizacion = document.getElementById('cot-numero').value;
 
-    // Nota: en navegadores móviles (Android/iOS) el diálogo de "Guardar como PDF" a veces
-    // toma el document.title ANTES de que el navegador repinte el cambio, y termina
-    // sugiriendo el nombre genérico del sistema. Dándole un pequeño respiro (setTimeout)
-    // antes de llamar a window.print() asegura que el título ya esté actualizado.
-    const tituloOriginal = document.title;
     const nombreLimpio = nombreCliente.replace(/[^a-zA-Z0-9 ]/g, "").trim().replace(/\s+/g, "_");
-    document.title = `Cotizacion_${numCotizacion}_${nombreLimpio}`;
-    setTimeout(() => {
-        window.print();
-        document.title = tituloOriginal;
-    }, 100);
+    imprimirConTitulo(`Cotizacion_${numCotizacion}_${nombreLimpio}`);
 }
 
         function renderizarTablasMantenimiento() {
@@ -4720,40 +4737,35 @@ async function borrarCuenta(i) {
             if (banner) banner.classList.remove('visible');
 
             // Imprimir
-            const tituloOriginal = document.title;
             const nombreLimpio = (cot.cliente||'').replace(/[^a-zA-Z0-9 ]/g,'').trim().replace(/\s+/g,'_');
-            document.title = `Cotizacion_${cot.numero}_${nombreLimpio}`;
+            imprimirConTitulo(`Cotizacion_${cot.numero}_${nombreLimpio}`);
 
+            // Restaurar estado anterior del formulario (independiente del título:
+            // esto solo repone lo que se ve en pantalla, no afecta el nombre del PDF).
             setTimeout(() => {
-                window.print();
-                document.title = tituloOriginal;
-
-                // Restaurar estado anterior del formulario
-                setTimeout(() => {
-                    seccionesCotizacion = estadoFormulario.secciones;
-                    seccionActualIdx = 0;
-                    cargosAdicionales = estadoFormulario.cargos;
-                    modoEdicion = modoAnterior;
-                    indiceEdicion = indiceAnterior;
-                    cotizacionEditando = cotAnterior;
-                    renderCargoUI();
-                    renderizarChipsSecciones();
-                    actualizarContenedorCotizacion();
-                    document.getElementById('cot-numero').value = estadoFormulario.numero;
-                    document.getElementById('cot-fecha').value  = estadoFormulario.fecha;
-                    document.getElementById('cot-titulo-doc').value = estadoFormulario.tituloDoc;
-                    document.getElementById('lbl-titulo-doc-preview').style.display = estadoFormulario.tituloDoc ? 'block' : 'none';
-                    if (estadoFormulario.tituloDoc) document.getElementById('lbl-titulo-doc-preview').innerText = estadoFormulario.tituloDoc;
-                    document.getElementById('cot-cliente').value = estadoFormulario.cliente;
-                    document.getElementById('cot-observaciones').value = estadoFormulario.obs;
-                    document.getElementById('cot-impuesto-config').value = estadoFormulario.impuesto;
-                    if (modoAnterior) {
-                        document.getElementById('cot-numero').setAttribute('readonly', true);
-                        document.getElementById('cot-numero').style.background = '#f1f5f9';
-                        if (banner) banner.classList.add('visible');
-                    }
-                }, 800);
-            }, 200);
+                seccionesCotizacion = estadoFormulario.secciones;
+                seccionActualIdx = 0;
+                cargosAdicionales = estadoFormulario.cargos;
+                modoEdicion = modoAnterior;
+                indiceEdicion = indiceAnterior;
+                cotizacionEditando = cotAnterior;
+                renderCargoUI();
+                renderizarChipsSecciones();
+                actualizarContenedorCotizacion();
+                document.getElementById('cot-numero').value = estadoFormulario.numero;
+                document.getElementById('cot-fecha').value  = estadoFormulario.fecha;
+                document.getElementById('cot-titulo-doc').value = estadoFormulario.tituloDoc;
+                document.getElementById('lbl-titulo-doc-preview').style.display = estadoFormulario.tituloDoc ? 'block' : 'none';
+                if (estadoFormulario.tituloDoc) document.getElementById('lbl-titulo-doc-preview').innerText = estadoFormulario.tituloDoc;
+                document.getElementById('cot-cliente').value = estadoFormulario.cliente;
+                document.getElementById('cot-observaciones').value = estadoFormulario.obs;
+                document.getElementById('cot-impuesto-config').value = estadoFormulario.impuesto;
+                if (modoAnterior) {
+                    document.getElementById('cot-numero').setAttribute('readonly', true);
+                    document.getElementById('cot-numero').style.background = '#f1f5f9';
+                    if (banner) banner.classList.add('visible');
+                }
+            }, 1000);
         }
     </script>
 </body>
