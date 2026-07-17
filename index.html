@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alexander D&C - Sistema de Presupuestos</title>
+    <title>Alexander D&C - Sistema de Cotizaciones</title>
     <style>
         :root {
             --primary: #0f172a;
@@ -88,7 +88,7 @@
             border-top:2px solid #cbd5e1 !important; }
         
         /* Notas y Cuentas */
-        .notes-footer { margin-top: 20px; font-size: 12px; color: #475569; line-height: 1.5; white-space: pre-line; }
+        .notes-footer { margin-top: 20px; font-size: 12px; color: #475569; line-height: 1.5; white-space: pre-line; text-align: justify; }
         .bank-footer { margin-top: 25px; font-size: 12px; color: #475569; }
         .bank-footer h4 { color: var(--primary); font-size: 13px; margin-bottom: 6px; }
         .bank-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
@@ -347,6 +347,18 @@
         .seccion-chip.activa { background:#0284c7; color:white; border-color:#0284c7; }
         .seccion-chip .chip-x { font-size:14px; cursor:pointer; color:inherit; opacity:.6; }
         .seccion-chip .chip-x:hover { opacity:1; color:#dc2626; }
+
+        /* ── Chips de categoría del catálogo ── */
+        .chip-categoria {
+            display:inline-flex; align-items:center; gap:4px;
+            padding:6px 12px; border-radius:20px;
+            background:#f1f5f9; color:#475569; font-size:12px; font-weight:600;
+            border:1.5px solid #e2e8f0; cursor:pointer; transition:.15s; }
+        .chip-categoria:hover { background:#e0f2fe; border-color:#bae6fd; color:#0369a1; }
+        .chip-categoria.activo { background:#0284c7; color:white; border-color:#0284c7; }
+        .cat-badge {
+            display:inline-block; padding:3px 9px; border-radius:12px;
+            background:#e0f2fe; color:#0369a1; font-size:11px; font-weight:700; }
         .seccion-banner {
             display:flex; align-items:center; gap:10px;
             background:#f0f9ff; border:1px solid #bae6fd;
@@ -455,7 +467,7 @@
         .rep-etapa-titulo.inicio { background: var(--accent); }
         .rep-etapa-titulo.proceso { background: var(--warning); }
         .rep-etapa-titulo.finalizado { background: var(--success); }
-        .rep-etapa-desc { font-size: 13px; color: var(--text); margin: 6px 0 10px 0; white-space: pre-line; }
+        .rep-etapa-desc { font-size: 13px; color: var(--text); margin: 6px 0 10px 0; white-space: pre-line; text-align: justify; }
         .rep-foto-grid { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-start; }
         .rep-foto-item { border: 1px solid #e2e8f0; border-radius: 6px; padding: 6px; background: #f8fafc; }
         .rep-foto-img-wrap { position: relative; width: 100%; overflow: hidden; border-radius: 4px; background: #e2e8f0; }
@@ -530,7 +542,7 @@
 
         <!-- VISTA: NUEVA COTIZACIÓN -->
         <div id="nueva-cotizacion" class="view active">
-            <h1 id="screen-title-panel">Panel de Creación de Presupuestos</h1>
+            <h1 id="screen-title-panel">Panel de Creación de Cotizaciones</h1>
             
             <div class="card no-print">
                 <!-- LOGO EXPRESS -->
@@ -545,7 +557,7 @@
                         <select id="cot-cliente"><option value="">-- Seleccione --</option></select>
                     </div>
                     <div class="form-group">
-                        <label>N° Presupuesto</label>
+                        <label>N° Cotización</label>
                         <input type="text" id="cot-numero" oninput="sincronizarCamposCabecera()">
                     </div>
                     <div class="form-group">
@@ -735,7 +747,7 @@
                     </div>
                     <div class="invoice-meta">
                         <h3>PRESUPUESTO</h3>
-                        <p><strong>Número:</strong> <span id="lbl-num">PRE-0001</span></p>
+                        <p><strong>Número:</strong> <span id="lbl-num">COT-0001</span></p>
                         <p><strong>Fecha:</strong> <span id="lbl-fecha">--/--/----</span></p>
                     </div>
                 </div>
@@ -1075,7 +1087,8 @@
             <div class="card">
                 <h3 id="form-catalogo-titulo">Agregar Nuevo Producto o Servicio</h3>
                 <div class="grid-form" style="margin-top:10px;">
-                    <input type="text" id="cat-nuevo-tipo" placeholder="Ej: Drywall, Estructuras...">
+                    <input type="text" id="cat-nuevo-tipo" placeholder="Ej: Drywall, Estructuras..." list="dl-categorias-catalogo">
+                    <datalist id="dl-categorias-catalogo"></datalist>
                     <input type="text" id="cat-nuevo-desc" placeholder="Descripción detallada del trabajo...">
                     <input type="text" id="cat-nuevo-unid" placeholder="Unidad (m², ml...)">
                     <input type="number" id="cat-nuevo-precio" placeholder="Precio Base (S/)">
@@ -1085,6 +1098,24 @@
                     </div>
                 </div>
             </div>
+
+            <div class="card no-print">
+                <div class="grid-form" style="grid-template-columns: 2fr 1fr; gap:10px; margin-bottom:12px;">
+                    <div class="form-group">
+                        <label>🔍 Buscar por descripción o rubro</label>
+                        <input type="text" id="cat-busqueda" placeholder="Ej: cemento, drywall, pintura..." oninput="renderizarTablaCatalogo()">
+                    </div>
+                    <div class="form-group">
+                        <label>Filtrar por categoría</label>
+                        <select id="cat-filtro-categoria" onchange="renderizarTablaCatalogo()">
+                            <option value="">Todas las categorías</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="cat-categorias-chips" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:8px;"></div>
+                <div id="cat-contador-resultados" style="font-size:12px; color:#64748b;"></div>
+            </div>
+
             <div class="card"><div class="table-scroll">
                 <table>
                     <thead>
@@ -1295,7 +1326,7 @@ function cargarDatosDesdeNube() {
             correlativoActual   = parseInt(datos.correlativo) || 1;
             localStorage.setItem('correlativo', String(correlativoActual));
 
-            panelTitulo.innerText = "Panel de Creación de Presupuestos";
+            panelTitulo.innerText = "Panel de Creación de Cotizaciones";
             panelTitulo.style.color = "var(--primary)";
 
             inicializarModulos();
@@ -1559,7 +1590,7 @@ ${catalogoResumen || '(catálogo vacío)'}`;
 
         function inicializarModulos() {
             if(!document.getElementById('cot-numero').value) {
-                document.getElementById('cot-numero').value = "PRE-" + ("000" + correlativoActual).slice(-4);
+                document.getElementById('cot-numero').value = "COT-" + ("000" + correlativoActual).slice(-4);
             }
             if(!document.getElementById('cot-fecha').value) {
                 document.getElementById('cot-fecha').value = new Date().toLocaleDateString('es-PE');
@@ -2338,8 +2369,8 @@ Responde ÚNICAMENTE con un JSON válido, sin texto adicional, sin markdown, con
                             onchange="actualizarCampoObra('${obra.id}','cliente', this.value)">
                     </div>
                     <div class="form-group">
-                        <label>Dirección / Ubicación</label>
-                        <input type="text" value="${(obra.direccion||'').replace(/"/g,'&quot;')}" placeholder="Dirección de la obra"
+                        <label>Ubicación</label>
+                        <input type="text" value="${(obra.direccion||'').replace(/"/g,'&quot;')}" placeholder="Ubicación de la obra"
                             onchange="actualizarCampoObra('${obra.id}','direccion', this.value)">
                     </div>
                     <div class="form-group">
@@ -2413,7 +2444,7 @@ Responde ÚNICAMENTE con un JSON válido, sin texto adicional, sin markdown, con
                         <h3>${obra.nombreObra || 'Obra sin nombre'}</h3>
                         <div class="rep-obra-meta">
                             <p><strong>Cliente:</strong> ${obra.cliente || '---'}</p>
-                            <p><strong>Dirección:</strong> ${obra.direccion || '---'}</p>
+                            <p><strong>Ubicación:</strong> ${obra.direccion || '---'}</p>
                             <p><strong>Responsable:</strong> ${obra.responsable || '---'} &nbsp;|&nbsp; <strong>Fecha:</strong> ${obra.fecha}</p>
                         </div>
                     </div>
@@ -2506,7 +2537,7 @@ Responde ÚNICAMENTE con un JSON válido, sin texto adicional, sin markdown, con
             mostrarToast('🤖 Redactando con IA...', 'success');
 
             const contexto = `Obra: ${obra.nombreObra || 'sin nombre'}. Cliente: ${obra.cliente || '---'}. ` +
-                `Dirección: ${obra.direccion || '---'}. Responsable: ${obra.responsable || '---'}.` +
+                `Ubicación: ${obra.direccion || '---'}. Responsable: ${obra.responsable || '---'}.` +
                 (obra.actividades ? ` Actividades realizadas: ${obra.actividades}.` : '') +
                 (obra.materiales ? ` Materiales utilizados: ${obra.materiales}.` : '') +
                 (obra.incidentes ? ` Incidentes reportados: ${obra.incidentes}.` : '');
@@ -3063,7 +3094,7 @@ async function agregarItemGlobal() {
         unid:            unidad,
         cant:            cantidad,
         precio:          precio,
-        subtotal:        cantidad * precio,
+        subtotal:        precio,
         usaPrecioUnit:   usaUnit,
         precioUnitario:  usaUnit ? unitario : null
     };
@@ -3226,15 +3257,18 @@ function cancelarEdicionItemCot() {
                         const unidLabel = (item.unid === 'GLB') ? 'GLB' : item.unid;
                         const cantLabel = (item.unid === 'GLB' || item.cant === 1) ? '' : item.cant;
                         const viñetas   = (item.trabajos || []).map(t => `• ${t}`).join('<br>');
+                        const precioUnitLabel = item.usaPrecioUnit && item.precioUnitario
+                            ? `S/ ${formatMonto(item.precioUnitario)}`
+                            : '—';
                         tbody.innerHTML += `<tr style="vertical-align:top;">
                             <td>
                                 ${item.desc ? `<b style="display:block;margin-bottom:4px;">${item.desc}</b>` : ''}
-                                <span style="font-size:12px;line-height:1.7;color:#334155;">${viñetas}</span>
+                                <span style="font-size:12px;line-height:1.7;color:#334155;text-align:justify;display:block;">${viñetas}</span>
                             </td>
                             <td style="text-align:center;vertical-align:middle;font-size:12px;">${unidLabel}</td>
                             <td style="text-align:right;vertical-align:middle;">${cantLabel}</td>
-                            <td style="text-align:right;vertical-align:middle;">—</td>
-                            <td style="text-align:right;font-weight:700;vertical-align:middle;">S/ ${item.subtotal.toFixed(2)}</td>
+                            <td style="text-align:right;vertical-align:middle;">${precioUnitLabel}</td>
+                            <td style="text-align:right;font-weight:700;vertical-align:middle;">S/ ${formatMonto(item.subtotal)}</td>
                             <td class="no-print" style="vertical-align:middle; white-space:nowrap;">
                                 <button class="btn btn-edit" onclick="cargarItemCotEnFormulario(${si},${ii})"
                                         style="padding:3px 7px;font-size:11px;">✎</button>
@@ -3248,8 +3282,8 @@ function cancelarEdicionItemCot() {
                                     ➔ ${item.tipoPrecio}</span></td>
                             <td style="text-align:center;">${item.unid}</td>
                             <td style="text-align:right;">${item.cant}</td>
-                            <td style="text-align:right;">S/ ${item.precio.toFixed(2)}</td>
-                            <td style="text-align:right;font-weight:700;">S/ ${item.subtotal.toFixed(2)}</td>
+                            <td style="text-align:right;">S/ ${formatMonto(item.precio)}</td>
+                            <td style="text-align:right;font-weight:700;">S/ ${formatMonto(item.subtotal)}</td>
                             <td class="no-print" style="white-space:nowrap;">
                                 <button class="btn btn-edit" onclick="cargarItemCotEnFormulario(${si},${ii})"
                                         style="padding:3px 7px;font-size:11px;">✎</button>
@@ -3264,11 +3298,11 @@ function cancelarEdicionItemCot() {
                     const secTotal = secSubtotal + secIgv;
                     granTotal += secTotal;
                     const igvTxt = igvOn
-                        ? `&nbsp;+&nbsp;IGV&nbsp;S/&nbsp;${secIgv.toFixed(2)}&nbsp;=&nbsp;<b>S/ ${secTotal.toFixed(2)}</b>`
-                        : `<b>S/ ${secTotal.toFixed(2)}</b>`;
+                        ? `&nbsp;+&nbsp;IGV&nbsp;S/&nbsp;${formatMonto(secIgv)}&nbsp;=&nbsp;<b>S/ ${formatMonto(secTotal)}</b>`
+                        : `<b>S/ ${formatMonto(secTotal)}</b>`;
                     tbody.innerHTML += `<tr class="tr-sec-subtotal">
                         <td colspan="4" style="text-align:right;">
-                            Total ${sec.nombre}: S/ ${secSubtotal.toFixed(2)} ${igvTxt}
+                            Total ${sec.nombre}: S/ ${formatMonto(secSubtotal)} ${igvTxt}
                         </td>
                         <td></td><td class="no-print"></td></tr>`;
                 }
@@ -3279,8 +3313,8 @@ function cancelarEdicionItemCot() {
                 // granTotal ya incluye IGV (se sumó en secTotal = secSubtotal * 1.18)
                 const base = granTotal / 1.18;
                 const igv  = granTotal - base;
-                document.getElementById('lbl-subtotal').innerText = base.toFixed(2);
-                document.getElementById('lbl-igv').innerText      = igv.toFixed(2);
+                document.getElementById('lbl-subtotal').innerText = formatMonto(base);
+                document.getElementById('lbl-igv').innerText      = formatMonto(igv);
                 document.getElementById('row-summary-subtotal').style.display = 'flex';
                 document.getElementById('row-summary-igv').style.display      = 'flex';
             } else {
@@ -3294,12 +3328,12 @@ function cancelarEdicionItemCot() {
             // Subtotal e IGV
             if (igvOn) {
                 const base = granTotal / 1.18;
-                document.getElementById('lbl-subtotal').innerText = base.toFixed(2);
-                document.getElementById('lbl-igv').innerText      = (granTotal - base).toFixed(2);
+                document.getElementById('lbl-subtotal').innerText = formatMonto(base);
+                document.getElementById('lbl-igv').innerText      = formatMonto(granTotal - base);
                 document.getElementById('row-summary-subtotal').style.display = 'flex';
                 document.getElementById('row-summary-igv').style.display      = 'flex';
             } else if (cargosAdicionales.length > 0) {
-                document.getElementById('lbl-subtotal').innerText = granTotal.toFixed(2);
+                document.getElementById('lbl-subtotal').innerText = formatMonto(granTotal);
                 document.getElementById('row-summary-subtotal').style.display = 'flex';
                 document.getElementById('row-summary-igv').style.display      = 'none';
             } else {
@@ -3315,12 +3349,12 @@ function cancelarEdicionItemCot() {
                     const label = c.tipo === 'pct' ? `${c.concepto} (${c.valor}%)` : c.concepto;
                     return `<div class="summary-row cargo-extra">
                         <span>+ ${label}:</span>
-                        <span>S/ ${monto.toFixed(2)}</span>
+                        <span>S/ ${formatMonto(monto)}</span>
                     </div>`;
                 }).join('');
             }
 
-            document.getElementById('lbl-total').innerText = totalFinal.toFixed(2);
+            document.getElementById('lbl-total').innerText = formatMonto(totalFinal);
         }
 
         function renderizarCuentasDocumento() {
@@ -3370,7 +3404,7 @@ function cancelarEdicionItemCot() {
             document.getElementById('cot-numero').style.background = '';
 
             // Avanzar al siguiente número de cotización
-            const nuevoNum = "PRE-" + ("000" + correlativoActual).slice(-4);
+            const nuevoNum = "COT-" + ("000" + correlativoActual).slice(-4);
             document.getElementById('cot-numero').value = nuevoNum;
             document.getElementById('lbl-num').innerText = nuevoNum;
 
@@ -3383,7 +3417,7 @@ function cancelarEdicionItemCot() {
             if (banner) banner.classList.remove('visible');
 
             // Actualizar título
-            document.getElementById('screen-title-panel').innerText = "Panel de Creación de Presupuestos";
+            document.getElementById('screen-title-panel').innerText = "Panel de Creación de Cotizaciones";
             document.getElementById('screen-title-panel').style.color = "var(--primary)";
         }
 
@@ -3428,7 +3462,7 @@ ${invoiceClone.outerHTML}
 </body>
 </html>`;
 
-        cotizacion.tipo      = "guardarPresupuestoConPdf";
+        cotizacion.tipo      = "guardarCotizacionConPdf";
         cotizacion.htmlFull  = htmlCompleto;   // HTML real del documento
 
         const respuesta = await fetch(URL_GAS, {
@@ -3512,7 +3546,7 @@ async function finalizarEImprimir() {
     // Imprimir PRIMERO (sin que el toast de Drive interfiera)
     const tituloOriginal = document.title;
     const nombreLimpio = nombreCliente.replace(/[^a-zA-Z0-9 ]/g, "").trim().replace(/\s+/g, "_");
-    document.title = `Presupuesto_${numCotizacion}_${nombreLimpio}`;
+    document.title = `Cotizacion_${numCotizacion}_${nombreLimpio}`;
     window.print();
     setTimeout(() => { document.title = tituloOriginal; }, 500);
 
@@ -3533,10 +3567,7 @@ async function finalizarEImprimir() {
 }
 
         function renderizarTablasMantenimiento() {
-            const tCat = document.getElementById('tabla-catalogo-body'); tCat.innerHTML = '';
-            memoriaCatalogo.forEach((item, i) => {
-                tCat.innerHTML += `<tr><td><b>${item.tipo}</b></td><td>${item.desc}</td><td>${item.unid}</td><td>S/ ${item.precio.toFixed(2)}</td><td class="actions-cell"><button class="btn btn-edit" onclick="cargarItemEnFormulario(${i})">Editar</button><button class="btn btn-danger" onclick="borrarDelCatalogo(${i})">Eliminar</button></td></tr>`;
-            });
+            renderizarTablaCatalogo();
 
             const tCli = document.getElementById('tabla-clientes-body'); tCli.innerHTML = '';
             memoriaClientes.forEach((c, i) => {
@@ -3547,6 +3578,95 @@ async function finalizarEImprimir() {
             memoriaCuentas.forEach((c, i) => {
                 tCta.innerHTML += `<tr><td><b>${c.banco}</b></td><td>${c.numero}</td><td>${c.cci || '---'}</td><td class="actions-cell"><button class="btn btn-edit" onclick="cargarCuentaEnFormulario(${i})">Editar</button><button class="btn btn-danger" onclick="borrarCuenta(${i})">Eliminar</button></td></tr>`;
             });
+        }
+
+        // ── Catálogo: categorías dinámicas (filtro select + datalist + chips) ──
+        function obtenerCategoriasCatalogo() {
+            return [...new Set(memoriaCatalogo.map(i => (i.tipo || '').trim()).filter(Boolean))]
+                .sort((a, b) => a.localeCompare(b, 'es'));
+        }
+
+        function poblarSelectoresCategoriaCatalogo() {
+            const categorias = obtenerCategoriasCatalogo();
+
+            const sel = document.getElementById('cat-filtro-categoria');
+            if (sel) {
+                const valorActual = sel.value;
+                sel.innerHTML = '<option value="">Todas las categorías</option>' +
+                    categorias.map(c => `<option value="${c}">${c}</option>`).join('');
+                if (categorias.includes(valorActual)) sel.value = valorActual;
+            }
+
+            const dl = document.getElementById('dl-categorias-catalogo');
+            if (dl) dl.innerHTML = categorias.map(c => `<option value="${c}"></option>`).join('');
+        }
+
+        function renderizarChipsCategoriasCatalogo() {
+            const cont = document.getElementById('cat-categorias-chips');
+            if (!cont) return;
+            const categorias = obtenerCategoriasCatalogo();
+            const actual = document.getElementById('cat-filtro-categoria')?.value || '';
+
+            const chip = (valor, label, activo) => `<button type="button" class="chip-categoria ${activo ? 'activo' : ''}"
+                onclick="seleccionarCategoriaCatalogo('${valor.replace(/'/g, "\\'")}')">${label}</button>`;
+
+            cont.innerHTML = chip('', `Todas (${memoriaCatalogo.length})`, actual === '') +
+                categorias.map(c => {
+                    const n = memoriaCatalogo.filter(i => (i.tipo || '').trim() === c).length;
+                    return chip(c, `${c} (${n})`, actual === c);
+                }).join('');
+        }
+
+        function seleccionarCategoriaCatalogo(categoria) {
+            const sel = document.getElementById('cat-filtro-categoria');
+            if (sel) sel.value = categoria;
+            renderizarTablaCatalogo();
+        }
+
+        function renderizarTablaCatalogo() {
+            const tCat = document.getElementById('tabla-catalogo-body');
+            if (!tCat) return;
+
+            poblarSelectoresCategoriaCatalogo();
+            renderizarChipsCategoriasCatalogo();
+
+            const texto = (document.getElementById('cat-busqueda')?.value || '').trim().toLowerCase();
+            const categoria = document.getElementById('cat-filtro-categoria')?.value || '';
+
+            const filtrados = memoriaCatalogo
+                .map((item, i) => ({ item, i }))
+                .filter(({ item }) => {
+                    const coincideTexto = !texto ||
+                        item.desc.toLowerCase().includes(texto) ||
+                        (item.tipo || '').toLowerCase().includes(texto);
+                    const coincideCategoria = !categoria || (item.tipo || '').trim() === categoria;
+                    return coincideTexto && coincideCategoria;
+                });
+
+            const contador = document.getElementById('cat-contador-resultados');
+            if (contador) {
+                contador.textContent = (texto || categoria)
+                    ? `Mostrando ${filtrados.length} de ${memoriaCatalogo.length} ítems`
+                    : `${memoriaCatalogo.length} ítem${memoriaCatalogo.length === 1 ? '' : 's'} en el catálogo`;
+            }
+
+            if (filtrados.length === 0) {
+                tCat.innerHTML = `<tr><td colspan="5" style="text-align:center;color:#94a3b8;font-style:italic;padding:16px;">
+                    ${memoriaCatalogo.length === 0
+                        ? 'Aún no hay ítems en el catálogo.'
+                        : 'No se encontraron ítems con esos filtros.'}</td></tr>`;
+                return;
+            }
+
+            tCat.innerHTML = filtrados.map(({ item, i }) => `<tr>
+                <td><span class="cat-badge">${item.tipo}</span></td>
+                <td>${item.desc}</td>
+                <td>${item.unid}</td>
+                <td>S/ ${formatMonto(item.precio)}</td>
+                <td class="actions-cell">
+                    <button class="btn btn-edit" onclick="cargarItemEnFormulario(${i})">Editar</button>
+                    <button class="btn btn-danger" onclick="borrarDelCatalogo(${i})">Eliminar</button>
+                </td></tr>`).join('');
         }
 
         // ── Catálogo CRUD ──────────────────────────────
@@ -3875,7 +3995,7 @@ async function borrarCuenta(i) {
             const minEl = document.getElementById("gs-min");
             if (totalEl) totalEl.textContent = allItems.length;
             if (rubrosEl) rubrosEl.textContent = filtered.length;
-            if (minEl) minEl.textContent = allItems.length ? "S/ " + Math.min(...allItems.map(i => i.precio)).toFixed(2) : "S/0";
+            if (minEl) minEl.textContent = allItems.length ? "S/ " + formatMonto(Math.min(...allItems.map(i => i.precio))) : "S/0";
 
             const cont = document.getElementById("guia-catalog");
             if (!cont) return;
@@ -3898,7 +4018,7 @@ async function borrarCuenta(i) {
                                 ${it.sub ? `<div class="guia-item-sub">${it.sub}</div>` : ""}
                             </div>
                             <div class="guia-item-unid">${it.unid}</div>
-                            <div class="guia-item-price">S/ ${it.precio.toFixed(2)}</div>
+                            <div class="guia-item-price">S/ ${formatMonto(it.precio)}</div>
                             <div><button class="guia-btn-usar" onclick="guiaUsarPrecio(${idx})">➕ Usar precio</button></div>
                         </div>`;}).join("")}
                     </div>
@@ -3988,7 +4108,7 @@ async function borrarCuenta(i) {
                                 : `${c.concepto}`}
                         </span>
                         <span class="cargo-tag-val">
-                            ${c.tipo === 'pct' ? c.valor + '%' : 'S/ ' + c.valor.toFixed(2)}
+                            ${c.tipo === 'pct' ? c.valor + '%' : 'S/ ' + formatMonto(c.valor)}
                         </span>
                         <button class="cargo-tag-del" onclick="eliminarCargo(${i})">✕</button>
                     </div>`).join('');
@@ -4015,6 +4135,14 @@ async function borrarCuenta(i) {
         };
 
         // ── Toast de notificaciones (reemplaza alert) ──────────────────
+        // ── Formato de montos: separador de miles con espacio, 2 decimales (Ej: 4 000.00, 12 325.50) ──
+        function formatMonto(valor) {
+            const num = parseFloat(valor) || 0;
+            const partes = num.toFixed(2).split('.');
+            partes[0] = partes[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+            return partes.join('.');
+        }
+
         function mostrarToast(mensaje, tipo) {
             let toast = document.getElementById('cot-toast');
             if (!toast) {
@@ -4127,7 +4255,7 @@ async function borrarCuenta(i) {
             if(el('cst-total'))     el('cst-total').textContent = total;
             if(el('cst-aprobadas')) el('cst-aprobadas').textContent = aprobadas;
             if(el('cst-pendientes'))el('cst-pendientes').textContent = pendientes;
-            if(el('cst-monto'))     el('cst-monto').textContent = montoTotal.toFixed(2);
+            if(el('cst-monto'))     el('cst-monto').textContent = formatMonto(montoTotal);
 
             if (filtradas.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="9" class="cot-empty">
@@ -4144,9 +4272,9 @@ async function borrarCuenta(i) {
                     <td>${c.tituloDoc ? `<span style="color:#0369a1;font-weight:600;">${c.tituloDoc}</span>` : '<span style="color:#94a3b8;">—</span>'}</td>
                     <td>${c.cliente || '---'}</td>
                     <td>${c.fecha || '---'}</td>
-                    <td style="text-align:right;">S/ ${parseFloat(c.subtotal||0).toFixed(2)}</td>
-                    <td style="text-align:right;">S/ ${parseFloat(c.igv||0).toFixed(2)}</td>
-                    <td style="text-align:right;font-weight:700;">S/ ${parseFloat(c.total||0).toFixed(2)}</td>
+                    <td style="text-align:right;">S/ ${formatMonto(parseFloat(c.subtotal||0))}</td>
+                    <td style="text-align:right;">S/ ${formatMonto(parseFloat(c.igv||0))}</td>
+                    <td style="text-align:right;font-weight:700;">S/ ${formatMonto(parseFloat(c.total||0))}</td>
                     <td>
                         <select class="badge-estado badge-${estado}" onchange="cambiarEstadoCotizacion(${idx}, this.value)"
                             style="border:none;cursor:pointer;font-weight:700;font-size:11px;padding:3px 8px;border-radius:12px;">
@@ -4327,12 +4455,12 @@ async function borrarCuenta(i) {
             numInput.removeAttribute('readonly');
             numInput.style.background = '';
             numInput.style.cursor = '';
-            const nuevoNum = "PRE-" + ("000" + correlativoActual).slice(-4);
+            const nuevoNum = "COT-" + ("000" + correlativoActual).slice(-4);
             numInput.value = nuevoNum;
             document.getElementById('lbl-num').innerText = nuevoNum;
             document.getElementById('cot-fecha').value = new Date().toLocaleDateString('es-PE');
             document.getElementById('lbl-fecha').innerText = document.getElementById('cot-fecha').value;
-            document.getElementById('screen-title-panel').innerText = "Panel de Creación de Presupuestos";
+            document.getElementById('screen-title-panel').innerText = "Panel de Creación de Cotizaciones";
             document.getElementById('screen-title-panel').style.color = "var(--primary)";
             mostrarToast("Edición cancelada.", "info");
         }
@@ -4342,7 +4470,7 @@ async function borrarCuenta(i) {
             const cot = memoriaCotizaciones[indice];
             if (!cot) return mostrarToast("⚠️ Cotización no encontrada.", "warning");
 
-            const nuevaNum = "PRE-" + ("000" + correlativoActual).slice(-4);
+            const nuevaNum = "COT-" + ("000" + correlativoActual).slice(-4);
             const copia = {
                 ...cot,
                 numero:    nuevaNum,
@@ -4425,7 +4553,7 @@ async function borrarCuenta(i) {
             // Imprimir
             const tituloOriginal = document.title;
             const nombreLimpio = (cot.cliente||'').replace(/[^a-zA-Z0-9 ]/g,'').trim().replace(/\s+/g,'_');
-            document.title = `Presupuesto_${cot.numero}_${nombreLimpio}`;
+            document.title = `Cotizacion_${cot.numero}_${nombreLimpio}`;
 
             setTimeout(() => {
                 window.print();
