@@ -1307,7 +1307,7 @@
 
     <script>
         // NUEVA INICIALIZACIÓN CON LA NUBE
-const URL_GAS = "https://script.google.com/macros/s/AKfycbxAu4J1aIxjGfH8RTTRKQ9vERhy86Tim0epokOgw3sdYj9Duf8bM_KDsz_HeTNl26hp/exec";
+const URL_GAS = "https://script.google.com/macros/s/AKfycbyea7Y15IoQ_sn4OCW0Hi59FX_rl3eB_qxt-UedDorutGKK1z6YRLvRyu6sYvSbEOs8/exec";
 
 let memoriaCatalogo = [];
 let memoriaClientes = [];
@@ -2031,6 +2031,13 @@ Responde ÚNICAMENTE con un JSON válido, sin texto adicional, sin markdown, con
 
         function eliminarObraReporte(idObra) {
             if (!confirm('¿Quitar esta obra del reporte?')) return;
+            const obra = reporteObraState.obras.find(o => o.id === idObra);
+            if (obra) {
+                const todasLasFotos = obra.modo === 'avance'
+                    ? (obra.avance.fotos || [])
+                    : [].concat(obra.etapas.inicio.fotos || [], obra.etapas.proceso.fotos || [], obra.etapas.finalizado.fotos || []);
+                todasLasFotos.forEach(f => { if (f.driveFileId) eliminarArchivoDrive(f.driveFileId); });
+            }
             reporteObraState.obras = reporteObraState.obras.filter(o => o.id !== idObra);
             renderReporteObra();
         }
@@ -2150,6 +2157,14 @@ Responde ÚNICAMENTE con un JSON válido, sin texto adicional, sin markdown, con
             });
         }
 
+        // Genera un identificador estable por foto (no cambia aunque la foto se mueva de
+        // posición en el arreglo), para que la sincronización con Drive siempre sepa con
+        // certeza a qué foto corresponde, incluso si el usuario agrega/borra otras fotos
+        // mientras una subida está en curso.
+        function generarIdFoto() {
+            return 'f' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+        }
+
         async function manejarFotosEtapa(idObra, etapaKey, fileList) {
             const obra = obtenerObraReporte(idObra);
             if (!obra || !fileList || fileList.length === 0) return;
@@ -2160,21 +2175,27 @@ Responde ÚNICAMENTE con un JSON válido, sin texto adicional, sin markdown, con
                 try {
                     const resultado = await comprimirImagenReporte(file);
                     const orientacionAuto = resultado.height > resultado.width ? 'vertical' : 'horizontal';
-                    const nuevaFoto = { src: resultado.src, caption: '', widthPct: orientacionAuto === 'vertical' ? 25 : 33, etiqueta: '', ubicacion: '', orientacion: orientacionAuto };
+                    const nuevaFoto = { id: generarIdFoto(), src: resultado.src, caption: '', widthPct: orientacionAuto === 'vertical' ? 25 : 33, etiqueta: '', ubicacion: '', orientacion: orientacionAuto };
                     destino.fotos.push(nuevaFoto);
-                    sincronizarFotoConDrive(obra, etapaKey, nuevaFoto);
+                    renderReporteObra();
+                    // Subimos de a una foto por vez (await): si se suben varias juntas y
+                    // se disparan todas en paralelo, dos peticiones casi simultáneas pueden
+                    // ver que la carpeta de la obra en Drive todavía no existe y crearla
+                    // cada una por su lado (carpetas duplicadas). Esperando a que cada
+                    // subida termine antes de lanzar la siguiente, eso no puede pasar.
+                    await ejecutarSincronizacionFoto(idObra, etapaKey, nuevaFoto.id);
                 } catch (err) {
                     console.error('Error procesando foto:', err);
                 }
             }
-            renderReporteObra();
         }
 
         function eliminarFotoReporte(idObra, etapaKey, idx) {
             const obra = obtenerObraReporte(idObra);
             if (!obra) return;
             const destino = etapaKey === 'avance' ? obra.avance : obra.etapas[etapaKey];
-            destino.fotos.splice(idx, 1);
+            const [fotoQuitada] = destino.fotos.splice(idx, 1);
+            if (fotoQuitada && fotoQuitada.driveFileId) eliminarArchivoDrive(fotoQuitada.driveFileId);
             renderReporteObra();
         }
 
@@ -2182,30 +2203,39 @@ Responde ÚNICAMENTE con un JSON válido, sin texto adicional, sin markdown, con
             const obra = obtenerObraReporte(idObra);
             if (!obra) return;
             const destino = etapaKey === 'avance' ? obra.avance : obra.etapas[etapaKey];
-            if (destino.fotos[idx]) destino.fotos[idx].caption = valor;
+            const foto = destino.fotos[idx];
+            if (!foto) return;
+            if (!foto.id) foto.id = generarIdFoto();
+            foto.caption = valor;
             // Actualización en vivo sin destruir el input: solo tocamos el texto de la vista impresa (si existe)
             const prev = document.getElementById(`rep-foto-cap-print-${idObra}-${etapaKey}-${idx}`);
             if (prev) prev.textContent = valor;
-            programarSincronizacionFoto(idObra, etapaKey, idx);
+            programarSincronizacionFoto(idObra, etapaKey, foto.id);
         }
 
         function actualizarUbicacionFoto(idObra, etapaKey, idx, valor) {
             const obra = obtenerObraReporte(idObra);
             if (!obra) return;
             const destino = etapaKey === 'avance' ? obra.avance : obra.etapas[etapaKey];
-            if (destino.fotos[idx]) destino.fotos[idx].ubicacion = valor;
+            const foto = destino.fotos[idx];
+            if (!foto) return;
+            if (!foto.id) foto.id = generarIdFoto();
+            foto.ubicacion = valor;
             const prev = document.getElementById(`rep-foto-ubi-print-${idObra}-${etapaKey}-${idx}`);
             if (prev) prev.textContent = valor ? ('📍 ' + valor) : '';
-            programarSincronizacionFoto(idObra, etapaKey, idx);
+            programarSincronizacionFoto(idObra, etapaKey, foto.id);
         }
 
         function actualizarEtiquetaFoto(idObra, etapaKey, idx, valor) {
             const obra = obtenerObraReporte(idObra);
             if (!obra) return;
             const destino = etapaKey === 'avance' ? obra.avance : obra.etapas[etapaKey];
-            if (destino.fotos[idx]) destino.fotos[idx].etiqueta = valor;
+            const foto = destino.fotos[idx];
+            if (!foto) return;
+            if (!foto.id) foto.id = generarIdFoto();
+            foto.etiqueta = valor;
             renderReporteObra();
-            programarSincronizacionFoto(idObra, etapaKey, idx, 300);
+            programarSincronizacionFoto(idObra, etapaKey, foto.id, 300);
         }
 
         function actualizarTamanoFoto(idObra, etapaKey, idx, valor) {
@@ -2232,6 +2262,7 @@ Responde ÚNICAMENTE con un JSON válido, sin texto adicional, sin markdown, con
             const destino = etapaKey === 'avance' ? obra.avance : obra.etapas[etapaKey];
             const foto = destino.fotos[idx];
             if (!foto) return;
+            if (!foto.id) foto.id = generarIdFoto(); // fotos guardadas antes de este arreglo
 
             const img = new Image();
             img.onload = () => {
@@ -2248,7 +2279,7 @@ Responde ÚNICAMENTE con un JSON válido, sin texto adicional, sin markdown, con
                 foto.orientacion = foto.orientacion === 'vertical' ? 'horizontal' : 'vertical';
                 renderReporteObra();
                 // La imagen cambió: sube la versión girada a Drive y borra la anterior
-                sincronizarFotoConDrive(obra, etapaKey, foto);
+                programarSincronizacionFoto(idObra, etapaKey, foto.id, 50);
             };
             img.src = foto.src;
         }
@@ -2841,9 +2872,10 @@ Contexto de la obra: ${contexto}`;
         function eliminarFotoDeGaleria(reporteId, obraId, etapaKey, idx) {
             if (!confirm('¿Eliminar esta foto de la galería? Esta acción también la quita del reporte de obra.')) return;
 
+            let fotoQuitada = null;
             const quitarDeObra = (obra) => {
                 const destino = etapaKey === 'avance' ? obra.avance : obra.etapas[etapaKey];
-                if (destino && destino.fotos[idx] !== undefined) destino.fotos.splice(idx, 1);
+                if (destino && destino.fotos[idx] !== undefined) fotoQuitada = destino.fotos.splice(idx, 1)[0];
             };
 
             if (reporteId === '__actual__') {
@@ -2859,6 +2891,7 @@ Contexto de la obra: ${contexto}`;
                     localStorage.setItem('reportes-obra-guardados', JSON.stringify(guardados));
                 }
             }
+            if (fotoQuitada && fotoQuitada.driveFileId) eliminarArchivoDrive(fotoQuitada.driveFileId);
             renderFiltrosGaleria();
             renderGaleria();
             mostrarToast('🗑️ Foto eliminada de la galería.', 'danger');
@@ -2908,18 +2941,50 @@ Contexto de la obra: ${contexto}`;
 
         // Evita subir una copia nueva por cada letra que el usuario escribe en descripción/ubicación:
         // esperamos un momento de pausa antes de sincronizar con Drive.
-        const fotoSyncTimers = {};
-        function programarSincronizacionFoto(idObra, etapaKey, idx, demoraMs = 1200) {
-            const key = idObra + '|' + etapaKey + '|' + idx;
+        const fotoSyncTimers    = {}; // key -> setTimeout pendiente (debounce)
+        const fotoSyncEnVuelo   = {}; // key -> true mientras hay una subida en curso
+        const fotoSyncPendiente = {}; // key -> true si llegó otro cambio mientras había una subida en curso
+
+        // Programa (con debounce) una sincronización para una foto identificada por su id
+        // estable — NO por su posición en el arreglo, que puede cambiar con el tiempo.
+        function programarSincronizacionFoto(idObra, etapaKey, fotoId, demoraMs = 1200) {
+            if (!fotoId) return;
+            const key = idObra + '|' + etapaKey + '|' + fotoId;
             if (fotoSyncTimers[key]) clearTimeout(fotoSyncTimers[key]);
             fotoSyncTimers[key] = setTimeout(() => {
                 delete fotoSyncTimers[key];
-                const obra = obtenerObraReporte(idObra);
-                if (!obra) return;
-                const destino = etapaKey === 'avance' ? obra.avance : obra.etapas[etapaKey];
-                const foto = destino && destino.fotos[idx];
-                if (foto) sincronizarFotoConDrive(obra, etapaKey, foto);
+                ejecutarSincronizacionFoto(idObra, etapaKey, fotoId);
             }, demoraMs);
+        }
+
+        // Ejecuta la sincronización real, garantizando que nunca haya dos peticiones en
+        // vuelo al mismo tiempo para la MISMA foto (eso es lo que antes producía archivos
+        // duplicados en Drive: dos subidas simultáneas, ninguna todavía enterada del
+        // fileId que acababa de crear la otra). Si llega una nueva solicitud mientras una
+        // ya está en curso, se marca como "pendiente" y se reintenta apenas la primera
+        // termine, para no perder la última edición del usuario.
+        async function ejecutarSincronizacionFoto(idObra, etapaKey, fotoId) {
+            const key = idObra + '|' + etapaKey + '|' + fotoId;
+            if (fotoSyncEnVuelo[key]) {
+                fotoSyncPendiente[key] = true;
+                return;
+            }
+            const obra = obtenerObraReporte(idObra);
+            if (!obra) return;
+            const destino = etapaKey === 'avance' ? obra.avance : obra.etapas[etapaKey];
+            const foto = destino && destino.fotos.find(f => f.id === fotoId);
+            if (!foto) return;
+
+            fotoSyncEnVuelo[key] = true;
+            try {
+                await sincronizarFotoConDrive(obra, etapaKey, foto);
+            } finally {
+                delete fotoSyncEnVuelo[key];
+                if (fotoSyncPendiente[key]) {
+                    delete fotoSyncPendiente[key];
+                    await ejecutarSincronizacionFoto(idObra, etapaKey, fotoId);
+                }
+            }
         }
 
         document.getElementById('cot-cliente').addEventListener('change', function() {
@@ -3469,21 +3534,29 @@ ${invoiceClone.outerHTML}
 </body>
 </html>`;
 
-        cotizacion.tipo      = "guardarCotizacionConPdf";
-        cotizacion.htmlFull  = htmlCompleto;   // HTML real del documento
+        // IMPORTANTE: no agregamos tipo/htmlFull directamente sobre "cotizacion" — ese es
+        // el mismo objeto que vive dentro de memoriaCotizaciones, y si lo mutamos acá esos
+        // campos de "transporte" quedan pegados para siempre y terminan guardándose como
+        // columnas reales en la hoja de Cotizaciones. Armamos un payload aparte.
+        const payload = Object.assign({}, cotizacion, {
+            tipo:               "guardarCotizacionConPdf",
+            htmlFull:           htmlCompleto,   // HTML real del documento
+            pdfFileIdAnterior:  cotizacion.pdfFileId || ''
+        });
 
         const respuesta = await fetch(URL_GAS, {
             method: "POST",
             redirect: "follow",
             headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify(cotizacion)
+            body: JSON.stringify(payload)
         });
         const resultado = await respuesta.json();
         if (resultado.ok && resultado.url) {
             console.log("✅ PDF generado en Drive:", resultado.url);
             const idx = memoriaCotizaciones.findIndex(c => c.numero === cotizacion.numero);
             if (idx >= 0) {
-                memoriaCotizaciones[idx].pdfUrl = resultado.url;
+                memoriaCotizaciones[idx].pdfUrl    = resultado.url;
+                memoriaCotizaciones[idx].pdfFileId = resultado.fileId || '';
                 guardarEnNube("Cotizaciones", memoriaCotizaciones);
             }
             setTimeout(() => mostrarToast("☁️ PDF guardado en Drive", "success"), 800);
@@ -4699,8 +4772,27 @@ async function borrarCuenta(i) {
             if (!confirm(`¿Eliminar la cotización ${cot.numero} de ${cot.cliente}?\n\nEsta acción no se puede deshacer.`)) return;
             memoriaCotizaciones.splice(indice, 1);
             await guardarEnNube("Cotizaciones", memoriaCotizaciones);
+            if (cot.pdfFileId) eliminarArchivoDrive(cot.pdfFileId);
             renderTablaHistorial();
             mostrarToast(`🗑️ Cotización ${cot.numero} eliminada.`, "danger");
+        }
+
+        // Pide al backend que borre (mande a la papelera) un archivo de Drive por su ID.
+        // Se usa tanto para PDFs de cotizaciones como para fotos de la galería. No bloquea
+        // la interfaz: si falla por conexión, simplemente queda un archivo huérfano en
+        // Drive, pero el registro local ya se borró igual.
+        async function eliminarArchivoDrive(fileId) {
+            if (!fileId) return;
+            try {
+                await fetch(URL_GAS, {
+                    method: "POST",
+                    redirect: "follow",
+                    headers: { "Content-Type": "text/plain;charset=utf-8" },
+                    body: JSON.stringify({ tipo: "eliminarArchivoDrive", fileId })
+                });
+            } catch (e) {
+                console.warn("⚠️ No se pudo borrar el archivo de Drive:", e);
+            }
         }
 
         // FASE 10: Generar/reimprimir PDF sin modificar la cotización
