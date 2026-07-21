@@ -506,6 +506,12 @@
         .gal-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 16px; }
         .gal-card { background: white; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.04); display: flex; flex-direction: column; }
         .gal-card-img-wrap { position: relative; width: 100%; aspect-ratio: 4/3; background: #e2e8f0; overflow: hidden; }
+        .gal-card-sin-preview, .foto-sin-preview-msg {
+            display:flex; align-items:center; justify-content:center; text-align:center;
+            width:100%; height:100%; min-height:80px; padding:10px;
+            background:#f1f5f9; color:#64748b; font-size:12px; font-weight:600; line-height:1.4; }
+        .foto-sin-preview-msg { position:absolute; inset:0; }
+        .rep-foto-img-wrap.foto-sin-preview img { display:none; }
         .gal-card-img-wrap.gal-vertical { aspect-ratio: 3/4; }
         .gal-card-img-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
         .gal-card-body { padding: 10px 12px 12px 12px; }
@@ -1312,6 +1318,7 @@ const URL_GAS = "https://script.google.com/macros/s/AKfycbyea7Y15IoQ_sn4OCW0Hi59
 let memoriaCatalogo = [];
 let memoriaClientes = [];
 let memoriaCuentas = [];
+let memoriaReportesNube = []; // NUEVO: reportes de obra (con fotos) que vienen de la nube
 
 // correlativo gestionado desde la nube (correlativoActual)
 
@@ -1335,6 +1342,21 @@ function cargarDatosDesdeNube() {
             memoriaCotizaciones = datos.cotizaciones || [];
             correlativoActual   = parseInt(datos.correlativo) || 1;
             localStorage.setItem('correlativo', String(correlativoActual));
+
+            // NUEVO: reportes de obra guardados en la nube (backend viejo sin hoja "Reportes" → llega []).
+            memoriaReportesNube = (datos.reportes || []).map(function(r) {
+                try {
+                    return {
+                        id: r.id,
+                        nombre: r.nombre,
+                        fechaGuardado: r.fechaGuardado,
+                        titulo: r.titulo,
+                        pdfUrl: r.pdfUrl || '',
+                        pdfFileId: r.pdfFileId || '',
+                        obras: JSON.parse(r.obrasJson || '[]')
+                    };
+                } catch (e) { return null; }
+            }).filter(Boolean);
 
             panelTitulo.innerText = "Panel de Creación de Cotizaciones";
             panelTitulo.style.color = "var(--primary)";
@@ -2318,7 +2340,8 @@ Responde ÚNICAMENTE con un JSON válido, sin texto adicional, sin markdown, con
             return `<div class="rep-foto-grid">` + fotos.map((f, idx) => `
                 <div class="rep-foto-item foto-${f.orientacion === 'vertical' ? 'vertical' : f.orientacion === 'completa' ? 'completa' : 'horizontal'}" style="width:calc(${f.widthPct}% - 12px);">
                     <div class="rep-foto-img-wrap">
-                        <img src="${f.src}">
+                        <img src="${srcDeFoto(f)}" onerror="this.closest('.rep-foto-img-wrap').classList.add('foto-sin-preview')">
+                        ${!srcDeFoto(f) ? '<div class="foto-sin-preview-msg">☁️ Foto respaldada en Drive<br>(sin vista previa aquí)</div>' : ''}
                         ${htmlBadgeEtiquetaFoto(f.etiqueta)}
                     </div>
                     <div id="rep-foto-cap-print-${idObra}-${etapaKey}-${idx}" class="rep-foto-caption">${f.caption || ''}</div>
@@ -2626,18 +2649,160 @@ Contexto de la obra: ${contexto}`;
             }
         }
 
-        // ── Guardado local de reportes (los datos de referencia -cotizaciones/clientes- vienen de la nube; ──
-        // ── el reporte en sí, con las fotos, se guarda en este dispositivo por el tamaño de las imágenes) ──
-        function obtenerReportesGuardados() {
+        // ── Guardado de reportes: LOCAL (con fotos en base64, mientras Drive las procesa) ──
+        // ── + NUBE (metadatos y fotos ya sin base64 — usan la URL de Drive) ──────────────
+        // Antes el reporte SOLO vivía en localStorage de un dispositivo, por eso la Galería
+        // no se veía en otro celular/PC aunque las fotos sí estuvieran en Drive: nunca se
+        // guardaba en la hoja "Reportes" el registro que dice qué fotos existen y dónde.
+        function obtenerReportesLocales() {
             try { return JSON.parse(localStorage.getItem('reportes-obra-guardados') || '[]'); }
             catch (e) { return []; }
+        }
+
+        // Combina lo guardado en este dispositivo con lo que ya hay en la nube.
+        // Si un mismo reporte (mismo id) existe en ambos lados, gana la versión LOCAL
+        // (tiene las fotos recién tomadas en base64, más fresca que la nube).
+        function obtenerReportesGuardados() {
+            const nube = memoriaReportesNube || [];
+            const locales = obtenerReportesLocales();
+            const porId = new Map();
+            nube.forEach(r => porId.set(r.id, r));
+            locales.forEach(r => porId.set(r.id, r));
+            return Array.from(porId.values())
+                .sort((a, b) => new Date(a.fechaGuardado || 0) - new Date(b.fechaGuardado || 0));
+        }
+
+        // Quita el base64 de una foto antes de mandarla a la hoja de cálculo (pesaría
+        // demasiado); se queda con todo lo demás, en especial driveUrl/driveUrlDirecta,
+        // que es justamente lo que permite verla desde otro dispositivo.
+        function fotoParaNube(foto) {
+            const { src, ...resto } = foto;
+            return resto;
+        }
+
+        function reporteParaNube(registro) {
+            const obrasSinBase64 = (registro.obras || []).map(obraOriginal => {
+                const obra = JSON.parse(JSON.stringify(obraOriginal));
+                const limpiarEtapa = (etapa) => { if (etapa && etapa.fotos) etapa.fotos = etapa.fotos.map(fotoParaNube); };
+                if (obra.etapas) {
+                    limpiarEtapa(obra.etapas.inicio);
+                    limpiarEtapa(obra.etapas.proceso);
+                    limpiarEtapa(obra.etapas.finalizado);
+                }
+                limpiarEtapa(obra.avance);
+                return obra;
+            });
+            return {
+                id: registro.id,
+                nombre: registro.nombre,
+                fechaGuardado: registro.fechaGuardado,
+                titulo: registro.titulo,
+                pdfUrl: registro.pdfUrl || '',
+                pdfFileId: registro.pdfFileId || '',
+                obrasJson: JSON.stringify(obrasSinBase64)
+            };
+        }
+
+        let syncReportesEnCurso = false, syncReportesPendiente = false, timerSyncReportes = null;
+
+        // Sube TODOS los reportes (local ∪ nube) a la hoja "Reportes", sin base64.
+        // Se llama después de guardar/eliminar un reporte y cada vez que una foto
+        // termina de respaldarse en Drive (para que su driveUrl quede en la nube).
+        async function sincronizarReportesConNube() {
+            if (syncReportesEnCurso) { syncReportesPendiente = true; return; }
+            syncReportesEnCurso = true;
+            try {
+                const todos = obtenerReportesGuardados().map(reporteParaNube);
+                await guardarEnNube("Reportes", todos);
+            } catch (e) {
+                console.warn('⚠️ No se pudo sincronizar reportes con la nube.', e);
+            } finally {
+                syncReportesEnCurso = false;
+                if (syncReportesPendiente) {
+                    syncReportesPendiente = false;
+                    sincronizarReportesConNube();
+                }
+            }
+        }
+
+        function programarSincronizacionReportes(demoraMs = 1500) {
+            if (timerSyncReportes) clearTimeout(timerSyncReportes);
+            timerSyncReportes = setTimeout(() => {
+                timerSyncReportes = null;
+                sincronizarReportesConNube();
+            }, demoraMs);
+        }
+
+        // Devuelve la mejor URL disponible para mostrar una foto como <img>:
+        // base64 local si aún existe (recién tomada en este dispositivo), o la URL
+        // directa de Drive (foto ya respaldada, visible también desde otros dispositivos).
+        function srcDeFoto(foto) {
+            return (foto && (foto.src || foto.driveUrlDirecta)) || '';
+        }
+
+        // ── Sube el PDF del Reporte de Obra a Drive (respaldo en la nube, sin abrir el diálogo de impresión) ──
+        async function crearPdfReporteEnDrive(registro) {
+            try {
+                const estilos = Array.from(document.styleSheets).map(ss => {
+                    try { return Array.from(ss.cssRules).map(r => r.cssText).join('\n'); }
+                    catch (e) { return ''; }
+                }).join('\n');
+
+                const previewEl = document.getElementById('rep-preview');
+                if (!previewEl) return;
+                const clone = previewEl.cloneNode(true);
+                clone.querySelectorAll('.no-print, button').forEach(el => el.remove());
+
+                const htmlCompleto = `<!DOCTYPE html>
+<html lang="es"><head><meta charset="UTF-8"><style>
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Arial', sans-serif; }
+body { background: white; color: #334155; font-size: 12px; }
+${estilos}
+.sidebar, .no-print, button { display: none !important; }
+.invoice-box { border: none !important; box-shadow: none !important; padding: 20px 24px !important; max-width: 100% !important; }
+img { max-width: 100%; }
+</style></head><body>${clone.outerHTML}</body></html>`;
+
+                const payload = {
+                    tipo: "guardarReportePdf",
+                    titulo: registro.titulo || registro.nombre,
+                    nombre: registro.nombre,
+                    htmlFull: htmlCompleto,
+                    pdfFileIdAnterior: registro.pdfFileId || ''
+                };
+
+                const respuesta = await fetch(URL_GAS, {
+                    method: "POST",
+                    redirect: "follow",
+                    headers: { "Content-Type": "text/plain;charset=utf-8" },
+                    body: JSON.stringify(payload)
+                });
+                const resultado = await respuesta.json();
+
+                if (resultado.ok && resultado.url) {
+                    const locales = obtenerReportesLocales();
+                    const idx = locales.findIndex(r => r.id === registro.id);
+                    if (idx >= 0) {
+                        locales[idx].pdfUrl = resultado.url;
+                        locales[idx].pdfFileId = resultado.fileId || '';
+                        localStorage.setItem('reportes-obra-guardados', JSON.stringify(locales));
+                        renderListaReportesGuardados();
+                    }
+                    mostrarToast('☁️ Reporte guardado en Drive', 'success');
+                    programarSincronizacionReportes();
+                } else if (resultado.error) {
+                    console.warn('⚠️ Error al guardar el reporte en Drive:', resultado.error);
+                }
+            } catch (e) {
+                console.warn('⚠️ Error de conexión con Drive al guardar el reporte.', e);
+            }
         }
 
         function guardarReporteObra() {
             if (reporteObraState.obras.length === 0) {
                 return mostrarToast('⚠️ Agrega al menos una obra antes de guardar.', 'warning');
             }
-            const guardados = obtenerReportesGuardados();
+            const guardados = obtenerReportesLocales();
             const nombreSugerido = document.getElementById('rep-titulo-doc').value || 'Reporte de Obra';
             const registro = {
                 id: reporteObraGuardadoId || ('rep_' + Date.now()),
@@ -2652,7 +2817,9 @@ Contexto de la obra: ${contexto}`;
                 localStorage.setItem('reportes-obra-guardados', JSON.stringify(guardados));
                 reporteObraGuardadoId = registro.id;
                 renderListaReportesGuardados();
-                mostrarToast('✅ Reporte guardado en este dispositivo.', 'success');
+                mostrarToast('✅ Reporte guardado. Sincronizando con la nube...', 'success');
+                programarSincronizacionReportes(300);
+                crearPdfReporteEnDrive(registro);
             } catch (err) {
                 console.error(err);
                 mostrarToast('❌ No se pudo guardar: el reporte es muy pesado (demasiadas fotos en alta cantidad). Reduce fotos o imprime directamente a PDF.', 'danger');
@@ -2671,12 +2838,14 @@ Contexto de la obra: ${contexto}`;
         }
 
         function eliminarReporteObraGuardado(id) {
-            if (!confirm('¿Eliminar este reporte guardado? Esta acción no se puede deshacer.')) return;
-            let guardados = obtenerReportesGuardados();
+            if (!confirm('¿Eliminar este reporte guardado? Esta acción no se puede deshacer (se eliminará también de la nube).')) return;
+            let guardados = obtenerReportesLocales();
             guardados = guardados.filter(r => r.id !== id);
             localStorage.setItem('reportes-obra-guardados', JSON.stringify(guardados));
+            memoriaReportesNube = memoriaReportesNube.filter(r => r.id !== id);
             if (reporteObraGuardadoId === id) reporteObraGuardadoId = null;
             renderListaReportesGuardados();
+            programarSincronizacionReportes(300);
         }
 
         function renderListaReportesGuardados() {
@@ -2689,7 +2858,9 @@ Contexto de la obra: ${contexto}`;
             }
             cont.innerHTML = guardados.slice().reverse().map(r => `
                 <div class="rep-guardado-item">
-                    <span>📄 ${r.nombre} <span style="color:#94a3b8;">(${r.obras.length} obra${r.obras.length===1?'':'s'})</span></span>
+                    <span>📄 ${r.nombre} <span style="color:#94a3b8;">(${(r.obras||[]).length} obra${(r.obras||[]).length===1?'':'s'})</span>
+                        ${r.pdfUrl ? `<a href="${r.pdfUrl}" target="_blank" rel="noopener" style="margin-left:8px;font-size:11px;color:#16a34a;font-weight:600;text-decoration:none;">☁️ PDF en Drive</a>` : ''}
+                    </span>
                     <div style="display:flex; gap:6px;">
                         <button class="btn btn-primary" style="padding:4px 10px; font-size:11px;" onclick="cargarReporteObraGuardado('${r.id}')">Abrir</button>
                         <button class="btn btn-danger" style="padding:4px 10px; font-size:11px;" onclick="eliminarReporteObraGuardado('${r.id}')">✕</button>
@@ -2856,7 +3027,9 @@ Contexto de la obra: ${contexto}`;
             return `
                 <div class="gal-card">
                     <div class="gal-card-img-wrap ${esVertical ? 'gal-vertical' : ''}">
-                        <img src="${foto.src}" loading="lazy">
+                        ${srcDeFoto(foto)
+                            ? `<img src="${srcDeFoto(foto)}" loading="lazy">`
+                            : `<div class="gal-card-sin-preview">☁️ Respaldando en Drive...</div>`}
                     </div>
                     <div class="gal-card-body">
                         <div class="gal-card-codigo">${codigo}</div>
@@ -2927,10 +3100,14 @@ Contexto de la obra: ${contexto}`;
                 const resultado = await respuesta.json();
                 if (resultado && resultado.ok && resultado.url) {
                     foto.driveUrl = resultado.url;
+                    foto.driveUrlDirecta = resultado.urlDirecta || null; // NUEVO: URL usable como <img src>
                     foto.driveFileId = resultado.fileId || null;
                     // Refresca la galería si es la vista activa, para mostrar el indicador ☁️
                     const vistaGaleria = document.getElementById('galeria');
                     if (vistaGaleria && vistaGaleria.classList.contains('active')) renderGaleria();
+                    // NUEVO: ya que la foto tiene URL de Drive, sincronizamos el reporte a la
+                    // nube para que sea visible en la Galería desde otros dispositivos.
+                    programarSincronizacionReportes();
                 } else if (resultado && resultado.error) {
                     console.warn('⚠️ Error al respaldar foto en Drive:', resultado.error);
                 }
