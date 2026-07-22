@@ -464,6 +464,17 @@
             .rep-foto-item { page-break-inside: avoid; }
             .rep-foto-item .rep-foto-controles { display: none !important; }
             .rep-foto-item img { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+            /* CORRECCIÓN: en pantalla, cada foto usa un ancho en % (widthPct) elegido por el
+               usuario (Pequeño/Mediano/Grande/Ancho completo) con calc(X% - 12px) sobre un
+               contenedor flex. Al imprimir, el ancho real de la página puede diferir lo
+               suficiente como para que esos anchos calculados se desborden del margen — eso
+               es lo que se veía como contenido "pegado" al borde en la vista previa de
+               impresión. Para el PDF/impresión forzamos una grilla fija de 2 columnas,
+               ignorando el widthPct de pantalla, así el documento impreso nunca se desborda. */
+            .rep-foto-grid { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 10px !important; }
+            .rep-foto-item { width: 100% !important; box-sizing: border-box !important; }
+            .rep-foto-item.foto-completa { grid-column: 1 / -1 !important; }
         }
 
         /* ═══════════════ REPORTE DE OBRA ═══════════════ */
@@ -2571,8 +2582,14 @@ Responde ÚNICAMENTE con un JSON válido, sin texto adicional, sin markdown, con
             if (reporteObraState.obras.length === 0) {
                 return mostrarToast('⚠️ Agrega al menos una obra antes de imprimir.', 'warning');
             }
+            // Aseguramos que lo impreso/subido a Drive sea siempre lo último editado
+            // (sin mostrar el toast de "guardado" que sí aparece con el botón Guardar).
+            const registro = guardarReporteObraLocal(true);
+
             const tituloDoc = (document.getElementById('rep-titulo-doc').value || 'Reporte_de_Obra').replace(/\s+/g, '_');
             imprimirConTitulo(tituloDoc);
+
+            if (registro) crearPdfReporteEnDrive(registro);
         }
 
         // ── Asistente IA: redacta o mejora los textos del reporte a partir de notas sueltas ──
@@ -2755,12 +2772,18 @@ Contexto de la obra: ${contexto}`;
 
                 const htmlCompleto = `<!DOCTYPE html>
 <html lang="es"><head><meta charset="UTF-8"><style>
+@page { size: A4; margin: 14mm 13mm; }
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Arial', sans-serif; }
 body { background: white; color: #334155; font-size: 12px; }
 ${estilos}
 .sidebar, .no-print, button { display: none !important; }
-.invoice-box { border: none !important; box-shadow: none !important; padding: 20px 24px !important; max-width: 100% !important; }
+.invoice-box { border: none !important; box-shadow: none !important; padding: 0 !important; max-width: 100% !important; }
 img { max-width: 100%; }
+/* Forzado incondicional (no depende de @media print): mismo criterio que la impresión del
+   navegador, para que el PDF de Drive luzca igual y nunca se desborde de la página. */
+.rep-foto-grid { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 10px !important; }
+.rep-foto-item { width: 100% !important; box-sizing: border-box !important; }
+.rep-foto-item.foto-completa { grid-column: 1 / -1 !important; }
 </style></head><body>${clone.outerHTML}</body></html>`;
 
                 const payload = {
@@ -2798,17 +2821,26 @@ img { max-width: 100%; }
             }
         }
 
-        function guardarReporteObra() {
+        // Guarda el reporte SOLO como datos (local + nube) — no genera ni sube ningún PDF.
+        // Se usa tanto para el botón "💾 Guardar reporte" como internamente antes de imprimir,
+        // para asegurarnos de que lo que se imprime/sube a Drive sea siempre lo último editado.
+        // Conserva pdfUrl/pdfFileId del registro anterior (si existía) para que, al generar un
+        // PDF nuevo más adelante, el backend pueda borrar el archivo viejo en vez de duplicarlo.
+        function guardarReporteObraLocal(silencioso) {
             if (reporteObraState.obras.length === 0) {
-                return mostrarToast('⚠️ Agrega al menos una obra antes de guardar.', 'warning');
+                if (!silencioso) mostrarToast('⚠️ Agrega al menos una obra antes de guardar.', 'warning');
+                return null;
             }
             const guardados = obtenerReportesLocales();
+            const anterior = reporteObraGuardadoId ? guardados.find(r => r.id === reporteObraGuardadoId) : null;
             const nombreSugerido = document.getElementById('rep-titulo-doc').value || 'Reporte de Obra';
             const registro = {
                 id: reporteObraGuardadoId || ('rep_' + Date.now()),
                 nombre: nombreSugerido + ' — ' + new Date().toLocaleDateString('es-PE'),
                 fechaGuardado: new Date().toISOString(),
                 titulo: document.getElementById('rep-titulo-doc').value,
+                pdfUrl: anterior?.pdfUrl || '',
+                pdfFileId: anterior?.pdfFileId || '',
                 obras: reporteObraState.obras
             };
             const idxExistente = guardados.findIndex(r => r.id === registro.id);
@@ -2817,13 +2849,19 @@ img { max-width: 100%; }
                 localStorage.setItem('reportes-obra-guardados', JSON.stringify(guardados));
                 reporteObraGuardadoId = registro.id;
                 renderListaReportesGuardados();
-                mostrarToast('✅ Reporte guardado. Sincronizando con la nube...', 'success');
+                if (!silencioso) mostrarToast('✅ Reporte guardado. Sincronizando con la nube...', 'success');
                 programarSincronizacionReportes(300);
-                crearPdfReporteEnDrive(registro);
+                return registro;
             } catch (err) {
                 console.error(err);
                 mostrarToast('❌ No se pudo guardar: el reporte es muy pesado (demasiadas fotos en alta cantidad). Reduce fotos o imprime directamente a PDF.', 'danger');
+                return null;
             }
+        }
+
+        // Botón "💾 Guardar reporte": solo persiste los datos, no genera PDF.
+        function guardarReporteObra() {
+            guardarReporteObraLocal(false);
         }
 
         function cargarReporteObraGuardado(id) {
@@ -3694,12 +3732,16 @@ async function crearPdfEnDrive(cotizacion) {
 <head>
 <meta charset="UTF-8">
 <style>
+/* Apps Script genera el PDF sin conocer nuestro @page del sistema (por defecto usa otro
+   tamaño/margen), por eso antes el PDF de Drive no coincidía con lo impreso desde el
+   navegador. Lo fijamos explícito acá, igual que en la impresión local (14mm / 13mm, A4). */
+@page { size: A4; margin: 14mm 13mm; }
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Arial', sans-serif; }
 body { background: white; color: #334155; font-size: 12px; }
 ${estilos}
 /* Overrides para PDF */
 .sidebar, .no-print, button { display: none !important; }
-.invoice-box { border: none !important; box-shadow: none !important; padding: 20px 24px !important; max-width: 100% !important; }
+.invoice-box { border: none !important; box-shadow: none !important; padding: 0 !important; max-width: 100% !important; }
 table { width: 100%; border-collapse: collapse; }
 table th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 .tr-sec-head td { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -4579,6 +4621,20 @@ async function borrarCuenta(i) {
             return partes.join('.');
         }
 
+        // Google Sheets a veces reconoce "16/7/2026" como una fecha real y la guarda como tal;
+        // al leerla de vuelta llega convertida a ISO ("2026-07-16T05:00:00.000Z"). Esta función
+        // detecta ese caso y la reformatea a como el usuario la escribió originalmente.
+        function formatearFechaCotizacion(valor) {
+            if (!valor) return '';
+            const esIso = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(String(valor));
+            if (!esIso) return valor;
+            try {
+                return new Date(valor).toLocaleDateString('es-PE');
+            } catch (e) {
+                return valor;
+            }
+        }
+
         function mostrarToast(mensaje, tipo) {
             let toast = document.getElementById('cot-toast');
             if (!toast) {
@@ -4707,7 +4763,7 @@ async function borrarCuenta(i) {
                     <td><b>${c.numero || '---'}</b></td>
                     <td>${c.tituloDoc ? `<span style="color:#0369a1;font-weight:600;">${c.tituloDoc}</span>` : '<span style="color:#94a3b8;">—</span>'}</td>
                     <td>${c.cliente || '---'}</td>
-                    <td>${c.fecha || '---'}</td>
+                    <td>${formatearFechaCotizacion(c.fecha) || '---'}</td>
                     <td style="text-align:right;">S/ ${formatMonto(parseFloat(c.subtotal||0))}</td>
                     <td style="text-align:right;">S/ ${formatMonto(parseFloat(c.igv||0))}</td>
                     <td style="text-align:right;font-weight:700;">S/ ${formatMonto(parseFloat(c.total||0))}</td>
@@ -4777,8 +4833,8 @@ async function borrarCuenta(i) {
             document.getElementById('lbl-num').innerText = cot.numero || '';
 
             // Fecha
-            document.getElementById('cot-fecha').value = cot.fecha || '';
-            document.getElementById('lbl-fecha').innerText = cot.fecha || '';
+            document.getElementById('cot-fecha').value = formatearFechaCotizacion(cot.fecha);
+            document.getElementById('lbl-fecha').innerText = formatearFechaCotizacion(cot.fecha);
 
             // Título general del documento
             document.getElementById('cot-titulo-doc').value = cot.tituloDoc || '';
