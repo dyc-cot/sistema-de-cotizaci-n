@@ -2,8 +2,18 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Alexander D&C - Sistema de Cotizaciones</title>
+
+    <!-- ── PWA: hace que el sistema se pueda "Instalar" como app ── -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1B2A41">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <!-- iOS no lee manifest.json: estas etiquetas son las que usa para "Añadir a inicio" -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Alexander D&C">
     <style>
         :root {
             --primary: #0f172a;
@@ -540,6 +550,25 @@
 </head>
 <body>
 
+    <!-- ── PANTALLA DE ACCESO: bloquea el sistema hasta ingresar la clave correcta ── -->
+    <div id="gate-acceso" style="position:fixed; inset:0; z-index:99999; background:#0f172a;
+        display:flex; align-items:center; justify-content:center; padding:20px;">
+        <div style="background:white; border-radius:12px; padding:36px 30px; width:100%; max-width:360px;
+            box-shadow:0 10px 40px rgba(0,0,0,0.3); text-align:center;">
+            <div style="width:56px; height:56px; border-radius:50%; background:#1B2A41; color:white;
+                display:flex; align-items:center; justify-content:center; font-size:26px; margin:0 auto 16px auto;">🔒</div>
+            <h2 style="color:#1B2A41; font-size:19px; margin-bottom:4px;">Alexander D&amp;C</h2>
+            <p style="color:#64748b; font-size:13px; margin-bottom:20px;">Ingresa la clave de acceso para continuar</p>
+            <input type="password" id="gate-clave" placeholder="Clave de acceso"
+                style="width:100%; padding:12px 14px; border:1.5px solid #cbd5e1; border-radius:8px; font-size:15px; text-align:center; margin-bottom:12px;"
+                onkeydown="if(event.key==='Enter'){event.preventDefault();intentarAcceso();}">
+            <button onclick="intentarAcceso()" id="gate-btn"
+                style="width:100%; padding:12px; border:none; border-radius:8px; background:#0284c7; color:white;
+                font-size:15px; font-weight:700; cursor:pointer;">Entrar</button>
+            <p id="gate-error" style="color:#dc2626; font-size:12px; margin-top:12px; min-height:16px;"></p>
+        </div>
+    </div>
+
     <!-- ── Barra superior móvil ── -->
     <div class="topbar">
         <button class="hamburger" id="hamburger-btn" onclick="toggleSidebar()" aria-label="Menú">
@@ -564,6 +593,14 @@
         <button class="menu-btn" onclick="switchView('cuentas')">🏦 Cuentas Bancarias</button>
         <button class="menu-btn" onclick="switchView('seguridad')">⚙️ Copia de Seguridad</button>
         <button class="menu-btn" onclick="switchView('guia-precios')">💡 Guía de Precios</button>
+        <button id="btn-instalar-app" class="menu-btn" onclick="instalarApp()"
+            style="display:none; align-items:center; gap:8px; background:#0284c7; color:white; margin-top:10px;">
+            ⬇️ Instalar App
+        </button>
+        <button class="menu-btn" onclick="cerrarSesionSistema()"
+            style="display:flex; align-items:center; gap:8px; background:transparent; color:#94a3b8; margin-top:6px; font-size:12px;">
+            🔒 Cerrar sesión
+        </button>
         <div style="margin-top: auto; padding: 20px; font-size: 11px; color: #64748b; text-align: center;">Alexander Diseño & Construcción v3.0 📱</div>
     </div>
 
@@ -1333,6 +1370,13 @@ let memoriaReportesNube = []; // NUEVO: reportes de obra (con fotos) que vienen 
 
 // correlativo gestionado desde la nube (correlativoActual)
 
+// ── Acceso: clave compartida del equipo, se guarda en este navegador tras validarla ──
+// Se envía en CADA pedido al backend (GET y POST); el Apps Script la verifica antes de
+// devolver o modificar cualquier dato — no es solo una pantalla decorativa en el frontend.
+function obtenerTokenAcceso() {
+    return localStorage.getItem('token-acceso-sistema') || '';
+}
+
 // ── GET: carga datos usando JSONP (compatible con file://) ─────
 function cargarDatosDesdeNube() {
     return new Promise(function(resolve, reject) {
@@ -1346,6 +1390,12 @@ function cargarDatosDesdeNube() {
         window[callbackName] = function(datos) {
             delete window[callbackName];
             document.body.removeChild(script);
+
+            // El backend responde ok:false si la clave de acceso no es válida.
+            if (datos && datos.ok === false) {
+                reject(new Error(datos.error || "Acceso no autorizado"));
+                return;
+            }
 
             memoriaCatalogo     = datos.catalogo     || [];
             memoriaClientes     = datos.clientes     || [];
@@ -1385,9 +1435,45 @@ function cargarDatosDesdeNube() {
             reject(new Error("Error JSONP"));
         };
 
-        script.src = URL_GAS + "?callback=" + callbackName;
+        script.src = URL_GAS + "?callback=" + callbackName + "&token=" + encodeURIComponent(obtenerTokenAcceso());
         document.body.appendChild(script);
     });
+}
+
+// ── PANTALLA DE ACCESO ──────────────────────────────────────────
+async function intentarAcceso() {
+    const claveInput = document.getElementById('gate-clave');
+    const errorEl = document.getElementById('gate-error');
+    const btn = document.getElementById('gate-btn');
+    const clave = claveInput.value.trim();
+
+    if (!clave) { errorEl.textContent = 'Ingresa la clave de acceso.'; return; }
+
+    btn.disabled = true;
+    btn.textContent = 'Verificando...';
+    errorEl.textContent = '';
+    localStorage.setItem('token-acceso-sistema', clave);
+
+    try {
+        await cargarDatosDesdeNube();
+        // Clave correcta: ocultamos la pantalla de acceso y arrancamos el resto de la app.
+        document.getElementById('gate-acceso').style.display = 'none';
+        registrarServiceWorker();
+    } catch (e) {
+        localStorage.removeItem('token-acceso-sistema');
+        errorEl.textContent = '❌ Clave incorrecta o sin conexión. Intenta de nuevo.';
+        claveInput.value = '';
+        claveInput.focus();
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Entrar';
+    }
+}
+
+function cerrarSesionSistema() {
+    if (!confirm('¿Cerrar sesión? Tendrás que volver a ingresar la clave de acceso.')) return;
+    localStorage.removeItem('token-acceso-sistema');
+    location.reload();
 }
 
 // ── POST: guarda datos (text/plain evita preflight CORS) ───────
@@ -1397,7 +1483,7 @@ async function guardarEnNube(nombreTabla, datosArray) {
             method: "POST",
             redirect: "follow",
             headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify({ tabla: nombreTabla, datos: datosArray })
+            body: JSON.stringify({ tabla: nombreTabla, datos: datosArray, token: obtenerTokenAcceso() })
         });
     } catch (error) {
         console.error("Error al guardar:", error);
@@ -2791,7 +2877,8 @@ img { max-width: 100%; }
                     titulo: registro.titulo || registro.nombre,
                     nombre: registro.nombre,
                     htmlFull: htmlCompleto,
-                    pdfFileIdAnterior: registro.pdfFileId || ''
+                    pdfFileIdAnterior: registro.pdfFileId || '',
+                    token: obtenerTokenAcceso()
                 };
 
                 const respuesta = await fetch(URL_GAS, {
@@ -3132,7 +3219,8 @@ img { max-width: 100%; }
                         caption: foto.caption || '',
                         fecha: new Date().toISOString(),
                         imagenBase64: foto.src,
-                        fileIdAnterior: foto.driveFileId || ''
+                        fileIdAnterior: foto.driveFileId || '',
+                        token: obtenerTokenAcceso()
                     })
                 });
                 const resultado = await respuesta.json();
@@ -3760,7 +3848,8 @@ ${invoiceClone.outerHTML}
         const payload = Object.assign({}, cotizacion, {
             tipo:               "guardarCotizacionConPdf",
             htmlFull:           htmlCompleto,   // HTML real del documento
-            pdfFileIdAnterior:  cotizacion.pdfFileId || ''
+            pdfFileIdAnterior:  cotizacion.pdfFileId || '',
+            token:              obtenerTokenAcceso()
         });
 
         const respuesta = await fetch(URL_GAS, {
@@ -4609,8 +4698,54 @@ async function borrarCuenta(i) {
         }
 
         window.onload = function() {
-            cargarDatosDesdeNube(); 
+            const claveGuardada = obtenerTokenAcceso();
+            if (claveGuardada) {
+                cargarDatosDesdeNube().then(() => {
+                    document.getElementById('gate-acceso').style.display = 'none';
+                    registrarServiceWorker();
+                }).catch(() => {
+                    localStorage.removeItem('token-acceso-sistema');
+                    const errorEl = document.getElementById('gate-error');
+                    if (errorEl) errorEl.textContent = '⚠️ Tu sesión expiró o la clave cambió. Ingrésala de nuevo.';
+                });
+            }
+            // Si no hay clave guardada, el sistema se queda en la pantalla de acceso
+            // hasta que el usuario la ingrese (ver intentarAcceso()).
         };
+
+        // ── PWA: registro del service worker + botón "Instalar app" ──
+        function registrarServiceWorker() {
+            if (!('serviceWorker' in navigator)) return;
+            navigator.serviceWorker.register('service-worker.js').catch((err) => {
+                console.warn('⚠️ No se pudo registrar el service worker (¿estás abriendo el archivo local en vez de por https?).', err);
+            });
+        }
+
+        let eventoInstalacionPWA = null;
+        window.addEventListener('beforeinstallprompt', (event) => {
+            event.preventDefault();
+            eventoInstalacionPWA = event;
+            const btn = document.getElementById('btn-instalar-app');
+            if (btn) btn.style.display = 'flex';
+        });
+
+        async function instalarApp() {
+            if (!eventoInstalacionPWA) {
+                mostrarToast('ℹ️ Tu navegador ya la tiene instalada, o usa el menú "Añadir a pantalla de inicio" manualmente.', 'success');
+                return;
+            }
+            eventoInstalacionPWA.prompt();
+            const { outcome } = await eventoInstalacionPWA.userChoice;
+            eventoInstalacionPWA = null;
+            const btn = document.getElementById('btn-instalar-app');
+            if (btn) btn.style.display = 'none';
+            if (outcome === 'accepted') mostrarToast('✅ App instalada.', 'success');
+        }
+
+        window.addEventListener('appinstalled', () => {
+            const btn = document.getElementById('btn-instalar-app');
+            if (btn) btn.style.display = 'none';
+        });
 
         // ── Toast de notificaciones (reemplaza alert) ──────────────────
         // ── Formato de montos: separador de miles con espacio, 2 decimales (Ej: 4 000.00, 12 325.50) ──
@@ -5021,7 +5156,7 @@ async function borrarCuenta(i) {
                     method: "POST",
                     redirect: "follow",
                     headers: { "Content-Type": "text/plain;charset=utf-8" },
-                    body: JSON.stringify({ tipo: "eliminarArchivoDrive", fileId })
+                    body: JSON.stringify({ tipo: "eliminarArchivoDrive", fileId, token: obtenerTokenAcceso() })
                 });
             } catch (e) {
                 console.warn("⚠️ No se pudo borrar el archivo de Drive:", e);
