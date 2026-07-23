@@ -540,6 +540,15 @@
         .rep-foto-img-wrap.foto-sin-preview img { display:none; }
         .gal-card-img-wrap.gal-vertical { aspect-ratio: 3/4; }
         .gal-card-img-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .gal-img-zoom-hint {
+            position: absolute; bottom: 6px; right: 6px; width: 26px; height: 26px; border-radius: 50%;
+            background: rgba(15,23,42,0.55); color: white; font-size: 13px;
+            display: flex; align-items: center; justify-content: center; pointer-events: none; }
+        .gal-card-img-wrap.gal-img-rota img, .gal-card-img-wrap.gal-img-rota .gal-img-zoom-hint { display: none; }
+        .gal-card-img-wrap.gal-img-rota::after {
+            content: '☁️ No se pudo cargar la miniatura — toca "Abrir en Drive" abajo';
+            position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+            text-align: center; font-size: 11px; color: #64748b; padding: 10px; background: #f1f5f9; }
         .gal-card-body { padding: 10px 12px 12px 12px; }
         .gal-card-codigo { font-size: 12px; font-weight: 700; color: var(--primary); margin-bottom: 4px; }
         .gal-card-desc { font-size: 12px; color: #64748b; margin: 4px 0; }
@@ -2868,8 +2877,62 @@ Contexto de la obra: ${contexto}`;
         // Devuelve la mejor URL disponible para mostrar una foto como <img>:
         // base64 local si aún existe (recién tomada en este dispositivo), o la URL
         // directa de Drive (foto ya respaldada, visible también desde otros dispositivos).
-        function srcDeFoto(foto) {
-            return (foto && (foto.src || foto.driveUrlDirecta)) || '';
+        // Devuelve la mejor URL para mostrar la foto como <img> en tamaño chico (tarjeta).
+        // OJO: "drive.google.com/uc?export=view" (lo que usábamos antes) es poco confiable
+        // como <img src> — Google a veces lo bloquea o lo redirige a una página de aviso en
+        // vez de la imagen, sobre todo en celulares. El endpoint "/thumbnail" está pensado
+        // justamente para esto y es mucho más estable. Lo reconstruimos acá mismo a partir
+        // del driveFileId que ya tenemos guardado, así no depende de lo que haya quedado
+        // grabado en la nube de subidas anteriores.
+        function srcDeFoto(foto, tamano) {
+            if (!foto) return '';
+            if (foto.src) return foto.src;
+            if (foto.driveFileId) return `https://drive.google.com/thumbnail?id=${foto.driveFileId}&sz=w${tamano || 700}`;
+            return foto.driveUrlDirecta || '';
+        }
+
+        // ── Visor de foto en pantalla completa (lightbox) ──────────────────
+        // Antes, tocar una foto en la Galería mandaba a la página de Drive, que en
+        // celulares poco potentes es pesada y a veces hacía recargar/cerrar la pestaña
+        // (perdiendo la sesión y pidiendo la clave de nuevo). Ahora se abre una vista
+        // ampliada DENTRO del sistema; "Ver en Drive" queda solo como opción secundaria.
+        function abrirVisorFoto(foto) {
+            const src = srcDeFoto(foto, 1600);
+            if (!src) return mostrarToast('☁️ Esta foto todavía se está respaldando en Drive, espera un momento.', 'warning');
+
+            let overlay = document.getElementById('visor-foto-overlay');
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.id = 'visor-foto-overlay';
+                overlay.className = 'no-print';
+                overlay.onclick = (e) => { if (e.target === overlay) cerrarVisorFoto(); };
+                overlay.innerHTML = `
+                    <button onclick="cerrarVisorFoto()" aria-label="Cerrar" style="position:absolute;top:14px;right:16px;z-index:2;
+                        background:rgba(255,255,255,0.15);border:none;color:white;width:40px;height:40px;border-radius:50%;
+                        font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
+                    <img id="visor-foto-img" style="max-width:94vw;max-height:82vh;object-fit:contain;border-radius:4px;
+                        box-shadow:0 10px 40px rgba(0,0,0,0.5);">
+                    <div id="visor-foto-caption" style="color:white;text-align:center;font-size:13px;margin-top:14px;max-width:90vw;"></div>
+                    <a id="visor-foto-drive-link" href="#" target="_blank" rel="noopener"
+                        style="color:#7dd3fc;font-size:12px;margin-top:10px;text-decoration:none;">☁️ Abrir original en Drive</a>`;
+                overlay.style.cssText = `position:fixed;inset:0;z-index:99998;background:rgba(15,23,42,0.94);
+                    display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;`;
+                document.body.appendChild(overlay);
+                document.addEventListener('keydown', (e) => { if (e.key === 'Escape') cerrarVisorFoto(); });
+            }
+
+            document.getElementById('visor-foto-img').src = src;
+            document.getElementById('visor-foto-caption').textContent = foto.caption || foto.ubicacion || '';
+            const linkDrive = document.getElementById('visor-foto-drive-link');
+            if (foto.driveUrl) { linkDrive.href = foto.driveUrl; linkDrive.style.display = 'inline'; }
+            else { linkDrive.style.display = 'none'; }
+
+            overlay.style.display = 'flex';
+        }
+
+        function cerrarVisorFoto() {
+            const overlay = document.getElementById('visor-foto-overlay');
+            if (overlay) overlay.style.display = 'none';
         }
 
         // ── Sube el PDF del Reporte de Obra a Drive (respaldo en la nube, sin abrir el diálogo de impresión) ──
@@ -3238,9 +3301,11 @@ img { max-width: 100%; }
             const colorEtiqueta = REP_ETIQUETA_COLOR[foto.etiqueta] || '#64748b';
             return `
                 <div class="gal-card">
-                    <div class="gal-card-img-wrap ${esVertical ? 'gal-vertical' : ''}">
+                    <div class="gal-card-img-wrap ${esVertical ? 'gal-vertical' : ''}"
+                         ${srcDeFoto(foto) ? `onclick="abrirVisorFotoPorRef('${it.reporteId}','${it.obraId}','${it.etapaKey}',${it.idx})" style="cursor:pointer;"` : ''}>
                         ${srcDeFoto(foto)
-                            ? `<img src="${srcDeFoto(foto)}" loading="lazy">`
+                            ? `<img src="${srcDeFoto(foto)}" loading="lazy" onerror="this.closest('.gal-card-img-wrap').classList.add('gal-img-rota')">
+                               <div class="gal-img-zoom-hint">🔍</div>`
                             : `<div class="gal-card-sin-preview">☁️ Respaldando en Drive...</div>`}
                     </div>
                     <div class="gal-card-body">
@@ -3248,10 +3313,34 @@ img { max-width: 100%; }
                         <span class="rep-foto-tag" style="position:static;display:inline-block;background:${colorEtiqueta};margin-bottom:6px;">${infoEtiqueta ? infoEtiqueta.label : 'Sin etiqueta'}</span>
                         <div class="gal-card-desc">${foto.caption || 'Sin descripción'}</div>
                         <div class="gal-card-meta">${foto.ubicacion ? '📍 ' + foto.ubicacion + ' · ' : ''}${it.etapaLabel}</div>
-                        ${foto.driveUrl ? `<a href="${foto.driveUrl}" target="_blank" rel="noopener" style="display:block;font-size:11px;color:#16a34a;font-weight:600;margin-bottom:6px;text-decoration:none;">☁️ Ver en Drive</a>` : `<div style="font-size:11px;color:#94a3b8;margin-bottom:6px;">☁️ Aún no respaldada</div>`}
+                        ${foto.driveUrl
+                            ? `<a href="${foto.driveUrl}" target="_blank" rel="noopener" style="display:block;font-size:10px;color:#94a3b8;margin-bottom:6px;text-decoration:none;">Abrir archivo original en Drive ↗</a>`
+                            : `<div style="font-size:11px;color:#94a3b8;margin-bottom:6px;">☁️ Aún no respaldada</div>`}
                         <button class="btn btn-danger" style="width:100%;justify-content:center;" onclick="eliminarFotoDeGaleria('${it.reporteId}','${it.obraId}','${it.etapaKey}',${it.idx})">🗑️ Eliminar</button>
                     </div>
                 </div>`;
+        }
+
+        // Busca la foto real a partir de su referencia (reporteId/obraId/etapaKey/idx) — el
+        // mismo patrón que ya usa eliminarFotoDeGaleria — y recién ahí abre el visor. Así el
+        // HTML de cada tarjeta no necesita llevar el objeto foto completo (con su base64)
+        // incrustado, lo que sería pesado para el DOM en celulares con muchas fotos.
+        function abrirVisorFotoPorRef(reporteId, obraId, etapaKey, idx) {
+            const buscarEnObra = (obra) => {
+                const destino = etapaKey === 'avance' ? obra?.avance : obra?.etapas?.[etapaKey];
+                return destino?.fotos?.[idx];
+            };
+            let foto = null;
+            if (reporteId === '__actual__') {
+                const obra = reporteObraState.obras.find(o => o.id === obraId);
+                foto = obra ? buscarEnObra(obra) : null;
+            } else {
+                const guardados = obtenerReportesGuardados();
+                const reg = guardados.find(r => r.id === reporteId);
+                const obra = reg ? (reg.obras || []).find(o => o.id === obraId) : null;
+                foto = obra ? buscarEnObra(obra) : null;
+            }
+            if (foto) abrirVisorFoto(foto);
         }
 
         function eliminarFotoDeGaleria(reporteId, obraId, etapaKey, idx) {
