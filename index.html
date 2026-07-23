@@ -110,6 +110,11 @@
         @media print {
             body { background: white; color: black; }
 
+            /* Red de seguridad general: nada debe poder desbordar el ancho de la página,
+               sin importar qué ancho fijo/calc() haya quedado puesto desde la pantalla. */
+            * { max-width: 100%; }
+            img, table { max-width: 100% !important; }
+
             /* Ocultar todo lo que no es el documento */
             .sidebar, .main-content > h1, .card:not(.print-only),
             .no-print, #screen-title-panel,
@@ -1104,10 +1109,15 @@
             </div>
 
             <div class="no-print" style="display:flex; gap:12px; max-width:640px; margin:30px auto 0 auto; flex-wrap:wrap;">
-                <button class="btn btn-success" onclick="imprimirReporteObra()" style="flex:1; min-width:220px;">🖨️ IMPRIMIR / GUARDAR EN PDF</button>
                 <button class="btn" onclick="guardarReporteObra()" style="flex:1; min-width:180px; background:#e0f2fe; color:#0369a1; border:1.5px solid #7dd3fc; font-size:15px; padding:14px; border-radius:6px; cursor:pointer; font-weight:600;">💾 Guardar reporte</button>
+                <button class="btn btn-success" onclick="imprimirReporteObra()" style="flex:1; min-width:180px;">🖨️ Imprimir</button>
+                <button class="btn" onclick="subirReportePdfADrive()" style="flex:1; min-width:180px; background:#fff7ed; color:#9a3412; border:1.5px solid #fdba74; font-size:15px; padding:14px; border-radius:6px; cursor:pointer; font-weight:600;">☁️ Subir PDF a Drive</button>
                 <button class="btn" onclick="nuevoReporteObra()" style="flex:1; min-width:180px; background:#f1f5f9; color:#334155; border:1.5px solid #cbd5e1; font-size:15px; padding:14px; border-radius:6px; cursor:pointer; font-weight:600;">🗑️ Nuevo Reporte</button>
             </div>
+            <p class="no-print" style="text-align:center; font-size:11px; color:#94a3b8; max-width:640px; margin:8px auto 0 auto;">
+                💾 Guardar solo guarda tus datos · 🖨️ Imprimir solo abre el diálogo de impresión de tu navegador ·
+                ☁️ Subir a Drive genera el PDF de respaldo en la nube — cada botón hace solo lo suyo, ninguno dispara a los otros.
+            </p>
         </div>
 
 
@@ -1142,8 +1152,18 @@
                     </div>
                     <button class="btn" id="gal-btn-comparativo" onclick="toggleComparativoGaleria()"
                         style="background:#0369a1; color:white; white-space:nowrap;">⇄ Ver comparativo Antes / Después</button>
+                    <button class="btn" id="gal-btn-resubir" onclick="resubirTodasLasFotosADrive()"
+                        style="background:#ea580c; color:white; white-space:nowrap;">🔄 Volver a subir todo a Drive</button>
                 </div>
+                <p style="font-size:11px; color:#94a3b8; margin-top:8px;">
+                    ¿Borraste manualmente las carpetas o fotos en Drive? Usa "🔄 Volver a subir todo a Drive" para
+                    volver a respaldar todas las fotos que aún tengas guardadas en este dispositivo, con enlaces nuevos.
+                    Esto crea archivos nuevos en Drive — solo funciona en el dispositivo donde se tomaron/cargaron las fotos.
+                </p>
             </div>
+
+            <div id="gal-resubir-status" class="no-print" style="display:none; margin-bottom:16px; padding:12px 16px;
+                background:#fff7ed; border:1.5px solid #fdba74; border-radius:8px; font-size:13px; color:#9a3412;"></div>
 
             <div id="gal-contenido"></div>
         </div>
@@ -2664,18 +2684,27 @@ Responde ÚNICAMENTE con un JSON válido, sin texto adicional, sin markdown, con
             vacioEl.style.display = reporteObraState.obras.length === 0 ? 'block' : 'none';
         }
 
+        // Solo imprime lo que ves en pantalla ahora mismo. No guarda datos ni sube nada a
+        // Drive — si quieres eso, usa los botones "💾 Guardar reporte" o "☁️ Subir PDF a Drive".
         function imprimirReporteObra() {
             if (reporteObraState.obras.length === 0) {
                 return mostrarToast('⚠️ Agrega al menos una obra antes de imprimir.', 'warning');
             }
-            // Aseguramos que lo impreso/subido a Drive sea siempre lo último editado
-            // (sin mostrar el toast de "guardado" que sí aparece con el botón Guardar).
-            const registro = guardarReporteObraLocal(true);
-
             const tituloDoc = (document.getElementById('rep-titulo-doc').value || 'Reporte_de_Obra').replace(/\s+/g, '_');
             imprimirConTitulo(tituloDoc);
+        }
 
-            if (registro) crearPdfReporteEnDrive(registro);
+        // Sube el PDF a Drive de forma explícita, independiente de Guardar e Imprimir.
+        // Guarda primero en silencio (para que el PDF refleje lo último editado) pero sin
+        // abrir ningún diálogo de impresión.
+        function subirReportePdfADrive() {
+            if (reporteObraState.obras.length === 0) {
+                return mostrarToast('⚠️ Agrega al menos una obra antes de subir a Drive.', 'warning');
+            }
+            const registro = guardarReporteObraLocal(true);
+            if (!registro) return;
+            mostrarToast('☁️ Generando y subiendo el PDF a Drive...', 'success');
+            crearPdfReporteEnDrive(registro);
         }
 
         // ── Asistente IA: redacta o mejora los textos del reporte a partir de notas sueltas ──
@@ -3080,6 +3109,64 @@ img { max-width: 100%; }
             const btn = document.getElementById('gal-btn-comparativo');
             if (btn) btn.style.background = galeriaModoComparativo ? '#0f172a' : '#0369a1';
             renderGaleria();
+        }
+
+        function recolectarTriosFotoParaResubir(reportesLocales) {
+            const trios = [];
+            const agregarObras = (obras) => {
+                (obras || []).forEach(obra => {
+                    const etapasAProcesar = obra.modo === 'avance'
+                        ? [['avance', obra.avance]]
+                        : [['inicio', obra.etapas.inicio], ['proceso', obra.etapas.proceso], ['finalizado', obra.etapas.finalizado]];
+                    etapasAProcesar.forEach(([etapaKey, etapa]) => {
+                        (etapa?.fotos || []).forEach(foto => {
+                            if (foto.src) trios.push({ obra, etapaKey, foto });
+                        });
+                    });
+                });
+            };
+            reportesLocales.forEach(registro => agregarObras(registro.obras));
+            agregarObras(reporteObraState.obras); // el reporte actual, aunque no se haya guardado aún
+            return trios;
+        }
+
+        // Re-sube a Drive TODAS las fotos que aún tengan copia local, sin importar si ya tenían
+        // un driveFileId (se ignora a propósito: si borraste las carpetas/archivos en Drive
+        // manualmente, ese ID ya apunta a algo que no existe — subimos uno nuevo desde cero).
+        async function resubirTodasLasFotosADrive() {
+            // OJO: leemos localStorage UNA sola vez y reusamos la misma referencia todo el
+            // proceso — si se vuelve a leer después del bucle, se pierden los driveUrl/driveFileId
+            // nuevos que sincronizarFotoConDrive va escribiendo sobre estos mismos objetos.
+            const locales = obtenerReportesLocales();
+            const trios = recolectarTriosFotoParaResubir(locales);
+            if (trios.length === 0) {
+                return mostrarToast('ℹ️ No hay fotos con copia local en este dispositivo para volver a subir.', 'success');
+            }
+            if (!confirm(`Se volverán a subir ${trios.length} foto(s) a Drive como archivos nuevos.\n\n` +
+                `Si antes borraste manualmente las carpetas o fotos en Drive, esto te sirve para dejarlas ordenadas de nuevo.\n\n¿Continuar?`)) return;
+
+            const statusEl = document.getElementById('gal-resubir-status');
+            const btn = document.getElementById('gal-btn-resubir');
+            btn.disabled = true;
+            statusEl.style.display = 'block';
+
+            let hechas = 0;
+            for (const { obra, etapaKey, foto } of trios) {
+                hechas++;
+                statusEl.textContent = `🔄 Subiendo foto ${hechas} de ${trios.length}...`;
+                // Uploads en serie (no en paralelo) para no saturar el backend de Apps Script.
+                await sincronizarFotoConDrive(obra, etapaKey, foto);
+            }
+
+            // Persistimos los nuevos driveFileId/driveUrl (mismos objetos que mutamos arriba).
+            localStorage.setItem('reportes-obra-guardados', JSON.stringify(locales));
+            programarSincronizacionReportes(300);
+
+            statusEl.textContent = `✅ Listo: se volvieron a subir ${trios.length} foto(s) a Drive.`;
+            setTimeout(() => { statusEl.style.display = 'none'; }, 6000);
+            btn.disabled = false;
+            renderGaleria();
+            mostrarToast('✅ Fotos re-subidas a Drive.', 'success');
         }
 
         function renderGaleria() {
