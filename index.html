@@ -480,16 +480,40 @@
             .rep-foto-item .rep-foto-controles { display: none !important; }
             .rep-foto-item img { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 
-            /* CORRECCIÓN: en pantalla, cada foto usa un ancho en % (widthPct) elegido por el
-               usuario (Pequeño/Mediano/Grande/Ancho completo) con calc(X% - 12px) sobre un
-               contenedor flex. Al imprimir, el ancho real de la página puede diferir lo
-               suficiente como para que esos anchos calculados se desborden del margen — eso
-               es lo que se veía como contenido "pegado" al borde en la vista previa de
-               impresión. Para el PDF/impresión forzamos una grilla fija de 2 columnas,
-               ignorando el widthPct de pantalla, así el documento impreso nunca se desborda. */
-            .rep-foto-grid { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 10px !important; }
-            .rep-foto-item { width: 100% !important; box-sizing: border-box !important; }
-            .rep-foto-item.foto-completa { grid-column: 1 / -1 !important; }
+            /* CORRECCIÓN: antes se forzaba una grilla fija de 2 columnas en impresión,
+               ignorando por completo el tamaño (Pequeña/Mediana/Grande/Ancho completo) que el
+               usuario elige para cada foto — por eso el tamaño elegido nunca se veía reflejado
+               en el PDF ni en la vista previa de impresión. Ahora usamos una grilla de 12
+               columnas y cada foto ocupa la cantidad de columnas que le corresponde según su
+               tamaño (ver --print-span, calculado en JS a partir de widthPct). Esto respeta el
+               tamaño elegido por el usuario y, al ser una grilla real (no un cálculo manual de
+               ancho en %), tampoco se desborda del margen de la página. */
+            .rep-foto-grid { display: grid !important; grid-template-columns: repeat(12, 1fr) !important; gap: 10px !important; }
+            .rep-foto-item {
+                width: auto !important;
+                box-sizing: border-box !important;
+                grid-column: span var(--print-span, 6) !important;
+            }
+            /* CORRECCIÓN "Foto completa": antes se forzaba a ocupar las 2 columnas (grid-column:
+               1/-1), lo cual no coincidía con lo que se veía en la vista previa en pantalla (donde
+               el usuario suele dejarla en 1 columna, p.ej. tamaño "Grande") y además, al no tener
+               límite de alto, una foto vertical estirada a todo el ancho de la página terminaba
+               ocupando más de una página y se cortaba a la mitad. Ahora ocupa 1 columna igual que
+               el resto, y se limita su alto máximo para que la foto completa siempre entre en una
+               sola página, sin recortarla (object-fit: contain sigue respetando la proporción real). */
+            .rep-foto-item.foto-completa .rep-foto-img-wrap {
+                max-height: 480px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .rep-foto-item.foto-completa .rep-foto-img-wrap img {
+                width: auto !important;
+                height: auto !important;
+                max-width: 100%;
+                max-height: 480px;
+                object-fit: contain;
+            }
         }
 
         /* ═══════════════ REPORTE DE OBRA ═══════════════ */
@@ -924,6 +948,7 @@
             <div class="no-print" style="display:flex; gap:12px; max-width:640px; margin:30px auto 0 auto; flex-wrap:wrap;">
                 <button class="btn btn-primary" onclick="guardarCotizacion()" style="flex:1; min-width:200px;">💾 GUARDAR COTIZACIÓN</button>
                 <button class="btn btn-success" onclick="imprimirCotizacionActual()" style="flex:1; min-width:200px;">🖨️ IMPRIMIR / PDF</button>
+                <button class="btn" onclick="enviarCotizacionPorWhatsApp()" style="flex:1; min-width:200px; background:#25D366; color:white; border:none; font-size:15px; padding:14px; border-radius:6px; cursor:pointer; font-weight:600;">📲 Enviar por WhatsApp</button>
                 <button class="btn no-print" onclick="limpiarCotizacion()" style="flex:1; min-width:180px; background:#f1f5f9; color:#334155; border:1.5px solid #cbd5e1; font-size:15px; padding:14px; border-radius:6px; cursor:pointer; font-weight:600;">🗑️ Nueva Cotización</button>
             </div>
         </div>
@@ -2386,6 +2411,14 @@ Responde ÚNICAMENTE con un JSON válido, sin texto adicional, sin markdown, con
             programarSincronizacionFoto(idObra, etapaKey, foto.id, 300);
         }
 
+        // Traduce el tamaño elegido en pantalla (widthPct: 25/33/50/100) a cuántas columnas
+        // de una grilla de 12 debe ocupar la foto al imprimir/generar el PDF, para que el
+        // tamaño elegido por el usuario se respete también ahí (ver @media print).
+        function spanImpresionDesdeWidthPct(widthPct) {
+            const mapa = { 25: 3, 33: 4, 50: 6, 100: 12 };
+            return mapa[widthPct] || 6;
+        }
+
         function actualizarTamanoFoto(idObra, etapaKey, idx, valor) {
             const obra = obtenerObraReporte(idObra);
             if (!obra) return;
@@ -2464,7 +2497,7 @@ Responde ÚNICAMENTE con un JSON válido, sin texto adicional, sin markdown, con
         function htmlControlesFotos(idObra, etapaKey, fotos) {
             if (!fotos || fotos.length === 0) return '';
             return `<div class="rep-foto-grid">` + fotos.map((f, idx) => `
-                <div class="rep-foto-item foto-${f.orientacion === 'vertical' ? 'vertical' : f.orientacion === 'completa' ? 'completa' : 'horizontal'}" style="width:calc(${f.widthPct}% - 12px);">
+                <div class="rep-foto-item foto-${f.orientacion === 'vertical' ? 'vertical' : f.orientacion === 'completa' ? 'completa' : 'horizontal'}" style="width:calc(${f.widthPct}% - 12px); --print-span:${spanImpresionDesdeWidthPct(f.widthPct)};">
                     <div class="rep-foto-img-wrap">
                         <img src="${srcDeFoto(f)}" onerror="this.closest('.rep-foto-img-wrap').classList.add('foto-sin-preview')">
                         ${!srcDeFoto(f) ? '<div class="foto-sin-preview-msg">☁️ Foto respaldada en Drive<br>(sin vista previa aquí)</div>' : ''}
@@ -2961,7 +2994,10 @@ img { max-width: 100%; }
    navegador, para que el PDF de Drive luzca igual y nunca se desborde de la página. */
 .rep-foto-grid { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 10px !important; }
 .rep-foto-item { width: 100% !important; box-sizing: border-box !important; }
-.rep-foto-item.foto-completa { grid-column: 1 / -1 !important; }
+/* Mismo criterio que en @media print: 1 columna (no forzar ancho completo) y alto máximo
+   para que la foto entre siempre completa en una página, sin recortarse ni partirse. */
+.rep-foto-item.foto-completa .rep-foto-img-wrap { max-height: 480px; display: flex; align-items: center; justify-content: center; }
+.rep-foto-item.foto-completa .rep-foto-img-wrap img { width: auto !important; height: auto !important; max-width: 100%; max-height: 480px; object-fit: contain; }
 </style></head><body>${clone.outerHTML}</body></html>`;
 
                 const payload = {
@@ -4054,6 +4090,34 @@ ${invoiceClone.outerHTML}
 }
 
 // 2. LUEGO VA ESTA FUNCIÓN
+// Arma un mensaje prellenado con los datos de la cotización y abre WhatsApp para
+// que elijas a quién enviárselo. WhatsApp no permite adjuntar archivos vía enlace
+// (wa.me solo admite texto), así que si el PDF ya se generó en Drive, se incluye
+// el enlace directo dentro del mensaje; si no, se avisa para generarlo primero.
+function enviarCotizacionPorWhatsApp() {
+    const numero  = document.getElementById('cot-numero').value || '';
+    const clienteIdx = document.getElementById('cot-cliente').value;
+    const nombreCliente = memoriaClientes[clienteIdx]?.nombre || document.getElementById('lbl-cliente-nombre')?.innerText || 'Cliente';
+    const tituloDoc = document.getElementById('cot-titulo-doc')?.value || '';
+    const total = document.getElementById('lbl-total')?.innerText || '';
+
+    const cotGuardada = memoriaCotizaciones.find(c => c.numero === numero);
+    const linkPdf = cotGuardada?.pdfUrl || '';
+
+    let mensaje = `Hola ${nombreCliente}, le compartimos la cotización *${numero}*`;
+    if (tituloDoc) mensaje += ` — ${tituloDoc}`;
+    mensaje += ` de *Alexander Diseño & Construcción*.\n\n💰 Total: S/ ${total}\n`;
+
+    if (linkPdf) {
+        mensaje += `\n📄 Ver/descargar el PDF:\n${linkPdf}`;
+    } else {
+        mensaje += `\n(Genera el PDF con "🖨️ IMPRIMIR / PDF" primero para incluir aquí el enlace de descarga, o adjúntalo manualmente en el chat.)`;
+    }
+    mensaje += `\n\nQuedamos atentos a cualquier consulta. ¡Gracias!`;
+
+    window.open(`https://wa.me/?text=${encodeURIComponent(mensaje)}`, '_blank');
+}
+
 async function guardarCotizacion() {
     if(document.getElementById('cot-cliente').value === "") return mostrarToast("⚠️ Seleccione un cliente.", "warning");
     const totalItems = seccionesCotizacion.reduce((s, sec) => s + sec.items.length, 0);
