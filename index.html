@@ -621,6 +621,10 @@
     <!-- MENÚ LATERAL -->
     <div class="sidebar">
         <h2>ALEXANDER D&C</h2>
+        <div id="badge-modo-lectura" style="display:none; margin:-6px 20px 14px 20px; background:#78350f; color:#fde68a;
+            font-size:11px; font-weight:700; text-align:center; padding:6px 8px; border-radius:6px; letter-spacing:.3px;">
+            🔒 MODO SOLO LECTURA
+        </div>
         <button class="menu-btn active" onclick="switchView('nueva-cotizacion')">📄 Nueva Cotización</button>
         <button class="menu-btn" onclick="switchView('cotizaciones')">📂 Cotizaciones</button>
         <button class="menu-btn" onclick="switchView('requerimiento')">🧾 Requerimiento de Compras</button>
@@ -1424,6 +1428,30 @@ let memoriaReportesNube = []; // NUEVO: reportes de obra (con fotos) que vienen 
 
 // correlativo gestionado desde la nube (correlativoActual)
 
+// ── Niveles de acceso: 'admin' (control total) o 'lectura' (solo ver/imprimir) ──
+// El backend es quien manda de verdad (rechaza cualquier guardado si la clave usada
+// es de solo lectura, aunque alguien manipule el frontend); esto de acá es solo para
+// avisar al usuario al toque y no dejarlo esperando un guardado que el backend va a
+// rechazar de todas formas.
+function esModoLectura() {
+    return localStorage.getItem('nivel-acceso-sistema') === 'lectura';
+}
+
+function aplicarNivelAcceso(nivel) {
+    localStorage.setItem('nivel-acceso-sistema', nivel === 'lectura' ? 'lectura' : 'admin');
+    document.body.classList.toggle('modo-lectura', nivel === 'lectura');
+    const badge = document.getElementById('badge-modo-lectura');
+    if (badge) badge.style.display = nivel === 'lectura' ? 'block' : 'none';
+}
+
+function bloquearSiSoloLectura() {
+    if (esModoLectura()) {
+        mostrarToast('🔒 Tu clave es de solo lectura: puedes ver e imprimir, pero no guardar ni modificar datos.', 'warning');
+        return true;
+    }
+    return false;
+}
+
 // ── Acceso: clave compartida del equipo, se guarda en este navegador tras validarla ──
 // Se envía en CADA pedido al backend (GET y POST); el Apps Script la verifica antes de
 // devolver o modificar cualquier dato — no es solo una pantalla decorativa en el frontend.
@@ -1457,6 +1485,11 @@ function cargarDatosDesdeNube() {
             memoriaCotizaciones = datos.cotizaciones || [];
             correlativoActual   = parseInt(datos.correlativo) || 1;
             localStorage.setItem('correlativo', String(correlativoActual));
+
+            // NUEVO: nivel de acceso devuelto por el backend ('admin' o 'lectura'). Backends
+            // viejos (que todavía no tienen este cambio) no mandan "nivel" → tratamos eso como
+            // 'admin' para no bloquear instalaciones existentes.
+            aplicarNivelAcceso(datos.nivel || 'admin');
 
             // NUEVO: reportes de obra guardados en la nube (backend viejo sin hoja "Reportes" → llega []).
             memoriaReportesNube = (datos.reportes || []).map(function(r) {
@@ -1527,11 +1560,13 @@ async function intentarAcceso() {
 function cerrarSesionSistema() {
     if (!confirm('¿Cerrar sesión? Tendrás que volver a ingresar la clave de acceso.')) return;
     localStorage.removeItem('token-acceso-sistema');
+    localStorage.removeItem('nivel-acceso-sistema');
     location.reload();
 }
 
 // ── POST: guarda datos (text/plain evita preflight CORS) ───────
 async function guardarEnNube(nombreTabla, datosArray) {
+    if (bloquearSiSoloLectura()) return;
     try {
         await fetch(URL_GAS, {
             method: "POST",
@@ -1871,6 +1906,7 @@ ${catalogoResumen || '(catálogo vacío)'}`;
         let filaReqEditando = null; // índice del ítem en edición
 
         function eliminarItemRequerimiento(idx) {
+            if (bloquearSiSoloLectura()) return;
             itemsRequerimiento.splice(idx, 1);
             if (filaReqEditando === idx) filaReqEditando = null;
             renderRequerimiento();
@@ -2203,6 +2239,7 @@ Responde ÚNICAMENTE con un JSON válido, sin texto adicional, sin markdown, con
         }
 
         function eliminarObraReporte(idObra) {
+            if (bloquearSiSoloLectura()) return;
             if (!confirm('¿Quitar esta obra del reporte?')) return;
             const obra = reporteObraState.obras.find(o => o.id === idObra);
             if (obra) {
@@ -2364,6 +2401,7 @@ Responde ÚNICAMENTE con un JSON válido, sin texto adicional, sin markdown, con
         }
 
         function eliminarFotoReporte(idObra, etapaKey, idx) {
+            if (bloquearSiSoloLectura()) return;
             const obra = obtenerObraReporte(idObra);
             if (!obra) return;
             const destino = etapaKey === 'avance' ? obra.avance : obra.etapas[etapaKey];
@@ -2740,6 +2778,7 @@ Responde ÚNICAMENTE con un JSON válido, sin texto adicional, sin markdown, con
         // Guarda primero en silencio (para que el PDF refleje lo último editado) pero sin
         // abrir ningún diálogo de impresión.
         function subirReportePdfADrive() {
+            if (bloquearSiSoloLectura()) return;
             if (reporteObraState.obras.length === 0) {
                 return mostrarToast('⚠️ Agrega al menos una obra antes de subir a Drive.', 'warning');
             }
@@ -2948,8 +2987,19 @@ Contexto de la obra: ${contexto}`;
                     <div id="visor-foto-caption" style="color:white;text-align:center;font-size:13px;margin-top:14px;max-width:90vw;"></div>
                     <a id="visor-foto-drive-link" href="#" target="_blank" rel="noopener"
                         style="color:#7dd3fc;font-size:12px;margin-top:10px;text-decoration:none;">☁️ Abrir original en Drive</a>`;
-                overlay.style.cssText = `position:fixed;inset:0;z-index:99998;background:rgba(15,23,42,0.94);
-                    display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;`;
+                // CORRECCIÓN: en algunos celulares (Android WebView más viejos) el visor se veía
+                // desplazado hacia un costado y cortado, en vez de centrado en toda la pantalla.
+                // Dos causas típicas de esto:
+                // 1) el atajo "inset:0" no siempre se soporta igual que top/right/bottom/left por
+                //    separado, así que ahora se ponen explícitos;
+                // 2) al crear el visor recién en el momento del toque, el navegador a veces lo
+                //    "pinta" en la posición equivocada por una fracción de segundo mientras la
+                //    página todavía tiene inercia de scroll — forzar su propia capa con
+                //    transform/will-change evita ese desfase visual.
+                overlay.style.cssText = `position:fixed;top:0;right:0;bottom:0;left:0;width:100%;height:100%;
+                    box-sizing:border-box;z-index:99998;background:rgba(15,23,42,0.94);
+                    display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;
+                    transform:translateZ(0);-webkit-transform:translateZ(0);will-change:transform;`;
                 document.body.appendChild(overlay);
                 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') cerrarVisorFoto(); });
             }
@@ -2960,12 +3010,17 @@ Contexto de la obra: ${contexto}`;
             if (foto.driveUrl) { linkDrive.href = foto.driveUrl; linkDrive.style.display = 'inline'; }
             else { linkDrive.style.display = 'none'; }
 
+            // Bloquea el scroll del fondo mientras el visor está abierto: además de ser lo
+            // esperable en cualquier visor a pantalla completa, evita que el scroll del fondo
+            // "arrastre" al visor mientras el navegador todavía lo está posicionando.
+            document.body.style.overflow = 'hidden';
             overlay.style.display = 'flex';
         }
 
         function cerrarVisorFoto() {
             const overlay = document.getElementById('visor-foto-overlay');
             if (overlay) overlay.style.display = 'none';
+            document.body.style.overflow = '';
         }
 
         // ── Sube el PDF del Reporte de Obra a Drive (respaldo en la nube, sin abrir el diálogo de impresión) ──
@@ -3091,6 +3146,7 @@ img { max-width: 100%; }
         }
 
         function eliminarReporteObraGuardado(id) {
+            if (bloquearSiSoloLectura()) return;
             if (!confirm('¿Eliminar este reporte guardado? Esta acción no se puede deshacer (se eliminará también de la nube).')) return;
             let guardados = obtenerReportesLocales();
             guardados = guardados.filter(r => r.id !== id);
@@ -3380,6 +3436,7 @@ img { max-width: 100%; }
         }
 
         function eliminarFotoDeGaleria(reporteId, obraId, etapaKey, idx) {
+            if (bloquearSiSoloLectura()) return;
             if (!confirm('¿Eliminar esta foto de la galería? Esta acción también la quita del reporte de obra.')) return;
 
             let fotoQuitada = null;
@@ -3415,6 +3472,7 @@ img { max-width: 100%; }
         // (foto.driveFileId), le pedimos al backend que borre esa copia vieja justo antes
         // de crear la nueva, para que en Drive quede siempre una sola versión por foto.
         async function sincronizarFotoConDrive(obra, etapaKey, foto) {
+            if (bloquearSiSoloLectura()) return;
             try {
                 const respuesta = await fetch(URL_GAS, {
                     method: "POST",
@@ -3579,6 +3637,7 @@ img { max-width: 100%; }
 
         function eliminarSeccion(idx, e) {
             e.stopPropagation();
+            if (bloquearSiSoloLectura()) return;
             if (seccionesCotizacion.length === 1)
                 return alert('Debe haber al menos una sección.');
             const sec = seccionesCotizacion[idx];
@@ -3800,6 +3859,7 @@ function cancelarEdicionItemCot() {
 }
 
         function eliminarFilaCotizacion(secIdx, itemIdx) {
+            if (bloquearSiSoloLectura()) return;
             if (itemCotEnEdicion && itemCotEnEdicion.secIdx === secIdx && itemCotEnEdicion.itemIdx === itemIdx) {
                 cancelarEdicionItemCot();
             }
@@ -3880,10 +3940,16 @@ function cancelarEdicionItemCot() {
                     }
                 });
 
-                if (sec.items.length > 0) {
-                    const secIgv   = igvOn ? secSubtotal * 0.18 : 0;
-                    const secTotal = secSubtotal + secIgv;
-                    granTotal += secTotal;
+                // El total de la sección (con o sin IGV) siempre se calcula y se suma al gran
+                // total, aunque no siempre se muestre la fila — ver más abajo.
+                const secIgv   = igvOn ? secSubtotal * 0.18 : 0;
+                const secTotal = secSubtotal + secIgv;
+                granTotal += secTotal;
+
+                // Con 1 solo ítem y sin IGV, el "Total" de la sección repetiría el mismo
+                // número que ya se ve en el subtotal de ese ítem — se omite por redundante.
+                // Con IGV activado sí se muestra, porque ahí aporta el desglose (subtotal + IGV).
+                if (sec.items.length > 1 || (sec.items.length === 1 && igvOn)) {
                     const totalTxt = igvOn
                         ? `S/ ${formatMonto(secSubtotal)}&nbsp;+&nbsp;IGV&nbsp;S/&nbsp;${formatMonto(secIgv)}&nbsp;=&nbsp;<b>S/ ${formatMonto(secTotal)}</b>`
                         : `<b>S/ ${formatMonto(secTotal)}</b>`;
@@ -4010,6 +4076,7 @@ function cancelarEdicionItemCot() {
 
 // ── PDF EN DRIVE ───────────────────────────────────────────────
 async function crearPdfEnDrive(cotizacion) {
+    if (bloquearSiSoloLectura()) return;
     try {
         // ── Capturar el HTML real del documento renderizado ──────────
         // Obtener todos los estilos de la página
@@ -4898,6 +4965,7 @@ async function borrarCuenta(i) {
         }
 
         function eliminarCargo(idx) {
+            if (bloquearSiSoloLectura()) return;
             cargosAdicionales.splice(idx, 1);
             renderCargoUI();
             actualizarContenedorCotizacion();
@@ -5375,6 +5443,7 @@ async function borrarCuenta(i) {
 
         // FASE 9: Eliminar cotización
         async function eliminarCotizacion(indice) {
+            if (bloquearSiSoloLectura()) return;
             const cot = memoriaCotizaciones[indice];
             if (!cot) return;
             if (!confirm(`¿Eliminar la cotización ${cot.numero} de ${cot.cliente}?\n\nEsta acción no se puede deshacer.`)) return;
