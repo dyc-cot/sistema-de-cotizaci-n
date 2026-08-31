@@ -657,7 +657,10 @@
                 <!-- LOGO EXPRESS -->
                 <div class="form-group" style="margin-bottom: 15px; background: #f0fdf4; padding: 12px; border-radius: 6px; border: 1px dashed #bbf7d0;">
                     <label style="color:#16a34a;">📁 Cargar/Cambiar Logo de la Empresa (PNG/JPG):</label>
-                    <input type="file" id="cot-logo-file" accept="image/*" style="border:none; padding:5px 0; background:transparent;">
+                    <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                        <input type="file" id="cot-logo-file" accept="image/*" style="border:none; padding:5px 0; background:transparent; flex:1; min-width:180px;">
+                        <button type="button" class="btn btn-danger" onclick="eliminarLogoEmpresa()" style="padding:6px 12px; font-size:12px; white-space:nowrap;">🗑️ Quitar logo</button>
+                    </div>
                 </div>
 
                 <div class="grid-form" style="grid-template-columns: 2fr 1fr 1fr 1fr;">
@@ -996,7 +999,23 @@
                     </div>
                 </div>
 
-                <div class="grid-form" style="grid-template-columns: 2fr 1fr 1fr auto; margin-bottom:5px;">
+                <div class="grid-form" style="grid-template-columns: 1.3fr 1.8fr 0.9fr 0.9fr auto; margin-bottom:5px;">
+                    <div class="form-group">
+                        <label>Categoría comercial</label>
+                        <select id="req-categoria">
+                            <option value="Aceros y Metales">Aceros y Metales</option>
+                            <option value="Maderas y Tableros">Maderas y Tableros</option>
+                            <option value="Cemento y Agregados">Cemento y Agregados</option>
+                            <option value="Drywall y Steel Framing">Drywall y Steel Framing</option>
+                            <option value="Ferretería y Fijaciones">Ferretería y Fijaciones</option>
+                            <option value="Eléctrico">Eléctrico</option>
+                            <option value="Plomería y Gasfitería">Plomería y Gasfitería</option>
+                            <option value="Pintura y Acabados">Pintura y Acabados</option>
+                            <option value="Vidrio y Aluminio">Vidrio y Aluminio</option>
+                            <option value="Cerrajería y Accesorios">Cerrajería y Accesorios</option>
+                            <option value="Otros">Otros</option>
+                        </select>
+                    </div>
                     <div class="form-group">
                         <label>Material / Ítem requerido</label>
                         <input type="text" id="req-item" list="lista-items-modulo" placeholder="Ej: Cemento Sol tipo I"
@@ -1005,8 +1024,10 @@
                     <div class="form-group">
                         <label>Unidad</label>
                         <select id="req-unidad">
-                            <option value="Und">Und</option><option value="Bolsa">Bolsa</option>
-                            <option value="Saco">Saco</option><option value="kg">kg</option>
+                            <option value="Und">Und</option><option value="Barra 6m">Barra 6m</option>
+                            <option value="Plancha">Plancha</option><option value="Bolsa">Bolsa</option>
+                            <option value="Saco">Saco</option><option value="Balde">Balde</option>
+                            <option value="Rollo">Rollo</option><option value="kg">kg</option>
                             <option value="m²">m²</option><option value="ml">ml</option>
                             <option value="m³">m³</option><option value="Galón">Galón</option>
                             <option value="Caja">Caja</option><option value="Pto">Pto</option>
@@ -1884,6 +1905,8 @@ ${catalogoResumen || '(catálogo vacío)'}`;
         }
 
         function agregarItemRequerimiento() {
+            if (bloquearSiSoloLectura()) return;
+            const categoria = document.getElementById('req-categoria').value;
             const desc     = document.getElementById('req-item').value.trim();
             const unidad   = document.getElementById('req-unidad').value;
             const cantidad = parseFloat(document.getElementById('req-cantidad').value);
@@ -1892,7 +1915,7 @@ ${catalogoResumen || '(catálogo vacío)'}`;
             if (!desc) return mostrarToast("⚠️ Escribe el material o ítem requerido.", "warning");
             if (isNaN(cantidad) || cantidad <= 0) return mostrarToast("⚠️ Ingresa una cantidad válida.", "warning");
 
-            itemsRequerimiento.push({ desc, unidad, cantidad, obs });
+            itemsRequerimiento.push({ desc, unidad, cantidad, obs, categoria });
 
             document.getElementById('req-item').value = '';
             document.getElementById('req-cantidad').value = '';
@@ -1902,7 +1925,16 @@ ${catalogoResumen || '(catálogo vacío)'}`;
             renderRequerimiento();
         }
 
-        const UNIDADES_REQUERIMIENTO = ['Und','Bolsa','Saco','kg','m²','ml','m³','Galón','Caja','Pto','Global'];
+        const UNIDADES_REQUERIMIENTO = ['Und','Barra 6m','Plancha','Bolsa','Saco','Balde','Rollo','kg','m²','ml','m³','Galón','Caja','Pto','Global'];
+        // Categorías comerciales para agrupar la lista de compras (Bill of Materials) —
+        // pensadas para que cada grupo se pueda pedir de una vez en el rubro correspondiente
+        // de la ferretería/proveedor (aceros en una, maderas en otra, etc.).
+        const CATEGORIAS_REQUERIMIENTO = [
+            'Aceros y Metales', 'Maderas y Tableros', 'Cemento y Agregados',
+            'Drywall y Steel Framing', 'Ferretería y Fijaciones', 'Eléctrico',
+            'Plomería y Gasfitería', 'Pintura y Acabados', 'Vidrio y Aluminio',
+            'Cerrajería y Accesorios', 'Otros'
+        ];
         let filaReqEditando = null; // índice del ítem en edición
 
         function eliminarItemRequerimiento(idx) {
@@ -1923,6 +1955,8 @@ ${catalogoResumen || '(catálogo vacío)'}`;
         }
 
         function guardarEdicionReq(idx) {
+            if (bloquearSiSoloLectura()) return;
+            const categoria = document.getElementById(`edit-req-cat-${idx}`).value;
             const desc     = document.getElementById(`edit-req-desc-${idx}`).value.trim();
             const unidad   = document.getElementById(`edit-req-unidad-${idx}`).value;
             const cantidad = parseFloat(document.getElementById(`edit-req-cant-${idx}`).value);
@@ -1932,7 +1966,7 @@ ${catalogoResumen || '(catálogo vacío)'}`;
                 return mostrarToast("⚠️ Revisa el material y la cantidad.", "warning");
             }
 
-            itemsRequerimiento[idx] = { desc, unidad, cantidad, obs };
+            itemsRequerimiento[idx] = { desc, unidad, cantidad, obs, categoria };
             filaReqEditando = null;
             renderRequerimiento();
             mostrarToast("✅ Ítem actualizado.", "success");
@@ -1951,38 +1985,66 @@ ${catalogoResumen || '(catálogo vacío)'}`;
 
             const opcionesUnidadReq = (seleccionada) => UNIDADES_REQUERIMIENTO
                 .map(u => `<option value="${u}" ${u === seleccionada ? 'selected' : ''}>${u}</option>`).join('');
+            const opcionesCategoriaReq = (seleccionada) => CATEGORIAS_REQUERIMIENTO
+                .map(c => `<option value="${c}" ${c === seleccionada ? 'selected' : ''}>${c}</option>`).join('');
 
+            // Agrupar por categoría comercial (Bill of Materials), respetando el orden de
+            // CATEGORIAS_REQUERIMIENTO — no el orden en que se agregaron los ítems — para que
+            // la lista quede siempre organizada igual al imprimir, sin importar cómo se fueron
+            // añadiendo. Los ítems sin categoría (listas viejas de antes de este cambio) caen
+            // en "Otros".
+            const grupos = {};
             itemsRequerimiento.forEach((it, i) => {
-                if (filaReqEditando === i) {
-                    tbody.innerHTML += `<tr style="background:#f0f9ff;">
-                        <td style="text-align:center;color:#94a3b8;">${i + 1}</td>
-                        <td><input type="text" id="edit-req-desc-${i}" value="${(it.desc || '').replace(/"/g,'&quot;')}"
-                                   style="width:100%;padding:7px;border:1.5px solid #93c5fd;border-radius:6px;"></td>
-                        <td><select id="edit-req-unidad-${i}" style="width:100%;padding:7px;border:1.5px solid #93c5fd;border-radius:6px;">${opcionesUnidadReq(it.unidad)}</select></td>
-                        <td><input type="number" id="edit-req-cant-${i}" value="${it.cantidad}" step="0.01"
-                                   style="width:75px;text-align:right;padding:7px;border:1.5px solid #93c5fd;border-radius:6px;"></td>
-                        <td><input type="text" id="edit-req-obs-${i}" value="${(it.obs || '').replace(/"/g,'&quot;')}"
-                                   style="width:100%;padding:7px;border:1.5px solid #93c5fd;border-radius:6px;font-size:12px;"></td>
-                        <td class="no-print" style="white-space:nowrap;">
-                            <button class="btn btn-success" onclick="guardarEdicionReq(${i})" style="padding:3px 7px;font-size:11px;">💾</button>
-                            <button class="btn" onclick="cancelarEdicionReq()" style="padding:3px 7px;font-size:11px;background:#e2e8f0;color:#334155;">✕</button>
-                        </td></tr>`;
-                    return;
-                }
-
-                tbody.innerHTML += `<tr>
-                    <td style="text-align:center;color:#94a3b8;">${i + 1}</td>
-                    <td><b>${it.desc}</b></td>
-                    <td style="text-align:center;">${it.unidad}</td>
-                    <td style="text-align:right;">${it.cantidad}</td>
-                    <td style="font-size:12px;color:#64748b;">${it.obs || ''}</td>
-                    <td class="no-print" style="white-space:nowrap;">
-                        <button class="btn btn-edit" onclick="editarItemRequerimiento(${i})"
-                                style="padding:3px 7px;font-size:11px;">✎</button>
-                        <button class="btn btn-danger" onclick="eliminarItemRequerimiento(${i})"
-                                style="padding:3px 7px;font-size:11px;">✕</button>
-                    </td></tr>`;
+                const cat = it.categoria || 'Otros';
+                if (!grupos[cat]) grupos[cat] = [];
+                grupos[cat].push(i); // guardamos el índice REAL en itemsRequerimiento
             });
+            const categoriasOrdenadas = CATEGORIAS_REQUERIMIENTO.filter(c => grupos[c]);
+            Object.keys(grupos).forEach(c => { if (!categoriasOrdenadas.includes(c)) categoriasOrdenadas.push(c); });
+
+            let html = '';
+            categoriasOrdenadas.forEach((cat, gi) => {
+                html += `<tr class="tr-sec-head"><td colspan="6">${gi + 1}. ${cat}</td></tr>`;
+
+                grupos[cat].forEach((i, ii) => {
+                    const it = itemsRequerimiento[i];
+                    const numItem = `${gi + 1}.${ii + 1}`;
+
+                    if (filaReqEditando === i) {
+                        html += `<tr style="background:#f0f9ff;">
+                            <td style="text-align:center;color:#94a3b8;">${numItem}</td>
+                            <td>
+                                <select id="edit-req-cat-${i}" style="width:100%;padding:6px;margin-bottom:4px;border:1.5px solid #93c5fd;border-radius:6px;font-size:12px;">${opcionesCategoriaReq(it.categoria)}</select>
+                                <input type="text" id="edit-req-desc-${i}" value="${(it.desc || '').replace(/"/g,'&quot;')}"
+                                       style="width:100%;padding:7px;border:1.5px solid #93c5fd;border-radius:6px;">
+                            </td>
+                            <td><select id="edit-req-unidad-${i}" style="width:100%;padding:7px;border:1.5px solid #93c5fd;border-radius:6px;">${opcionesUnidadReq(it.unidad)}</select></td>
+                            <td><input type="number" id="edit-req-cant-${i}" value="${it.cantidad}" step="0.01"
+                                       style="width:75px;text-align:right;padding:7px;border:1.5px solid #93c5fd;border-radius:6px;"></td>
+                            <td><input type="text" id="edit-req-obs-${i}" value="${(it.obs || '').replace(/"/g,'&quot;')}"
+                                       style="width:100%;padding:7px;border:1.5px solid #93c5fd;border-radius:6px;font-size:12px;"></td>
+                            <td class="no-print" style="white-space:nowrap;">
+                                <button class="btn btn-success" onclick="guardarEdicionReq(${i})" style="padding:3px 7px;font-size:11px;">💾</button>
+                                <button class="btn" onclick="cancelarEdicionReq()" style="padding:3px 7px;font-size:11px;background:#e2e8f0;color:#334155;">✕</button>
+                            </td></tr>`;
+                        return;
+                    }
+
+                    html += `<tr>
+                        <td style="text-align:center;color:#94a3b8;">${numItem}</td>
+                        <td><b>${it.desc}</b></td>
+                        <td style="text-align:center;">${it.unidad}</td>
+                        <td style="text-align:right;">${it.cantidad}</td>
+                        <td style="font-size:12px;color:#64748b;">${it.obs || ''}</td>
+                        <td class="no-print" style="white-space:nowrap;">
+                            <button class="btn btn-edit" onclick="editarItemRequerimiento(${i})"
+                                    style="padding:3px 7px;font-size:11px;">✎</button>
+                            <button class="btn btn-danger" onclick="eliminarItemRequerimiento(${i})"
+                                    style="padding:3px 7px;font-size:11px;">✕</button>
+                        </td></tr>`;
+                });
+            });
+            tbody.innerHTML = html;
         }
 
         // ── Adjuntos de referencia para la IA del requerimiento (imágenes / PDF) ──
@@ -2054,16 +2116,18 @@ ${catalogoResumen || '(catálogo vacío)'}`;
             const systemPrompt =
 `Eres un asistente técnico para "Alexander Diseño & Construcción", empresa de construcción, drywall, estructuras y remodelaciones en Chiclayo, Perú.
 Se te da la descripción de un trabajo y, opcionalmente, imágenes o documentos de referencia (fotos del lugar, planos, fichas técnicas) que debes usar para precisar medidas, materiales y cantidades.
-Tu tarea es armar un REQUERIMIENTO DE COMPRA DE MATERIALES, es decir, una lista de materiales necesarios para ejecutar el trabajo — SIN precios, SIN mano de obra, solo materiales físicos a comprar.
+Tu tarea es armar una LISTA DE REQUERIMIENTOS DE MATERIALES (Bill of Materials / BOM) para ejecutar el trabajo — SIN precios, SIN mano de obra, solo materiales físicos a comprar, organizada por categoría comercial para facilitar la compra en ferretería/proveedor.
 Reglas:
 1. Si se adjuntaron imágenes o documentos, analízalos primero para precisar medidas, cantidades y tipos de material.
 2. Usa la herramienta de búsqueda web cuando sea necesario para precisar especificaciones técnicas reales (ej. diámetros de tubería, calibres de cable, tipos de cemento, presentaciones comerciales típicas en Perú), de modo que el material quede bien especificado y fácil de pedir en una ferretería.
 3. Cada ítem debe tener una descripción específica y comprable (ej. "Cemento Sol tipo I x 42.5kg", no solo "cemento").
-4. Calcula cantidades razonables según el trabajo descrito (con un margen prudente de desperdicio si aplica), y explica supuestos relevantes en las notas.
-5. NUNCA incluyas precios, costos, ni mano de obra. Solo materiales.
+4. Calcula primero la cantidad técnica real necesaria (con un margen prudente de desperdicio si aplica), y LUEGO conviértela a la UNIDAD DE VENTA ESTÁNDAR con la que se compra ese material — no dejes cantidades en metros lineales o m² sueltos si ese material se vende por pieza. Ejemplos: si se necesitan 17.5 metros lineales de tubo cuadrado y se vende en barras de 6m, calcula 3 "Barra 6m" (redondeando siempre hacia arriba, nunca fracciones de barra/plancha); si se necesitan 8.2 m² de plancha de MDF de 1.22x2.44m (2.98 m² c/u), calcula 3 "Plancha"; pintura o sellador en "Galón" o "Balde" según presentación comercial habitual; cable/manguera en "Rollo" si se vende así. Si el material genuinamente se vende suelto por unidad, peso, o área (ladrillos, cemento en bolsa, cerámico en m²), usa esa unidad tal cual.
+5. Asigna a cada ítem UNA categoría comercial, eligiendo EXACTAMENTE una de esta lista (sin inventar otras): "Aceros y Metales", "Maderas y Tableros", "Cemento y Agregados", "Drywall y Steel Framing", "Ferretería y Fijaciones", "Eléctrico", "Plomería y Gasfitería", "Pintura y Acabados", "Vidrio y Aluminio", "Cerrajería y Accesorios", "Otros".
+6. Explica en "obs" cualquier supuesto relevante del cálculo (ej. "se descuenta merma de 10%", "presentación de 4 galones").
+7. NUNCA incluyas precios, costos, ni mano de obra. Solo materiales.
 
 Responde ÚNICAMENTE con un JSON válido, sin texto adicional, sin markdown, con esta forma exacta:
-{"items":[{"desc":"Descripción específica del material","unidad":"Und|Bolsa|Saco|kg|m²|ml|m³|Galón|Caja|Pto|Global","cantidad":1,"obs":"observación breve opcional, ej. especificación técnica o supuesto de cálculo"}],"notas":"breve nota general sobre supuestos o fuentes técnicas usadas"}`;
+{"items":[{"categoria":"una de las categorías de la lista","desc":"Descripción específica del material","unidad":"Und|Barra 6m|Plancha|Bolsa|Saco|Balde|Rollo|kg|m²|ml|m³|Galón|Caja|Pto|Global","cantidad":1,"obs":"observación breve opcional, ej. especificación técnica o supuesto de cálculo"}],"notas":"breve nota general sobre supuestos o fuentes técnicas usadas"}`;
 
             const userParts = [];
             userParts.push({ text: descripcion || "Analiza los archivos adjuntos y arma la lista de materiales correspondiente." });
@@ -2104,11 +2168,13 @@ Responde ÚNICAMENTE con un JSON válido, sin texto adicional, sin markdown, con
 
                 nuevos.forEach(it => {
                     const cantidad = parseFloat(it.cantidad) || 1;
+                    const categoria = CATEGORIAS_REQUERIMIENTO.includes(it.categoria) ? it.categoria : 'Otros';
                     itemsRequerimiento.push({
                         desc: it.desc || 'Material',
                         unidad: it.unidad || 'Und',
                         cantidad: cantidad,
-                        obs: it.obs || ''
+                        obs: it.obs || '',
+                        categoria: categoria
                     });
                 });
 
@@ -2893,6 +2959,31 @@ Contexto de la obra: ${contexto}`;
             return resto;
         }
 
+        // Antes de guardar el reporte en localStorage, saca el base64 (foto.src) de las
+        // fotos que YA están respaldadas en Drive (tienen driveFileId) — eso es lo que
+        // hacía que un reporte con muchas fotos en alta calidad superara el límite de
+        // localStorage del navegador (~5-10MB) y tirara el error "no se puede guardar".
+        // La foto se sigue viendo igual (srcDeFoto cae a la URL de Drive cuando no hay
+        // src local), solo que ya no queda duplicada en pesado base64 en el navegador.
+        // Las fotos que todavía NO se subieron (ej. sin conexión en ese momento)
+        // conservan su base64 para no perder ese avance.
+        function aligerarObrasParaGuardar(obras) {
+            const clon = JSON.parse(JSON.stringify(obras || []));
+            const limpiarFotos = (fotos) => {
+                (fotos || []).forEach(f => { if (f.driveFileId && f.src) delete f.src; });
+            };
+            clon.forEach(obra => {
+                if (obra.modo === 'avance') {
+                    limpiarFotos(obra.avance && obra.avance.fotos);
+                } else if (obra.etapas) {
+                    limpiarFotos(obra.etapas.inicio && obra.etapas.inicio.fotos);
+                    limpiarFotos(obra.etapas.proceso && obra.etapas.proceso.fotos);
+                    limpiarFotos(obra.etapas.finalizado && obra.etapas.finalizado.fotos);
+                }
+            });
+            return clon;
+        }
+
         function reporteParaNube(registro) {
             const obrasSinBase64 = (registro.obras || []).map(obraOriginal => {
                 const obra = JSON.parse(JSON.stringify(obraOriginal));
@@ -3097,6 +3188,7 @@ img { max-width: 100%; }
         // Conserva pdfUrl/pdfFileId del registro anterior (si existía) para que, al generar un
         // PDF nuevo más adelante, el backend pueda borrar el archivo viejo en vez de duplicarlo.
         function guardarReporteObraLocal(silencioso) {
+            if (bloquearSiSoloLectura()) return null;
             if (reporteObraState.obras.length === 0) {
                 if (!silencioso) mostrarToast('⚠️ Agrega al menos una obra antes de guardar.', 'warning');
                 return null;
@@ -3111,7 +3203,10 @@ img { max-width: 100%; }
                 titulo: document.getElementById('rep-titulo-doc').value,
                 pdfUrl: anterior?.pdfUrl || '',
                 pdfFileId: anterior?.pdfFileId || '',
-                obras: reporteObraState.obras
+                // Se guarda sin el base64 de las fotos ya respaldadas en Drive — ver
+                // aligerarObrasParaGuardar(). El estado en pantalla (reporteObraState) no
+                // se toca, así que la calidad al editar/imprimir en esta sesión no cambia.
+                obras: aligerarObrasParaGuardar(reporteObraState.obras)
             };
             const idxExistente = guardados.findIndex(r => r.id === registro.id);
             try {
@@ -3124,7 +3219,20 @@ img { max-width: 100%; }
                 return registro;
             } catch (err) {
                 console.error(err);
-                mostrarToast('❌ No se pudo guardar: el reporte es muy pesado (demasiadas fotos en alta cantidad). Reduce fotos o imprime directamente a PDF.', 'danger');
+                const hayFotosSinSubir = (reporteObraState.obras || []).some(obra => {
+                    const listas = obra.modo === 'avance'
+                        ? [obra.avance && obra.avance.fotos]
+                        : [obra.etapas && obra.etapas.inicio && obra.etapas.inicio.fotos,
+                           obra.etapas && obra.etapas.proceso && obra.etapas.proceso.fotos,
+                           obra.etapas && obra.etapas.finalizado && obra.etapas.finalizado.fotos];
+                    return listas.some(fotos => (fotos || []).some(f => !f.driveFileId));
+                });
+                mostrarToast(
+                    hayFotosSinSubir
+                        ? '❌ No se pudo guardar: hay fotos que todavía no terminaron de respaldarse en Drive (por ejemplo, por conexión lenta) y siguen pesando en el navegador. Espera a que terminen de subirse e inténtalo de nuevo.'
+                        : '❌ No se pudo guardar: el reporte tiene demasiadas fotos para el espacio del navegador. Divide el reporte en varios más chicos, o genera/imprime el PDF directamente sin guardarlo primero.',
+                    'danger'
+                );
                 return null;
             }
         }
@@ -3585,6 +3693,23 @@ img { max-width: 100%; }
                 reader.readAsDataURL(file);
             }
         });
+
+        // Quita el logo guardado (localStorage) y lo oculta en las 3 vistas que lo usan:
+        // Cotización, Requerimiento de Compras y Reporte de Obra.
+        function eliminarLogoEmpresa() {
+            if (!localStorage.getItem('logo-empresa')) {
+                return mostrarToast('ℹ️ No hay ningún logo cargado.', 'warning');
+            }
+            if (!confirm('¿Quitar el logo de la empresa? Dejará de aparecer en cotizaciones, requerimientos y reportes hasta que subas uno nuevo.')) return;
+
+            localStorage.removeItem('logo-empresa');
+            document.getElementById('cot-logo-file').value = '';
+            ['lbl-logo', 'req-logo', 'rep-logo'].forEach(id => {
+                const img = document.getElementById(id);
+                if (img) { img.removeAttribute('src'); img.style.display = 'none'; }
+            });
+            mostrarToast('🗑️ Logo eliminado.', 'success');
+        }
 
         function autoLlenarItem() {
             const val = document.getElementById('cot-item').value.trim();
