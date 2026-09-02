@@ -627,12 +627,15 @@
         </div>
         <button class="menu-btn active" onclick="switchView('nueva-cotizacion')">📄 Nueva Cotización</button>
         <button class="menu-btn" onclick="switchView('cotizaciones')">📂 Cotizaciones</button>
+        <button class="menu-btn" onclick="switchView('calculadora')">🧮 Calculadora de Materiales</button>
+        <button class="menu-btn" onclick="switchView('despiece-melamina')">🪵 Despiece de Melamina</button>
         <button class="menu-btn" onclick="switchView('requerimiento')">🧾 Requerimiento de Compras</button>
         <button class="menu-btn" onclick="switchView('reporte-obra')">📸 Reporte de Obra</button>
         <button class="menu-btn" onclick="switchView('galeria')">🖼️ Galería Fotográfica</button>
         <button class="menu-btn" onclick="switchView('catalogo')">📦 Catálogo de Costos</button>
         <button class="menu-btn" onclick="switchView('clientes')">👥 Base de Clientes</button>
         <button class="menu-btn" onclick="switchView('cuentas')">🏦 Cuentas Bancarias</button>
+        <button class="menu-btn" onclick="switchView('gastos-obra')">💵 Gastos de Obra</button>
         <button class="menu-btn" onclick="switchView('seguridad')">⚙️ Copia de Seguridad</button>
         <button class="menu-btn" onclick="switchView('guia-precios')">💡 Guía de Precios</button>
         <button id="btn-instalar-app" class="menu-btn" onclick="instalarApp()"
@@ -759,10 +762,16 @@
                     </div>
                     <div class="form-group">
                         <label>Unidad</label>
-                        <select id="cot-unidad">
-                            <option value="m²">m²</option><option value="ml">ml</option><option value="Pto">Pto</option>
-                            <option value="Und">Und</option><option value="Global">Global</option><option value="m³">m³</option>
-                        </select>
+                        <input type="text" id="cot-unidad" list="dl-unidades-medida" value="m²" placeholder="m², Kg, Gal...">
+                        <datalist id="dl-unidades-medida">
+                            <option value="m²"><option value="ml"><option value="m³">
+                            <option value="Pto"><option value="Und"><option value="Global"><option value="GLB">
+                            <option value="Kg"><option value="L"><option value="Gal">
+                            <option value="Bolsa"><option value="Saco"><option value="Rollo">
+                            <option value="Caja"><option value="Plancha"><option value="Barra 6m">
+                            <option value="Balde"><option value="Docena"><option value="Millar">
+                            <option value="Juego"><option value="Par"><option value="Día"><option value="Hora">
+                        </datalist>
                     </div>
                     <div class="form-group">
                         <label>Precio Unit. (S/)</label>
@@ -794,13 +803,7 @@
                     <div class="grid-form" style="grid-template-columns: 1fr 1fr 1fr auto; gap:10px;">
                         <div class="form-group">
                             <label>Unidad de medida</label>
-                            <select id="glb-unidad" onchange="onGlbUnidadChange()">
-                                <option value="GLB">GLB (Global)</option>
-                                <option value="m²">m²</option>
-                                <option value="ml">ml</option>
-                                <option value="m³">m³</option>
-                                <option value="Und">Und</option>
-                            </select>
+                            <input type="text" id="glb-unidad" list="dl-unidades-medida" value="GLB" placeholder="GLB, m², Kg..." onchange="onGlbUnidadChange()" oninput="onGlbUnidadChange()">
                         </div>
                         <div class="form-group">
                             <label>Cantidad</label>
@@ -1244,6 +1247,17 @@
                         <button class="btn btn-danger" id="btn-cancelar-catalogo" onclick="cancelarEdicionCatalogo()" style="display:none;">Cancelar</button>
                     </div>
                 </div>
+                <label style="display:flex; align-items:center; gap:8px; font-size:13px; color:#334155; margin-top:4px; cursor:pointer;">
+                    <input type="checkbox" id="cat-usar-distribuidores" onchange="toggleDistribuidoresCatalogo()">
+                    🏬 Es un material — quiero comparar precios de varios proveedores (Sodimac, Promart, Ferronor, etc.)
+                </label>
+                <div id="cat-distribuidores-wrap" style="display:none; margin-top:10px; background:#f8fafc; border:1px dashed #cbd5e1; border-radius:8px; padding:12px;">
+                    <div id="cat-distribuidores-lista"></div>
+                    <button type="button" class="btn" onclick="agregarFilaDistribuidor()" style="margin-top:6px; padding:6px 12px; font-size:12px; background:#e0f2fe; color:#0369a1;">➕ Agregar proveedor</button>
+                    <p style="font-size:11px; color:#64748b; margin-top:8px;">
+                        El "Precio Base" de arriba se calcula solo, tomando el precio más barato de los proveedores que cargues acá.
+                    </p>
+                </div>
             </div>
 
             <div class="card">
@@ -1321,6 +1335,112 @@
             </div>
         </div>
 
+        <!-- VISTA: GASTOS DE OBRA -->
+        <div id="gastos-obra" class="view">
+            <h1>💵 Control de Gastos de Obra</h1>
+
+            <div class="card">
+                <h3 id="form-gasto-titulo">Registrar Gasto</h3>
+                <div class="grid-form" style="grid-template-columns: 1fr 1fr 1.6fr 1fr; margin-top:10px;">
+                    <div class="form-group">
+                        <label>Fecha</label>
+                        <input type="date" id="gas-fecha">
+                    </div>
+                    <div class="form-group">
+                        <label>Categoría</label>
+                        <select id="gas-categoria" onchange="toggleCategoriaGastoOtro()">
+                            <option value="Materiales">Materiales</option>
+                            <option value="Mano de obra">Mano de obra</option>
+                            <option value="Transporte y Viáticos">Transporte y Viáticos</option>
+                            <option value="Herramientas y Equipos">Herramientas y Equipos</option>
+                            <option value="Alquileres">Alquileres</option>
+                            <option value="Otro">Otro (especificar)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Descripción</label>
+                        <input type="text" id="gas-descripcion" placeholder="Ej: Cemento y arena para losa">
+                    </div>
+                    <div class="form-group">
+                        <label>Monto (S/)</label>
+                        <input type="number" id="gas-monto" min="0.01" step="0.01" placeholder="0.00">
+                    </div>
+                </div>
+                <div class="grid-form" style="grid-template-columns: 1fr 1fr 1.6fr 1fr; margin-top:8px;" id="gas-otro-wrap-row">
+                    <div class="form-group" id="gas-otro-wrap" style="display:none; grid-column: 1 / 3;">
+                        <label>Especifica la categoría</label>
+                        <input type="text" id="gas-categoria-otro" placeholder="Ej: Permisos municipales">
+                    </div>
+                    <div class="form-group">
+                        <label>Proveedor (opcional)</label>
+                        <input type="text" id="gas-proveedor" placeholder="Ej: Ferretería Sodimac">
+                    </div>
+                    <div class="form-group">
+                        <label>N° Boleta/Factura (opcional)</label>
+                        <input type="text" id="gas-comprobante" placeholder="Ej: B001-00234">
+                    </div>
+                </div>
+                <div class="grid-form" style="grid-template-columns: 2fr auto; margin-top:8px; align-items:end;">
+                    <div class="form-group">
+                        <label>Vincular a cotización (opcional — para comparar contra lo cotizado)</label>
+                        <select id="gas-cotizacion">
+                            <option value="">— Sin vincular (gasto general) —</option>
+                        </select>
+                    </div>
+                    <div style="display:flex; gap:8px;">
+                        <button class="btn btn-primary" id="btn-guardar-gasto" onclick="guardarGasto()">Guardar Gasto</button>
+                        <button class="btn btn-danger" id="btn-cancelar-gasto" onclick="cancelarEdicionGasto()" style="display:none;">Cancelar</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Resumen de rentabilidad por cotización</h3>
+                <p style="font-size:12px; color:#64748b; margin:4px 0 12px;">Solo aparecen las cotizaciones que ya tienen al menos un gasto vinculado.</p>
+                <div class="table-scroll">
+                    <table>
+                        <thead>
+                            <tr><th>Cotización</th><th>Cliente</th><th style="text-align:right;">Total cotizado</th>
+                                <th style="text-align:right;">Total gastado</th><th style="text-align:right;">Margen</th></tr>
+                        </thead>
+                        <tbody id="tabla-rentabilidad-body"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="cot-toolbar">
+                    <input type="text" class="cot-search" id="gas-buscador" placeholder="🔍 Buscar por descripción, proveedor, comprobante..." oninput="renderTablaGastos()">
+                    <select id="gas-filtro-categoria" onchange="renderTablaGastos()">
+                        <option value="">Todas las categorías</option>
+                        <option value="Materiales">Materiales</option>
+                        <option value="Mano de obra">Mano de obra</option>
+                        <option value="Transporte y Viáticos">Transporte y Viáticos</option>
+                        <option value="Herramientas y Equipos">Herramientas y Equipos</option>
+                        <option value="Alquileres">Alquileres</option>
+                        <option value="Otro">Otro</option>
+                    </select>
+                    <select id="gas-filtro-cotizacion" onchange="renderTablaGastos()">
+                        <option value="">Todas las cotizaciones (y sin vincular)</option>
+                        <option value="__ninguna__">Solo gastos sin vincular</option>
+                    </select>
+                </div>
+                <div class="cot-stats" style="margin-top:12px;">
+                    <div class="cot-stat"><div class="cot-stat-label">Gastos visibles</div><div class="cot-stat-val" id="gst-total-items">0</div></div>
+                    <div class="cot-stat"><div class="cot-stat-label">Total gastado (filtro)</div><div class="cot-stat-val" id="gst-total-monto" style="font-size:15px;">S/ 0.00</div></div>
+                </div>
+                <div class="table-scroll" style="margin-top:12px;">
+                    <table>
+                        <thead>
+                            <tr><th>Fecha</th><th>Categoría</th><th>Descripción</th><th>Proveedor</th>
+                                <th>Cotización</th><th style="text-align:right;">Monto</th><th>Acciones</th></tr>
+                        </thead>
+                        <tbody id="tabla-gastos-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
         <!-- VISTA: SEGURIDAD (BACKUPS) -->
         <div id="seguridad" class="view">
             <h1>Copia de Seguridad y Respaldo</h1>
@@ -1362,6 +1482,269 @@
                     son solo mano de obra. Los ítems <span style="background:#fef3c7;color:#d97706;padding:1px 6px;border-radius:10px;font-size:11px;font-weight:600;">Mat.</span>
                     son el producto en tienda. Precios referenciales de mercado; ajusta según tu margen y condiciones del trabajo.
                     Al hacer clic en <strong>Usar precio</strong> se carga el ítem en el formulario de nueva cotización.
+                </div>
+            </div>
+        </div>
+
+        <!-- VISTA: CALCULADORA DE MATERIALES -->
+        <div id="calculadora" class="view">
+            <h1>🧮 Calculadora de Metrados y Materiales</h1>
+            <div class="card no-print">
+                <p style="font-size:13px; color:#64748b; margin-bottom:14px;">
+                    Calcula cuánto material necesitas según las medidas de tu obra: no solo concreto y albañilería,
+                    también estructuras metálicas, mueblería de melamina, instalaciones eléctricas y gasfitería.
+                    Los ratios son valores <strong>de referencia — ajústalos</strong> según tu experiencia real y los
+                    rendimientos de tus proveedores. No reemplazan el cálculo de un ingeniero para elementos estructurales.
+                </p>
+
+                <div class="grid-form" style="grid-template-columns: 2fr 1fr; margin-bottom:10px;">
+                    <div class="form-group">
+                        <label>Tipo de elemento a calcular</label>
+                        <select id="calc-tipo" onchange="renderCamposCalculadora()"></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Cantidad de elementos iguales</label>
+                        <input type="number" id="calc-multiplicador" value="1" min="1" step="1">
+                    </div>
+                </div>
+
+                <div id="calc-campos-dimensiones" class="grid-form" style="grid-template-columns: repeat(3, 1fr); margin-bottom:10px;"></div>
+
+                <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                    <button class="btn btn-primary" style="flex:1; min-width:220px;" onclick="calcularMateriales()">🧮 Calcular materiales</button>
+                    <button class="btn" style="flex:1; min-width:220px; background:#f1f5f9; color:#334155; border:1.5px solid #cbd5e1;" onclick="agregarMaterialPersonalizado()">📝 Solo armar mi propia lista (sin fórmula)</button>
+                </div>
+            </div>
+
+            <div class="card no-print" id="calc-resultado" style="display:none;">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:6px;">
+                    <div>
+                        <div style="font-size:12px; color:#94a3b8; text-transform:uppercase; letter-spacing:.5px;">Metrado calculado</div>
+                        <div id="calc-metrado-valor" style="font-size:26px; font-weight:800; color:#1B2A41;"></div>
+                    </div>
+                    <div style="text-align:right;">
+                        <div style="font-size:12px; color:#94a3b8; text-transform:uppercase; letter-spacing:.5px;">Costo total estimado</div>
+                        <div id="calc-total-valor" style="font-size:26px; font-weight:800; color:#16a34a;"></div>
+                    </div>
+                </div>
+
+                <p id="calc-nota-receta" style="display:none; font-size:12px; color:#0369a1; background:#f0f9ff; padding:8px 12px; border-radius:6px; margin-bottom:12px;"></p>
+
+                <div class="table-scroll"><table>
+                    <thead><tr>
+                        <th>Material</th>
+                        <th style="width:80px;text-align:center;">Unid.</th>
+                        <th style="width:100px;text-align:right;">Cantidad</th>
+                        <th style="width:110px;text-align:right;">Precio Unit. (S/)</th>
+                        <th style="width:110px;text-align:right;">Subtotal (S/)</th>
+                        <th style="width:50px;text-align:center;"></th>
+                    </tr></thead>
+                    <tbody id="calc-tabla-materiales"></tbody>
+                </table></div>
+
+                <button class="btn" style="margin-top:10px; background:#f0fdf4; color:#15803d; border:1.5px solid #86efac;" onclick="agregarMaterialPersonalizado()">➕ Agregar material personalizado</button>
+
+                <input type="text" id="calc-nombre-seccion" placeholder="Nombre de la sección (ej: Muro de Contención - Materiales)"
+                    style="width:100%; margin-top:14px;">
+
+                <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:12px;">
+                    <button class="btn btn-primary" style="flex:1; min-width:220px;" onclick="enviarMaterialesACotizacion()">➕ Agregar a la Cotización actual</button>
+                    <button class="btn" style="flex:1; min-width:220px; background:#fff7ed; color:#9a3412; border:1.5px solid #fdba74;" onclick="enviarMaterialesARequerimiento()">🧾 Agregar al Requerimiento de Compras</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- VISTA: DESPIECE DE MELAMINA -->
+        <div id="despiece-melamina" class="view">
+            <h1>🪵 Despiece de Melamina</h1>
+
+            <div class="card no-print">
+                <p style="font-size:13px; color:#64748b; margin-bottom:14px;">
+                    Arma tu lista de piezas (despiece) y calcula cuántas planchas necesitas, cómo distribuir
+                    los cortes en cada una y cuántos metros de tapacanto usar. El acomodo usa un algoritmo de
+                    optimización tipo guillotina (reaprovecha los espacios sobrantes entre piezas, no solo filas)
+                    para minimizar el desperdicio — aun así, es una <strong>referencia automática</strong>:
+                    siempre revisa el diagrama antes de cortar, y ajústalo a mano si tu máquina o proveedor de
+                    corte trabaja distinto.
+                </p>
+
+                <div class="grid-form" style="grid-template-columns: repeat(5, 1fr); margin-bottom:4px;">
+                    <div class="form-group">
+                        <label>Ancho de plancha (cm)</label>
+                        <input type="number" id="desp-plancha-ancho" value="244" min="1" step="1">
+                    </div>
+                    <div class="form-group">
+                        <label>Alto de plancha (cm)</label>
+                        <input type="number" id="desp-plancha-alto" value="183" min="1" step="1">
+                    </div>
+                    <div class="form-group">
+                        <label>Espesor</label>
+                        <select id="desp-espesor">
+                            <option value="15mm">15mm</option>
+                            <option value="18mm" selected>18mm</option>
+                            <option value="25mm">25mm</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Precio por plancha (S/)</label>
+                        <input type="number" id="desp-precio-plancha" value="0" min="0" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label>Precio tapacanto (S//ml)</label>
+                        <input type="number" id="desp-precio-tapacanto" value="0" min="0" step="0.1">
+                    </div>
+                </div>
+                <div class="grid-form" style="grid-template-columns: repeat(3, 1fr); margin-top:10px;">
+                    <div class="form-group">
+                        <label>Holgura de corte / sierra (mm)</label>
+                        <input type="number" id="desp-kerf" value="4" min="0" step="1">
+                    </div>
+                    <div class="form-group">
+                        <label>Espesor tablero posterior / fondo (mm)</label>
+                        <input type="number" id="desp-espesor-tapa-post" value="4" min="1" step="1">
+                    </div>
+                    <div class="form-group">
+                        <label>Precio tablero posterior (S//m²)</label>
+                        <input type="number" id="desp-precio-tapa-post" value="0" min="0" step="0.1">
+                    </div>
+                </div>
+            </div>
+
+            <div class="card no-print">
+                <h3 style="margin:0 0 6px 0;">🏗️ Generador de Módulo (a partir de medidas generales)</h3>
+                <p style="font-size:13px; color:#64748b; margin-bottom:14px;">
+                    Ingresa las medidas totales de tu mueble (largo × alto × fondo) y el sistema arma
+                    automáticamente el despiece — costados, piso, techo, divisiones, entrepaños, puertas y
+                    tablero posterior — aplicando los descuentos típicos de carpintería según el espesor de
+                    tu melamina. Las piezas generadas se agregan a la lista de abajo, donde puedes revisarlas
+                    y ajustarlas antes de calcular.
+                </p>
+
+                <div class="grid-form" style="grid-template-columns: 2fr 1fr 1fr 1fr; margin-bottom:10px;">
+                    <div class="form-group">
+                        <label>Nombre del mueble</label>
+                        <input type="text" id="gen-nombre-mueble" placeholder="Ej: Barra de Cocina" value="Módulo">
+                    </div>
+                    <div class="form-group">
+                        <label>Largo / Ancho total (cm)</label>
+                        <input type="number" id="gen-ancho" value="220" min="1" step="0.5">
+                    </div>
+                    <div class="form-group">
+                        <label>Alto total (cm)</label>
+                        <input type="number" id="gen-alto" value="120" min="1" step="0.5">
+                    </div>
+                    <div class="form-group">
+                        <label>Fondo / Profundidad (cm)</label>
+                        <input type="number" id="gen-fondo" value="45" min="1" step="0.5">
+                    </div>
+                </div>
+
+                <div style="display:flex; gap:18px; flex-wrap:wrap; margin-bottom:14px; font-size:13px;">
+                    <label><input type="checkbox" id="gen-lleva-piso" checked> Lleva piso</label>
+                    <label><input type="checkbox" id="gen-lleva-techo" checked> Lleva techo</label>
+                    <label><input type="checkbox" id="gen-lleva-tapa-post" checked> Lleva tablero posterior (fondo)</label>
+                    <label><input type="checkbox" id="gen-lleva-zocalo" onchange="document.getElementById('gen-zocalo-cont').style.display=this.checked?'block':'none'"> Lleva zócalo (base elevada)</label>
+                </div>
+
+                <div id="gen-zocalo-cont" style="display:none; max-width:220px; margin-bottom:14px;">
+                    <div class="form-group">
+                        <label>Altura del zócalo (cm)</label>
+                        <input type="number" id="gen-zocalo-alto" value="10" min="1" step="0.5">
+                    </div>
+                </div>
+
+                <div class="grid-form" style="grid-template-columns: repeat(4, 1fr); margin-bottom:10px;">
+                    <div class="form-group">
+                        <label>N° de divisiones verticales</label>
+                        <input type="number" id="gen-num-divisiones" value="0" min="0" step="1">
+                    </div>
+                    <div class="form-group">
+                        <label>Entrepaños por compartimento</label>
+                        <input type="number" id="gen-num-entrepanos" value="0" min="0" step="1">
+                    </div>
+                    <div class="form-group">
+                        <label>Puertas por compartimento</label>
+                        <input type="number" id="gen-puertas-por-compartimento" value="1" min="1" step="1">
+                    </div>
+                    <div class="form-group">
+                        <label>Holgura de puertas (mm)</label>
+                        <input type="number" id="gen-holgura-puerta" value="2" min="0" step="0.5">
+                    </div>
+                </div>
+                <label style="font-size:13px; display:block; margin-bottom:14px;">
+                    <input type="checkbox" id="gen-lleva-puertas"> Lleva puertas
+                </label>
+
+                <button class="btn btn-primary" style="width:100%;" onclick="generarPiezasModulo()">➕ Generar piezas del módulo</button>
+            </div>
+
+            <div class="card no-print">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:8px;">
+                    <h3 style="margin:0;">📋 Lista de piezas</h3>
+                    <div style="display:flex; gap:8px;">
+                        <button class="btn" style="background:#f0fdf4; color:#15803d; border:1.5px solid #86efac;" onclick="agregarPiezaDespiece()">➕ Agregar pieza</button>
+                        <button class="btn btn-danger" onclick="vaciarListaPiezasDespiece()">🗑️ Vaciar lista</button>
+                    </div>
+                </div>
+                <div class="table-scroll"><table>
+                    <thead><tr>
+                        <th>Nombre / referencia</th>
+                        <th style="width:90px;text-align:right;">Ancho (cm)</th>
+                        <th style="width:90px;text-align:right;">Alto (cm)</th>
+                        <th style="width:70px;text-align:center;">Cant.</th>
+                        <th style="width:90px;text-align:center;">Veta fija</th>
+                        <th style="width:190px;text-align:center;">Tapacanto en bordes</th>
+                        <th style="width:50px;"></th>
+                    </tr></thead>
+                    <tbody id="desp-tabla-piezas"></tbody>
+                </table></div>
+
+                <button class="btn btn-primary" style="width:100%; margin-top:14px;" onclick="calcularDespieceMelamina()">🧮 Calcular despiece</button>
+            </div>
+
+            <div class="card no-print" id="desp-resultado" style="display:none;">
+                <div class="grid-form" style="grid-template-columns: repeat(4, 1fr); margin-bottom:10px;">
+                    <div>
+                        <div style="font-size:12px; color:#94a3b8; text-transform:uppercase; letter-spacing:.5px;">Planchas necesarias</div>
+                        <div id="desp-total-planchas" style="font-size:24px; font-weight:800; color:#1B2A41;"></div>
+                    </div>
+                    <div>
+                        <div style="font-size:12px; color:#94a3b8; text-transform:uppercase; letter-spacing:.5px;">Aprovechamiento</div>
+                        <div id="desp-aprovechamiento" style="font-size:24px; font-weight:800; color:#1B2A41;"></div>
+                    </div>
+                    <div>
+                        <div style="font-size:12px; color:#94a3b8; text-transform:uppercase; letter-spacing:.5px;">Tapacanto total</div>
+                        <div id="desp-tapacanto-total" style="font-size:24px; font-weight:800; color:#1B2A41;"></div>
+                    </div>
+                    <div style="text-align:right;">
+                        <div style="font-size:12px; color:#94a3b8; text-transform:uppercase; letter-spacing:.5px;">Costo estimado</div>
+                        <div id="desp-costo-total" style="font-size:24px; font-weight:800; color:#16a34a;"></div>
+                    </div>
+                </div>
+
+                <p id="desp-aviso-sobredimension" style="display:none; font-size:12px; color:#9a3412; background:#fff7ed; padding:8px 12px; border-radius:6px; margin-bottom:12px;"></p>
+
+                <h3 style="margin:16px 0 10px 0;">📐 Diagrama de corte por plancha</h3>
+                <div id="desp-diagramas"></div>
+
+                <h3 style="margin:20px 0 10px 0;">🧾 Materiales para la cotización / requerimiento</h3>
+                <div class="table-scroll"><table>
+                    <thead><tr>
+                        <th>Material</th>
+                        <th style="width:80px;text-align:center;">Unid.</th>
+                        <th style="width:100px;text-align:right;">Cantidad</th>
+                        <th style="width:110px;text-align:right;">Precio Unit. (S/)</th>
+                        <th style="width:110px;text-align:right;">Subtotal (S/)</th>
+                    </tr></thead>
+                    <tbody id="desp-tabla-materiales"></tbody>
+                </table></div>
+
+                <input type="text" id="desp-nombre-seccion" placeholder="Nombre de la sección (ej: Mueble de Cocina - Melamina)"
+                    style="width:100%; margin-top:14px;">
+
+                <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:12px;">
+                    <button class="btn btn-primary" style="flex:1; min-width:220px;" onclick="enviarDespieceACotizacion()">➕ Agregar a la Cotización actual</button>
+                    <button class="btn" style="flex:1; min-width:220px; background:#fff7ed; color:#9a3412; border:1.5px solid #fdba74;" onclick="enviarDespieceARequerimiento()">🧾 Agregar al Requerimiento de Compras</button>
                 </div>
             </div>
         </div>
@@ -1446,6 +1829,8 @@ let memoriaCatalogo = [];
 let memoriaClientes = [];
 let memoriaCuentas = [];
 let memoriaReportesNube = []; // NUEVO: reportes de obra (con fotos) que vienen de la nube
+let memoriaGastos = []; // NUEVO: control de gastos de obra
+let editIndexGasto = null;
 
 // correlativo gestionado desde la nube (correlativoActual)
 
@@ -1504,6 +1889,7 @@ function cargarDatosDesdeNube() {
             memoriaClientes     = datos.clientes     || [];
             memoriaCuentas      = datos.cuentas      || [];
             memoriaCotizaciones = datos.cotizaciones || [];
+            memoriaGastos       = datos.gastos       || []; // NUEVO: backends viejos sin hoja "Gastos" → llega []
             correlativoActual   = parseInt(datos.correlativo) || 1;
             localStorage.setItem('correlativo', String(correlativoActual));
 
@@ -1768,6 +2154,1140 @@ ${catalogoResumen || '(catálogo vacío)'}`;
             }
         }
 
+        // ═══════════════ CALCULADORA DE METRADOS Y MATERIALES ═══════════════
+        // Ratios de referencia de la industria peruana (bolsas/m³, m³/m³, kg/m³, etc.).
+        // Son valores ESTIMADOS y EDITABLES en pantalla — cada obra real puede variar según
+        // diseño estructural, dosificación exacta y rendimiento de material.
+
+        // Pesos comerciales de varillas de acero corrugado (kg por metro lineal) — tabla de
+        // referencia de la industria peruana (Aceros Arequipa / SiderPerú).
+        const PESOS_VARILLA_KG_M = {
+            '1/4" (6.35mm)':  0.248,
+            '3/8" (9.5mm)':   0.560,
+            '1/2" (12.7mm)':  0.994,
+            '5/8" (15.9mm)':  1.552,
+            '3/4" (19.1mm)':  2.235,
+            '1" (25.4mm)':    3.973
+        };
+        const LARGO_BARRA_ACERO_DEFAULT    = 9; // metros (barra comercial estándar de acero en Perú)
+        const LARGO_BARRA_GENERICA_DEFAULT = 6; // metros (perfiles, tubos, etc. — editable por el usuario)
+
+        const CATEGORIAS_CALCULADORA = [
+            { id: 'concreto',   nombre: '🧱 Concreto y Albañilería' },
+            { id: 'metalica',   nombre: '⚙️ Estructuras Metálicas' },
+            { id: 'melamina',   nombre: '🪵 Mueblería / Melamina' },
+            { id: 'electrica',  nombre: '⚡ Instalaciones Eléctricas' },
+            { id: 'gasfiteria', nombre: '🚿 Gasfitería' },
+            { id: 'libre',      nombre: '✏️ Cálculo Libre / Personalizado' }
+        ];
+
+        const RECETAS_CALCULADORA = {
+            // ── CONCRETO Y ALBAÑILERÍA ──────────────────────────────────────
+            muro_concreto: {
+                categoria: 'concreto',
+                nombre: 'Muro de Contención (concreto armado)',
+                unidadMetrado: 'm³',
+                campos: [
+                    { id: 'largo', label: 'Largo (m)' },
+                    { id: 'espesor', label: 'Espesor (m)' },
+                    { id: 'alto', label: 'Alto (m)' }
+                ],
+                materiales: [
+                    { desc: 'Cemento Portland Tipo I (bolsa 42.5kg)', unid: 'Bolsa', ratio: 9.5 },
+                    { desc: 'Arena gruesa', unid: 'm³', ratio: 0.52 },
+                    { desc: 'Piedra chancada 1/2"', unid: 'm³', ratio: 0.55 },
+                    { desc: 'Acero corrugado (fierro de construcción)', unid: 'kg', ratio: 80, convertible: 'varilla' },
+                    { desc: 'Agua', unid: 'm³', ratio: 0.185 }
+                ]
+            },
+            zapata: {
+                categoria: 'concreto',
+                nombre: 'Zapata de Concreto Armado',
+                unidadMetrado: 'm³',
+                campos: [
+                    { id: 'largo', label: 'Largo (m)' },
+                    { id: 'ancho', label: 'Ancho (m)' },
+                    { id: 'alto', label: 'Peralte / Alto (m)' }
+                ],
+                materiales: [
+                    { desc: 'Cemento Portland Tipo I (bolsa 42.5kg)', unid: 'Bolsa', ratio: 9.5 },
+                    { desc: 'Arena gruesa', unid: 'm³', ratio: 0.52 },
+                    { desc: 'Piedra chancada 1/2"', unid: 'm³', ratio: 0.55 },
+                    { desc: 'Acero corrugado (fierro de construcción)', unid: 'kg', ratio: 70, convertible: 'varilla' },
+                    { desc: 'Agua', unid: 'm³', ratio: 0.185 }
+                ]
+            },
+            columna: {
+                categoria: 'concreto',
+                nombre: 'Columna de Concreto Armado',
+                unidadMetrado: 'm³',
+                campos: [
+                    { id: 'ancho', label: 'Ancho sección (m)' },
+                    { id: 'espesor', label: 'Peralte sección (m)' },
+                    { id: 'alto', label: 'Altura (m)' }
+                ],
+                materiales: [
+                    { desc: 'Cemento Portland Tipo I (bolsa 42.5kg)', unid: 'Bolsa', ratio: 9.5 },
+                    { desc: 'Arena gruesa', unid: 'm³', ratio: 0.52 },
+                    { desc: 'Piedra chancada 1/2"', unid: 'm³', ratio: 0.55 },
+                    { desc: 'Acero corrugado (fierro de construcción)', unid: 'kg', ratio: 110, convertible: 'varilla' },
+                    { desc: 'Agua', unid: 'm³', ratio: 0.185 }
+                ]
+            },
+            viga: {
+                categoria: 'concreto',
+                nombre: 'Viga de Concreto Armado',
+                unidadMetrado: 'm³',
+                campos: [
+                    { id: 'largo', label: 'Largo (m)' },
+                    { id: 'ancho', label: 'Ancho (m)' },
+                    { id: 'alto', label: 'Peralte (m)' }
+                ],
+                materiales: [
+                    { desc: 'Cemento Portland Tipo I (bolsa 42.5kg)', unid: 'Bolsa', ratio: 9.5 },
+                    { desc: 'Arena gruesa', unid: 'm³', ratio: 0.52 },
+                    { desc: 'Piedra chancada 1/2"', unid: 'm³', ratio: 0.55 },
+                    { desc: 'Acero corrugado (fierro de construcción)', unid: 'kg', ratio: 100, convertible: 'varilla' },
+                    { desc: 'Agua', unid: 'm³', ratio: 0.185 }
+                ]
+            },
+            losa: {
+                categoria: 'concreto',
+                nombre: 'Losa de Concreto (techo / piso armado)',
+                unidadMetrado: 'm³',
+                campos: [
+                    { id: 'largo', label: 'Largo (m)' },
+                    { id: 'ancho', label: 'Ancho (m)' },
+                    { id: 'espesor', label: 'Espesor (m)' }
+                ],
+                materiales: [
+                    { desc: 'Cemento Portland Tipo I (bolsa 42.5kg)', unid: 'Bolsa', ratio: 9.5 },
+                    { desc: 'Arena gruesa', unid: 'm³', ratio: 0.52 },
+                    { desc: 'Piedra chancada 1/2"', unid: 'm³', ratio: 0.55 },
+                    { desc: 'Acero corrugado / malla', unid: 'kg', ratio: 40, convertible: 'varilla' },
+                    { desc: 'Agua', unid: 'm³', ratio: 0.185 }
+                ]
+            },
+            contrapiso: {
+                categoria: 'concreto',
+                nombre: 'Contrapiso / Falso Piso (sin refuerzo)',
+                unidadMetrado: 'm³',
+                campos: [
+                    { id: 'largo', label: 'Largo (m)' },
+                    { id: 'ancho', label: 'Ancho (m)' },
+                    { id: 'espesor', label: 'Espesor (m)', default: 0.1 }
+                ],
+                materiales: [
+                    { desc: 'Cemento Portland Tipo I (bolsa 42.5kg)', unid: 'Bolsa', ratio: 6 },
+                    { desc: 'Arena gruesa', unid: 'm³', ratio: 0.55 },
+                    { desc: 'Piedra chancada 1/2"', unid: 'm³', ratio: 0.6 },
+                    { desc: 'Agua', unid: 'm³', ratio: 0.18 }
+                ]
+            },
+            muro_ladrillo: {
+                categoria: 'concreto',
+                nombre: 'Muro de Ladrillo (albañilería, soga)',
+                unidadMetrado: 'm²',
+                campos: [
+                    { id: 'largo', label: 'Largo (m)' },
+                    { id: 'alto', label: 'Alto (m)' }
+                ],
+                materiales: [
+                    { desc: 'Ladrillo King Kong 18 huecos', unid: 'Und', ratio: 39 },
+                    { desc: 'Cemento Portland Tipo I (bolsa 42.5kg)', unid: 'Bolsa', ratio: 0.45 },
+                    { desc: 'Arena gruesa', unid: 'm³', ratio: 0.03 }
+                ]
+            },
+            encofrado: {
+                categoria: 'concreto',
+                nombre: 'Encofrado (área de contacto)',
+                unidadMetrado: 'm²',
+                campos: [
+                    { id: 'largo', label: 'Largo (m)' },
+                    { id: 'alto', label: 'Alto / desarrollo (m)' }
+                ],
+                materiales: [
+                    { desc: 'Plancha de triplay fenólico 18mm (incl. 10% desperdicio)', unid: 'Plancha', ratio: 0.35 },
+                    { desc: 'Madera tornillo (cuartones/soleras)', unid: 'ml', ratio: 3.5, convertible: 'barra' },
+                    { desc: 'Clavos para madera', unid: 'kg', ratio: 0.2 },
+                    { desc: 'Desmoldante / petróleo', unid: 'Galón', ratio: 0.03 },
+                    { desc: 'Puntales metálicos (alquiler o compra)', unid: 'Und', ratio: 0.5 }
+                ],
+                nota: 'El encofrado varía mucho según el elemento (muro, columna, losa) y el sistema que uses. Ajusta los ratios o agrega/quita materiales según tu propio sistema de encofrado.'
+            },
+
+            // ── ESTRUCTURAS METÁLICAS ────────────────────────────────────────
+            cobertura_metalica: {
+                categoria: 'metalica',
+                nombre: 'Cobertura con Calamina / Aluzinc',
+                unidadMetrado: 'm²',
+                campos: [
+                    { id: 'largo', label: 'Largo (m)' },
+                    { id: 'ancho', label: 'Ancho (m)' }
+                ],
+                materiales: [
+                    { desc: 'Plancha de calamina / Aluzinc (incl. 5% desperdicio)', unid: 'm²', ratio: 1.05 },
+                    { desc: 'Correas / perlines metálicos', unid: 'ml', ratio: 1.5, convertible: 'barra' },
+                    { desc: 'Pernos autorroscantes con arandela', unid: 'Und', ratio: 6 },
+                    { desc: 'Pintura anticorrosiva', unid: 'Galón', ratio: 0.04 }
+                ]
+            },
+            estructura_perfiles: {
+                categoria: 'metalica',
+                nombre: 'Estructura de Perfiles Metálicos (ml)',
+                unidadMetrado: 'ml',
+                campos: [
+                    { id: 'largo', label: 'Longitud total de estructura (ml)' }
+                ],
+                materiales: [
+                    { desc: 'Perfil / tubo estructural (incl. 5% desperdicio)', unid: 'ml', ratio: 1.05, convertible: 'barra' },
+                    { desc: 'Electrodo de soldadura', unid: 'kg', ratio: 0.15 },
+                    { desc: 'Disco de corte / desbaste', unid: 'Und', ratio: 0.1 },
+                    { desc: 'Pintura base anticorrosiva + acabado', unid: 'Galón', ratio: 0.02 }
+                ]
+            },
+            baranda_metalica: {
+                categoria: 'metalica',
+                nombre: 'Baranda / Cerco Metálico (ml)',
+                unidadMetrado: 'ml',
+                campos: [
+                    { id: 'largo', label: 'Longitud (ml)' }
+                ],
+                materiales: [
+                    { desc: 'Tubo estructural (parantes + pasamanos)', unid: 'ml', ratio: 2.2, convertible: 'barra' },
+                    { desc: 'Electrodo de soldadura', unid: 'kg', ratio: 0.2 },
+                    { desc: 'Pintura anticorrosiva + esmalte', unid: 'Galón', ratio: 0.03 }
+                ]
+            },
+
+            // ── MUEBLERÍA / MELAMINA ─────────────────────────────────────────
+            melamina_modulo: {
+                categoria: 'melamina',
+                nombre: 'Módulo de Melamina a Medida (por m² de proyección)',
+                unidadMetrado: 'm²',
+                campos: [
+                    { id: 'ancho', label: 'Ancho (m)' },
+                    { id: 'alto', label: 'Alto (m)' }
+                ],
+                materiales: [
+                    { desc: 'Plancha de melamina 18mm (incl. desperdicio de corte)', unid: 'm²', ratio: 1.25 },
+                    { desc: 'Tapacanto PVC 22mm', unid: 'ml', ratio: 4 },
+                    { desc: 'Bisagra codo 35mm', unid: 'Und', ratio: 2 },
+                    { desc: 'Corredera telescópica (par)', unid: 'Und', ratio: 0.5 },
+                    { desc: 'Tornillería y accesorios de ensamble', unid: 'Global', ratio: 1 }
+                ],
+                nota: 'Esta receta es solo una referencia general por m² de proyección. Para el despiece exacto de tus planchas (cada pieza, corte y sobrante) usa "➕ Agregar material personalizado" y detalla cada una.'
+            },
+
+            // ── INSTALACIONES ELÉCTRICAS ─────────────────────────────────────
+            punto_electrico: {
+                categoria: 'electrica',
+                nombre: 'Punto Eléctrico (tomacorriente / interruptor / luz)',
+                unidadMetrado: 'Und',
+                campos: [
+                    { id: 'largo', label: 'Cantidad de puntos' }
+                ],
+                materiales: [
+                    { desc: 'Cable THW 14 AWG', unid: 'ml', ratio: 4 },
+                    { desc: 'Tubería PVC-SEL 3/4"', unid: 'ml', ratio: 3, convertible: 'barra' },
+                    { desc: 'Caja octogonal / rectangular galvanizada', unid: 'Und', ratio: 1 },
+                    { desc: 'Tomacorriente / interruptor / placa', unid: 'Und', ratio: 1 }
+                ]
+            },
+            circuito_alumbrado: {
+                categoria: 'electrica',
+                nombre: 'Circuito de Alumbrado (ml de tendido)',
+                unidadMetrado: 'ml',
+                campos: [
+                    { id: 'largo', label: 'Longitud del tendido (ml)' }
+                ],
+                materiales: [
+                    { desc: 'Cable THW 12 AWG', unid: 'ml', ratio: 1.1 },
+                    { desc: 'Tubería PVC-SEL 3/4"', unid: 'ml', ratio: 1.05, convertible: 'barra' },
+                    { desc: 'Curvas y uniones PVC', unid: 'Und', ratio: 0.3 }
+                ]
+            },
+
+            // ── GASFITERÍA ────────────────────────────────────────────────────
+            red_agua: {
+                categoria: 'gasfiteria',
+                nombre: 'Red de Agua Fría / Caliente (ml)',
+                unidadMetrado: 'ml',
+                campos: [
+                    { id: 'largo', label: 'Longitud de tubería (ml)' }
+                ],
+                materiales: [
+                    { desc: 'Tubería PVC/CPVC (incl. 10% desperdicio)', unid: 'ml', ratio: 1.1, convertible: 'barra' },
+                    { desc: 'Codos', unid: 'Und', ratio: 0.3 },
+                    { desc: 'Uniones / tees', unid: 'Und', ratio: 0.2 },
+                    { desc: 'Pegamento PVC', unid: 'Galón', ratio: 0.01 }
+                ]
+            },
+            red_desague: {
+                categoria: 'gasfiteria',
+                nombre: 'Red de Desagüe (ml)',
+                unidadMetrado: 'ml',
+                campos: [
+                    { id: 'largo', label: 'Longitud de tubería (ml)' }
+                ],
+                materiales: [
+                    { desc: 'Tubería PVC SAL (incl. 10% desperdicio)', unid: 'ml', ratio: 1.1, convertible: 'barra' },
+                    { desc: 'Codos / Yee', unid: 'Und', ratio: 0.25 },
+                    { desc: 'Pegamento PVC para desagüe', unid: 'Galón', ratio: 0.01 }
+                ]
+            },
+
+            // ── CÁLCULO LIBRE ─────────────────────────────────────────────────
+            libre: {
+                categoria: 'libre',
+                nombre: 'Cálculo Libre (arma tu propia lista de materiales)',
+                especial: 'libre',
+                unidadMetrado: null,
+                campos: [],
+                materiales: [],
+                nota: 'Aquí no hay fórmula: solo registra el metrado (opcional) y agrega cada material con "➕ Agregar material personalizado". Útil para cualquier rubro que no esté en las otras categorías.'
+            }
+        };
+
+        let calcUltimoResultado = null; // { metrado, unidadMetrado, materiales: [{desc,unid,cant,precio,subtotal,...}], nombreTipo, notaReceta }
+        let calcConversionAbierta = new Set(); // índices de materiales con el panel de conversión a unidades abierto
+
+        function inicializarCalculadora() {
+            const sel = document.getElementById('calc-tipo');
+            if (sel && !sel.dataset.armado) {
+                sel.innerHTML = CATEGORIAS_CALCULADORA.map(cat => {
+                    const opciones = Object.entries(RECETAS_CALCULADORA)
+                        .filter(([key, r]) => r.categoria === cat.id)
+                        .map(([key, r]) => `<option value="${key}">${r.nombre}</option>`).join('');
+                    return opciones ? `<optgroup label="${cat.nombre}">${opciones}</optgroup>` : '';
+                }).join('');
+                sel.dataset.armado = '1';
+                renderCamposCalculadora();
+            }
+        }
+
+        function renderCamposCalculadora() {
+            const receta = RECETAS_CALCULADORA[document.getElementById('calc-tipo').value];
+            const cont = document.getElementById('calc-campos-dimensiones');
+
+            if (receta.especial === 'libre') {
+                cont.style.gridTemplateColumns = `1fr 1fr`;
+                cont.innerHTML = `
+                    <div class="form-group">
+                        <label>Metrado (opcional — puedes dejarlo en 0 y solo agregar materiales manualmente)</label>
+                        <input type="number" id="calc-libre-metrado" step="0.01" min="0" value="0" placeholder="0.00">
+                    </div>
+                    <div class="form-group">
+                        <label>Unidad del metrado</label>
+                        <select id="calc-libre-unidad">
+                            <option value="m²">m²</option>
+                            <option value="ml">ml</option>
+                            <option value="m³">m³</option>
+                            <option value="Und">Und</option>
+                            <option value="kg">kg</option>
+                            <option value="Global">Global</option>
+                        </select>
+                    </div>`;
+            } else {
+                cont.style.gridTemplateColumns = `repeat(${receta.campos.length}, 1fr)`;
+                cont.innerHTML = receta.campos.map(c => `
+                    <div class="form-group">
+                        <label>${c.label}</label>
+                        <input type="number" id="calc-dim-${c.id}" step="0.01" min="0" value="${c.default || ''}" placeholder="0.00">
+                    </div>`).join('');
+            }
+            document.getElementById('calc-resultado').style.display = 'none';
+        }
+
+        // Busca en el catálogo un precio de referencia para prellenar (coincidencia por texto).
+        function buscarPrecioEnCatalogo(desc) {
+            const palabras = (desc || '').toLowerCase().split(/\s+/).filter(w => w.length > 3);
+            const match = memoriaCatalogo.find(it =>
+                palabras.some(p => it.desc.toLowerCase().includes(p))
+            );
+            return match ? match.precio : 0;
+        }
+
+        function calcularMateriales() {
+            const tipoKey = document.getElementById('calc-tipo').value;
+            const receta = RECETAS_CALCULADORA[tipoKey];
+            const multiplicador = parseFloat(document.getElementById('calc-multiplicador').value) || 1;
+
+            let metrado, unidadMetrado;
+
+            if (receta.especial === 'libre') {
+                metrado = (parseFloat(document.getElementById('calc-libre-metrado').value) || 0) * multiplicador;
+                unidadMetrado = document.getElementById('calc-libre-unidad').value;
+            } else {
+                const valores = receta.campos.map(c => parseFloat(document.getElementById(`calc-dim-${c.id}`).value) || 0);
+                if (valores.some(v => v <= 0)) {
+                    return mostrarToast('⚠️ Completa todas las medidas (mayores a 0).', 'warning');
+                }
+                metrado = valores.reduce((a, b) => a * b, 1) * multiplicador;
+                unidadMetrado = receta.unidadMetrado;
+            }
+
+            const materiales = (receta.materiales || []).map(m => {
+                const cantidadCruda = m.ratio * metrado;
+                const cant = (m.unid === 'Bolsa' || m.unid === 'Und') ? Math.ceil(cantidadCruda) : Math.round(cantidadCruda * 100) / 100;
+                const precio = buscarPrecioEnCatalogo(m.desc);
+                return {
+                    desc: m.desc, unid: m.unid, cant, precio, subtotal: cant * precio,
+                    personalizado: false,
+                    convertible: m.convertible || null,
+                    diametroVarilla: Object.keys(PESOS_VARILLA_KG_M)[2], // 1/2" por defecto
+                    largoBarra: m.convertible === 'varilla' ? LARGO_BARRA_ACERO_DEFAULT : LARGO_BARRA_GENERICA_DEFAULT
+                };
+            });
+
+            calcUltimoResultado = { metrado, unidadMetrado, materiales, nombreTipo: receta.nombre, notaReceta: receta.nota || null };
+            document.getElementById('calc-nombre-seccion').value = `${receta.nombre.toUpperCase()} - MATERIALES`;
+            calcConversionAbierta = new Set();
+            renderResultadoCalculadora();
+        }
+
+        // Genera los controles inline (diámetro/largo de barra) para convertir un material
+        // de su unidad base (kg o ml) a "Unidades" (varillas o barras/tubos completos).
+        function htmlControlesConversion(m, i) {
+            if (m.convertible === 'varilla') {
+                const pesoBarra = (PESOS_VARILLA_KG_M[m.diametroVarilla] || 0) * m.largoBarra;
+                const unidades = pesoBarra > 0 ? Math.ceil(m.cant / pesoBarra) : 0;
+                return `
+                    <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end; font-size:12px;">
+                        <div>
+                            <label style="display:block;color:#64748b;margin-bottom:2px;">Diámetro de varilla</label>
+                            <select onchange="actualizarDiametroVarilla(${i}, this.value)" style="padding:4px;">
+                                ${Object.keys(PESOS_VARILLA_KG_M).map(d => `<option value="${d}" ${d===m.diametroVarilla?'selected':''}>${d}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display:block;color:#64748b;margin-bottom:2px;">Largo de barra comercial (m)</label>
+                            <input type="number" value="${m.largoBarra}" step="0.5" min="1" style="width:80px;padding:4px;"
+                                onchange="actualizarLargoBarraMaterial(${i}, this.value)">
+                        </div>
+                        <div style="color:#0369a1;font-weight:600;">
+                            ≈ ${unidades} varilla${unidades===1?'':'s'} de ${m.diametroVarilla} × ${m.largoBarra}m
+                            <span style="color:#94a3b8;font-weight:400;"> (${m.cant} kg ÷ ${pesoBarra.toFixed(2)} kg/barra)</span>
+                        </div>
+                        <button type="button" class="btn btn-primary" style="padding:5px 12px;font-size:12px;"
+                            onclick="aplicarConversionMaterial(${i})">✅ Usar en unidades (${unidades})</button>
+                    </div>`;
+            }
+            if (m.convertible === 'barra') {
+                const unidades = m.largoBarra > 0 ? Math.ceil(m.cant / m.largoBarra) : 0;
+                return `
+                    <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end; font-size:12px;">
+                        <div>
+                            <label style="display:block;color:#64748b;margin-bottom:2px;">Largo de barra/tubo comercial (m)</label>
+                            <input type="number" value="${m.largoBarra}" step="0.5" min="1" style="width:80px;padding:4px;"
+                                onchange="actualizarLargoBarraMaterial(${i}, this.value)">
+                        </div>
+                        <div style="color:#0369a1;font-weight:600;">
+                            ≈ ${unidades} unidad${unidades===1?'':'es'} de ${m.largoBarra}m
+                            <span style="color:#94a3b8;font-weight:400;"> (${m.cant} ml ÷ ${m.largoBarra}m)</span>
+                        </div>
+                        <button type="button" class="btn btn-primary" style="padding:5px 12px;font-size:12px;"
+                            onclick="aplicarConversionMaterial(${i})">✅ Usar en unidades (${unidades})</button>
+                    </div>`;
+            }
+            return '';
+        }
+
+        function renderResultadoCalculadora() {
+            const r = calcUltimoResultado;
+            document.getElementById('calc-resultado').style.display = 'block';
+            document.getElementById('calc-metrado-valor').textContent = r.unidadMetrado ? `${r.metrado.toFixed(2)} ${r.unidadMetrado}` : '—';
+
+            const tbody = document.getElementById('calc-tabla-materiales');
+
+            if (r.materiales.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#94a3b8; padding:20px;">
+                    Aún no hay materiales en esta lista. Usa "➕ Agregar material personalizado" para empezar.</td></tr>`;
+            } else {
+                tbody.innerHTML = r.materiales.map((m, i) => {
+                    const filaPrincipal = `
+                        <tr>
+                            <td>
+                                ${m.personalizado
+                                    ? `<input type="text" value="${(m.desc||'').replace(/"/g,'&quot;')}" placeholder="Descripción del material"
+                                         style="width:100%;padding:4px;" onchange="actualizarDescMaterial(${i}, this.value)">`
+                                    : m.desc}
+                                ${(m.convertible && !m.unidBaseOriginal) ? `<button type="button" class="btn" style="padding:2px 8px;font-size:11px;margin-left:6px;background:#e0f2fe;color:#0369a1;"
+                                    onclick="toggleConversionMaterial(${i})">🔁 ${calcConversionAbierta.has(i) ? 'Ocultar' : 'Convertir a unidades'}</button>` : ''}
+                                ${m.unidBaseOriginal ? `<button type="button" class="btn" style="padding:2px 8px;font-size:11px;margin-left:6px;"
+                                    onclick="revertirConversionMaterial(${i})">↩️ Revertir a ${m.unidBaseOriginal}</button>` : ''}
+                            </td>
+                            <td style="text-align:center;">
+                                ${m.personalizado
+                                    ? `<select onchange="actualizarUnidMaterial(${i}, this.value)" style="padding:4px;">
+                                        ${UNIDADES_REQUERIMIENTO.map(u => `<option value="${u}" ${u===m.unid?'selected':''}>${u}</option>`).join('')}
+                                       </select>`
+                                    : m.unid}
+                            </td>
+                            <td style="text-align:right;">
+                                <input type="number" value="${m.cant}" step="0.01" min="0" style="width:90px;text-align:right;padding:4px;"
+                                    onchange="actualizarCantidadCalculadora(${i}, this.value)">
+                            </td>
+                            <td style="text-align:right;">
+                                <input type="number" value="${m.precio.toFixed(2)}" step="0.01" min="0" style="width:90px;text-align:right;padding:4px;"
+                                    onchange="actualizarPrecioCalculadora(${i}, this.value)">
+                            </td>
+                            <td style="text-align:right;font-weight:700;">${formatMonto ? formatMonto(m.subtotal) : m.subtotal.toFixed(2)}</td>
+                            <td style="text-align:center;">
+                                <button type="button" class="btn btn-danger" style="padding:3px 8px;font-size:11px;" onclick="eliminarMaterialCalculadora(${i})">✕</button>
+                            </td>
+                        </tr>`;
+
+                    const filaConversion = (m.convertible && !m.unidBaseOriginal && calcConversionAbierta.has(i)) ? `
+                        <tr class="no-print">
+                            <td colspan="6" style="background:#f8fafc;padding:10px 14px;">
+                                ${htmlControlesConversion(m, i)}
+                            </td>
+                        </tr>` : '';
+
+                    return filaPrincipal + filaConversion;
+                }).join('');
+            }
+
+            const total = r.materiales.reduce((a, m) => a + m.subtotal, 0);
+            document.getElementById('calc-total-valor').textContent = 'S/ ' + (formatMonto ? formatMonto(total) : total.toFixed(2));
+
+            const notaCont = document.getElementById('calc-nota-receta');
+            if (notaCont) {
+                notaCont.style.display = r.notaReceta ? 'block' : 'none';
+                notaCont.textContent = r.notaReceta ? ('💡 ' + r.notaReceta) : '';
+            }
+        }
+
+        function toggleConversionMaterial(i) {
+            if (calcConversionAbierta.has(i)) calcConversionAbierta.delete(i); else calcConversionAbierta.add(i);
+            renderResultadoCalculadora();
+        }
+
+        function actualizarDiametroVarilla(i, valor) {
+            calcUltimoResultado.materiales[i].diametroVarilla = valor;
+            renderResultadoCalculadora();
+        }
+
+        function actualizarLargoBarraMaterial(i, valor) {
+            calcUltimoResultado.materiales[i].largoBarra = parseFloat(valor) || 1;
+            renderResultadoCalculadora();
+        }
+
+        // Convierte de forma definitiva la fila de kg/ml a "Unidades" (piezas completas),
+        // recalculando la cantidad y cambiando la unidad mostrada. Guarda el valor original
+        // (unidad y cantidad en kg/ml) para poder revertir si el usuario cambia de opinión.
+        function aplicarConversionMaterial(i) {
+            const m = calcUltimoResultado.materiales[i];
+            let unidades, detalle;
+            if (m.convertible === 'varilla') {
+                const pesoBarra = (PESOS_VARILLA_KG_M[m.diametroVarilla] || 0) * m.largoBarra;
+                unidades = pesoBarra > 0 ? Math.ceil(m.cant / pesoBarra) : 0;
+                detalle = `${m.diametroVarilla} × ${m.largoBarra}m`;
+            } else {
+                unidades = m.largoBarra > 0 ? Math.ceil(m.cant / m.largoBarra) : 0;
+                detalle = `de ${m.largoBarra}m`;
+            }
+            m.unidBaseOriginal = m.unid;
+            m.cantBaseOriginal = m.cant;
+            m.descBaseOriginal = m.desc;
+            m.desc = `${m.desc} (${detalle})`;
+            m.unid = 'Und';
+            m.cant = unidades;
+            // El precio de catálogo estaba pensado para la unidad base (kg/ml); al pasar a
+            // "Und" probablemente no aplique, así que intentamos buscar un precio por pieza
+            // y si no hay coincidencia, lo dejamos en 0 para que el usuario lo complete.
+            m.precio = buscarPrecioEnCatalogo(m.desc) || 0;
+            m.subtotal = m.cant * m.precio;
+            calcConversionAbierta.delete(i);
+            renderResultadoCalculadora();
+            mostrarToast('🔁 Material convertido a unidades. Verifica el precio por pieza.', 'success');
+        }
+
+        function revertirConversionMaterial(i) {
+            const m = calcUltimoResultado.materiales[i];
+            if (!m.unidBaseOriginal) return;
+            m.unid = m.unidBaseOriginal;
+            m.cant = m.cantBaseOriginal;
+            m.desc = m.descBaseOriginal;
+            m.precio = buscarPrecioEnCatalogo(m.desc) || 0;
+            m.subtotal = m.cant * m.precio;
+            delete m.unidBaseOriginal;
+            delete m.cantBaseOriginal;
+            delete m.descBaseOriginal;
+            renderResultadoCalculadora();
+        }
+
+        function actualizarCantidadCalculadora(i, valor) {
+            const m = calcUltimoResultado.materiales[i];
+            m.cant = parseFloat(valor) || 0;
+            m.subtotal = m.cant * m.precio;
+            renderResultadoCalculadora();
+        }
+
+        function actualizarPrecioCalculadora(i, valor) {
+            const m = calcUltimoResultado.materiales[i];
+            m.precio = parseFloat(valor) || 0;
+            m.subtotal = m.cant * m.precio;
+            renderResultadoCalculadora();
+        }
+
+        function actualizarDescMaterial(i, valor) {
+            calcUltimoResultado.materiales[i].desc = valor;
+        }
+
+        function actualizarUnidMaterial(i, valor) {
+            calcUltimoResultado.materiales[i].unid = valor;
+        }
+
+        function eliminarMaterialCalculadora(i) {
+            calcUltimoResultado.materiales.splice(i, 1);
+            calcConversionAbierta = new Set(); // los índices cambiaron: evitamos dejar abierto el panel de otra fila
+            renderResultadoCalculadora();
+        }
+
+        // Agrega una fila de material 100% editable a mano (descripción, unidad, cantidad,
+        // precio) — para encofrados, despiece de melamina, o cualquier ítem que no esté
+        // cubierto por ninguna receta. Si todavía no se había calculado nada, arranca una
+        // lista vacía para poder construirla desde cero.
+        function agregarMaterialPersonalizado() {
+            if (!calcUltimoResultado) {
+                const receta = RECETAS_CALCULADORA[document.getElementById('calc-tipo').value];
+                calcUltimoResultado = { metrado: 0, unidadMetrado: receta.unidadMetrado || null, materiales: [], nombreTipo: receta.nombre, notaReceta: receta.nota || null };
+                document.getElementById('calc-nombre-seccion').value = `${receta.nombre.toUpperCase()} - MATERIALES`;
+                calcConversionAbierta = new Set();
+            }
+            calcUltimoResultado.materiales.push({
+                desc: '', unid: 'Und', cant: 1, precio: 0, subtotal: 0,
+                personalizado: true, convertible: null
+            });
+            renderResultadoCalculadora();
+        }
+
+        function enviarMaterialesACotizacion() {
+            const r = calcUltimoResultado;
+            if (!r || r.materiales.length === 0) return mostrarToast('⚠️ No hay materiales en la lista todavía.', 'warning');
+            const nombreSeccion = (document.getElementById('calc-nombre-seccion').value || r.nombreTipo).toUpperCase().trim();
+
+            let destino = seccionesCotizacion.find(s => s.nombre === nombreSeccion);
+            if (!destino) {
+                destino = { nombre: nombreSeccion, items: [] };
+                seccionesCotizacion.push(destino);
+            }
+            r.materiales.forEach(m => {
+                if (!m.desc || !m.desc.trim()) return; // evita mandar filas personalizadas vacías
+                destino.items.push({
+                    desc: m.desc,
+                    tipoPrecio: 'A todo costo',
+                    unid: m.unid,
+                    cant: m.cant,
+                    precio: m.precio,
+                    subtotal: m.subtotal
+                });
+            });
+            seccionActualIdx = seccionesCotizacion.length - 1;
+            renderizarChipsSecciones();
+            actualizarContenedorCotizacion();
+            switchView('nueva-cotizacion');
+            mostrarToast('✅ Materiales agregados a la cotización. Revisa precios antes de enviar.', 'success');
+        }
+
+        function enviarMaterialesARequerimiento() {
+            const r = calcUltimoResultado;
+            if (!r || r.materiales.length === 0) return mostrarToast('⚠️ No hay materiales en la lista todavía.', 'warning');
+            r.materiales.forEach(m => {
+                if (!m.desc || !m.desc.trim()) return;
+                itemsRequerimiento.push({
+                    desc: m.desc,
+                    unidad: m.unid,
+                    cantidad: m.cant,
+                    obs: r.unidadMetrado ? `Calculado: ${r.nombreTipo} — ${r.metrado.toFixed(2)} ${r.unidadMetrado}` : `Calculado: ${r.nombreTipo}`,
+                    categoria: 'Materiales'
+                });
+            });
+            switchView('requerimiento');
+            mostrarToast('✅ Materiales agregados al Requerimiento de Compras.', 'success');
+        }
+
+        // ═══════════════ DESPIECE DE MELAMINA ═══════════════
+        // Toma una lista de piezas (ancho x alto x cantidad) y calcula cuántas planchas se
+        // necesitan usando un algoritmo de acomodo por "estantes" (shelf packing / NFDH),
+        // el mismo enfoque que usan la mayoría de herramientas de corte óptimo. No es
+        // matemáticamente perfecto (el bin-packing 2D óptimo es un problema muy complejo),
+        // pero da un acomodo razonable y siempre se puede ajustar a mano antes de cortar.
+        let despiecePiezas = [];      // [{id, nombre, ancho, alto, cant, veta, tap:{arriba,abajo,izq,der}}]
+        let despieceTapasPosteriores = []; // [{nombre, ancho, alto}] — tableros de fondo (material aparte, no se anida con la melamina)
+        let despieceUltimoResultado = null; // { planchas:[...], materiales:[...], tapacantoTotalM, areaUtil, areaTotal }
+
+        function inicializarDespieceMelamina() {
+            if (despiecePiezas.length === 0) {
+                agregarPiezaDespiece();
+            }
+        }
+
+        function agregarPiezaDespiece() {
+            despiecePiezas.push({
+                id: 'pz_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
+                nombre: '', ancho: 60, alto: 40, cant: 1, veta: false,
+                tap: { arriba: false, abajo: false, izq: false, der: false }
+            });
+            renderTablaPiezasDespiece();
+        }
+
+        function vaciarListaPiezasDespiece() {
+            if (despiecePiezas.length === 0) return;
+            if (!confirm('¿Vaciar toda la lista de piezas y tableros posteriores? Esta acción no se puede deshacer.')) return;
+            despiecePiezas = [];
+            despieceTapasPosteriores = [];
+            renderTablaPiezasDespiece();
+            document.getElementById('desp-resultado').style.display = 'none';
+        }
+
+        // Genera automáticamente el despiece de un mueble tipo "caja" (mueble bajo, alto,
+        // barra, cajonera, clóset, etc.) a partir de sus medidas generales, aplicando los
+        // descuentos típicos de carpintería en melamina: los costados corren toda la altura,
+        // mientras que piso/techo/divisiones van INSERTADOS entre los costados (se descuenta
+        // el espesor de melamina de cada lado). El tablero posterior se calcula aparte porque
+        // normalmente es un material distinto (más delgado) y no se anida junto a la melamina.
+        function generarPiezasModulo() {
+            const nombre   = (document.getElementById('gen-nombre-mueble').value || 'Módulo').trim();
+            const anchoTot = parseFloat(document.getElementById('gen-ancho').value) || 0;
+            const altoTot  = parseFloat(document.getElementById('gen-alto').value) || 0;
+            const fondoTot = parseFloat(document.getElementById('gen-fondo').value) || 0;
+
+            if (anchoTot <= 0 || altoTot <= 0 || fondoTot <= 0) {
+                return mostrarToast('⚠️ Ingresa el largo, alto y fondo del mueble (mayores a 0).', 'warning');
+            }
+
+            const espesorMel = (parseFloat(document.getElementById('desp-espesor').value) || 18) / 10; // mm -> cm
+            const espesorTapaPost = (parseFloat(document.getElementById('desp-espesor-tapa-post').value) || 4) / 10; // mm -> cm
+
+            const llevaPiso     = document.getElementById('gen-lleva-piso').checked;
+            const llevaTecho    = document.getElementById('gen-lleva-techo').checked;
+            const llevaTapaPost = document.getElementById('gen-lleva-tapa-post').checked;
+            const llevaZocalo   = document.getElementById('gen-lleva-zocalo').checked;
+            const zocaloAlto    = llevaZocalo ? (parseFloat(document.getElementById('gen-zocalo-alto').value) || 0) : 0;
+
+            const numDivisiones      = parseInt(document.getElementById('gen-num-divisiones').value) || 0;
+            const numEntrepanosPorC  = parseInt(document.getElementById('gen-num-entrepanos').value) || 0;
+            const llevaPuertas       = document.getElementById('gen-lleva-puertas').checked;
+            const puertasPorComp     = Math.max(1, parseInt(document.getElementById('gen-puertas-por-compartimento').value) || 1);
+            const holguraPuertaCm    = (parseFloat(document.getElementById('gen-holgura-puerta').value) || 0) / 10; // mm -> cm
+
+            const nuevasPiezas = [];
+            const agregar = (sufijo, ancho, alto, cant, tap, veta = false) => {
+                if (cant <= 0 || ancho <= 0 || alto <= 0) return;
+                nuevasPiezas.push({
+                    id: 'pz_' + Date.now() + '_' + Math.floor(Math.random() * 100000),
+                    nombre: `${nombre} - ${sufijo}`,
+                    ancho: Math.round(ancho * 100) / 100,
+                    alto: Math.round(alto * 100) / 100,
+                    cant, veta,
+                    tap: { arriba: false, abajo: false, izq: false, der: false, ...tap }
+                });
+            };
+
+            // Profundidad útil de costados/piso/techo/divisiones: si hay tapa posterior, se
+            // descuenta su espesor para que, ya armado, el mueble mida exactamente el fondo
+            // indicado (la tapa se clava sobre el borde trasero).
+            const fondoUtil = fondoTot - (llevaTapaPost ? espesorTapaPost : 0);
+
+            // Altura de la "caja" (sin contar el zócalo, si lo hay)
+            const altoCaja = altoTot - zocaloAlto;
+
+            // Costados (2 piezas) — corren toda la altura de la caja
+            agregar('Costado', fondoUtil, altoCaja, 2, { der: true }, true);
+
+            // Piso y techo — van insertados ENTRE los costados
+            const anchoInsertado = anchoTot - 2 * espesorMel;
+            if (llevaPiso)  agregar('Piso',  anchoInsertado, fondoUtil, 1, {});
+            if (llevaTecho) agregar('Techo', anchoInsertado, fondoUtil, 1, {});
+
+            // Altura interior disponible para divisiones/puertas (entre piso y techo)
+            const altoInterior = altoCaja - (llevaPiso ? espesorMel : 0) - (llevaTecho ? espesorMel : 0);
+
+            // Divisiones verticales
+            if (numDivisiones > 0) {
+                agregar('División vertical', fondoUtil, altoInterior, numDivisiones, { der: true });
+            }
+
+            // Ancho interior disponible, repartido en compartimentos (entre costados y divisiones)
+            const anchoInteriorTotal = anchoInsertado - numDivisiones * espesorMel;
+            const numCompartimentos  = numDivisiones + 1;
+            const anchoPorCompartimento = anchoInteriorTotal / numCompartimentos;
+
+            // Entrepaños (repisas internas) — mismo fondo que el piso, con canto visible al frente
+            if (numEntrepanosPorC > 0) {
+                agregar('Entrepaño', anchoPorCompartimento, fondoUtil, numEntrepanosPorC * numCompartimentos, { arriba: true });
+            }
+
+            // Puertas — cubren el frente de cada compartimento, con holgura alrededor
+            if (llevaPuertas) {
+                const anchoPuerta = (anchoPorCompartimento / puertasPorComp) - 2 * holguraPuertaCm;
+                const altoPuerta  = altoCaja - 2 * holguraPuertaCm;
+                agregar('Puerta', anchoPuerta, altoPuerta, puertasPorComp * numCompartimentos,
+                    { arriba: true, abajo: true, izq: true, der: true });
+            }
+
+            // Zócalo frontal (tira baja, opcional)
+            if (llevaZocalo) {
+                agregar('Zócalo frontal', anchoTot, zocaloAlto, 1, { arriba: true });
+            }
+
+            if (nuevasPiezas.length === 0) {
+                return mostrarToast('⚠️ No se generó ninguna pieza — revisa las medidas y opciones.', 'warning');
+            }
+
+            despiecePiezas.push(...nuevasPiezas);
+
+            // Tablero posterior (fondo) — material aparte, se guarda solo el área total
+            if (llevaTapaPost) {
+                despieceTapasPosteriores.push({ nombre: `${nombre} - Tablero posterior`, ancho: anchoTot, alto: altoCaja });
+            }
+
+            renderTablaPiezasDespiece();
+            mostrarToast(`✅ Se agregaron ${nuevasPiezas.length} tipo(s) de pieza de "${nombre}" a la lista.`, 'success');
+        }
+
+        function eliminarPiezaDespiece(id) {
+            despiecePiezas = despiecePiezas.filter(p => p.id !== id);
+            renderTablaPiezasDespiece();
+        }
+
+        function actualizarPiezaDespiece(id, campo, valor) {
+            const p = despiecePiezas.find(p => p.id === id);
+            if (!p) return;
+            if (campo === 'nombre') p.nombre = valor;
+            else if (campo === 'veta') p.veta = valor;
+            else if (['arriba', 'abajo', 'izq', 'der'].includes(campo)) p.tap[campo] = valor;
+            else p[campo] = parseFloat(valor) || 0;
+        }
+
+        function renderTablaPiezasDespiece() {
+            const tbody = document.getElementById('desp-tabla-piezas');
+            if (!tbody) return;
+            tbody.innerHTML = despiecePiezas.map(p => `
+                <tr>
+                    <td><input type="text" value="${(p.nombre||'').replace(/"/g,'&quot;')}" placeholder="Ej: Costado izquierdo"
+                        style="width:100%;padding:4px;" onchange="actualizarPiezaDespiece('${p.id}','nombre', this.value)"></td>
+                    <td><input type="number" value="${p.ancho}" min="1" step="0.5" style="width:80px;text-align:right;padding:4px;"
+                        onchange="actualizarPiezaDespiece('${p.id}','ancho', this.value)"></td>
+                    <td><input type="number" value="${p.alto}" min="1" step="0.5" style="width:80px;text-align:right;padding:4px;"
+                        onchange="actualizarPiezaDespiece('${p.id}','alto', this.value)"></td>
+                    <td><input type="number" value="${p.cant}" min="1" step="1" style="width:60px;text-align:center;padding:4px;"
+                        onchange="actualizarPiezaDespiece('${p.id}','cant', this.value)"></td>
+                    <td style="text-align:center;">
+                        <input type="checkbox" ${p.veta?'checked':''} title="No rotar esta pieza al acomodarla (respeta el sentido de la veta)"
+                            onchange="actualizarPiezaDespiece('${p.id}','veta', this.checked)">
+                    </td>
+                    <td style="text-align:center; font-size:11px;">
+                        <label style="margin-right:6px;"><input type="checkbox" ${p.tap.arriba?'checked':''} onchange="actualizarPiezaDespiece('${p.id}','arriba', this.checked)"> Arr</label>
+                        <label style="margin-right:6px;"><input type="checkbox" ${p.tap.abajo?'checked':''} onchange="actualizarPiezaDespiece('${p.id}','abajo', this.checked)"> Aba</label>
+                        <label style="margin-right:6px;"><input type="checkbox" ${p.tap.izq?'checked':''} onchange="actualizarPiezaDespiece('${p.id}','izq', this.checked)"> Izq</label>
+                        <label><input type="checkbox" ${p.tap.der?'checked':''} onchange="actualizarPiezaDespiece('${p.id}','der', this.checked)"> Der</label>
+                    </td>
+                    <td style="text-align:center;">
+                        <button type="button" class="btn btn-danger" style="padding:3px 8px;font-size:11px;" onclick="eliminarPiezaDespiece('${p.id}')">✕</button>
+                    </td>
+                </tr>`).join('');
+        }
+
+        // Acomoda las piezas (ya expandidas por cantidad) en planchas usando shelf-packing:
+        // ordena de mayor a menor alto, y va llenando "estantes" horizontales de izquierda a
+        // derecha; cuando una pieza no cabe en el estante actual, abre uno nuevo debajo; cuando
+        // ya no cabe ningún estante nuevo en la plancha, pasa a la siguiente plancha.
+        // Empaqueta las piezas usando el algoritmo "Guillotine — Best Short Side Fit", el
+        // mismo enfoque que usan la mayoría de optimizadores de corte profesionales (mejor
+        // que el simple acomodo por estantes: reutiliza los espacios que sobran entre piezas
+        // de distinto tamaño en vez de "sellar" cada fila). El resultado sigue siendo
+        // 100% cortable con cortes rectos de extremo a extremo (guillotina), como cualquier
+        // sierra escuadradora real.
+        //
+        // Cómo funciona: cada plancha mantiene una lista de "rectángulos libres" (empieza con
+        // uno solo: la plancha entera). Para cada pieza (de mayor a menor área), se busca —
+        // entre TODOS los rectángulos libres de TODAS las planchas abiertas— el que deje menos
+        // espacio sobrante alrededor de la pieza (Best Short Side Fit). Al colocarla, ese
+        // rectángulo se divide en dos rectángulos libres nuevos mediante un corte recto,
+        // eligiendo el eje de corte que conserve el rectángulo más grande y útil posible.
+        function empacarPiezasEnPlanchas(piezas, planchaAncho, planchaAlto, kerf) {
+            const planchas = []; // [{ freeRects:[{x,y,w,h}], colocadas:[{x,y,w,h,pieza}], sobredimensionada }]
+
+            // Piezas grandes primero: deja mejor los espacios libres para las piezas chicas después.
+            piezas.sort((a, b) => (b.ancho * b.alto) - (a.ancho * a.alto));
+
+            const rectanguloContenido = (a, b) =>
+                a.x >= b.x - 0.01 && a.y >= b.y - 0.01 &&
+                a.x + a.w <= b.x + b.w + 0.01 && a.y + a.h <= b.y + b.h + 0.01;
+
+            const podarRectangulosLibres = (rects) => {
+                const validos = rects.filter(r => r.w > 0.05 && r.h > 0.05);
+                return validos.filter((r, i) => !validos.some((otro, j) => j !== i && rectanguloContenido(r, otro)));
+            };
+
+            const colocarEnPlancha = (plancha, rectIdx, w, h, pieza) => {
+                const rect = plancha.freeRects[rectIdx];
+                plancha.colocadas.push({ x: rect.x, y: rect.y, w, h, pieza });
+
+                const wConKerf = w + kerf, hConKerf = h + kerf;
+                const sobranteDerecha = rect.w - wConKerf;
+                const sobranteAbajo   = rect.h - hConKerf;
+
+                // Eje de corte: se corta primero por el lado donde sobra MENOS espacio, así el
+                // rectángulo grande que queda libre conserva la mayor superficie útil posible.
+                let nuevos;
+                if (sobranteDerecha < sobranteAbajo) {
+                    nuevos = [
+                        { x: rect.x, y: rect.y + hConKerf, w: wConKerf, h: rect.h - hConKerf },
+                        { x: rect.x + wConKerf, y: rect.y, w: rect.w - wConKerf, h: rect.h }
+                    ];
+                } else {
+                    nuevos = [
+                        { x: rect.x + wConKerf, y: rect.y, w: rect.w - wConKerf, h: hConKerf },
+                        { x: rect.x, y: rect.y + hConKerf, w: rect.w, h: rect.h - hConKerf }
+                    ];
+                }
+
+                plancha.freeRects.splice(rectIdx, 1);
+                plancha.freeRects.push(...nuevos);
+                plancha.freeRects = podarRectangulosLibres(plancha.freeRects);
+            };
+
+            piezas.forEach(pieza => {
+                const orientaciones = pieza.veta
+                    ? [[pieza.ancho, pieza.alto]]
+                    : [[pieza.ancho, pieza.alto], [pieza.alto, pieza.ancho]];
+
+                let mejor = null; // { pIdx, rIdx, w, h, score }
+
+                planchas.forEach((plancha, pIdx) => {
+                    plancha.freeRects.forEach((rect, rIdx) => {
+                        orientaciones.forEach(([w, h]) => {
+                            const wConKerf = w + kerf, hConKerf = h + kerf;
+                            if (wConKerf <= rect.w + 0.01 && hConKerf <= rect.h + 0.01) {
+                                const score = Math.min(rect.w - wConKerf, rect.h - hConKerf); // Best Short Side Fit
+                                if (!mejor || score < mejor.score) mejor = { pIdx, rIdx, w, h, score };
+                            }
+                        });
+                    });
+                });
+
+                if (mejor) {
+                    colocarEnPlancha(planchas[mejor.pIdx], mejor.rIdx, mejor.w, mejor.h, pieza);
+                } else {
+                    // No cupo en ninguna plancha existente: se abre una nueva.
+                    const [w0, h0] = orientaciones.find(([w, h]) => w <= planchaAncho + 0.01 && h <= planchaAlto + 0.01) || orientaciones[0];
+                    const nuevaPlancha = {
+                        freeRects: [{ x: 0, y: 0, w: planchaAncho, h: planchaAlto }],
+                        colocadas: [],
+                        sobredimensionada: w0 > planchaAncho + 0.01 || h0 > planchaAlto + 0.01
+                    };
+                    planchas.push(nuevaPlancha);
+                    colocarEnPlancha(nuevaPlancha, 0, w0, h0, pieza);
+                }
+            });
+
+            return planchas;
+        }
+
+        function calcularDespieceMelamina() {
+            const planchaAncho = parseFloat(document.getElementById('desp-plancha-ancho').value) || 0;
+            const planchaAlto  = parseFloat(document.getElementById('desp-plancha-alto').value) || 0;
+            const kerfCm       = (parseFloat(document.getElementById('desp-kerf').value) || 0) / 10; // mm -> cm
+            const espesor      = document.getElementById('desp-espesor').value;
+            const precioPlancha   = parseFloat(document.getElementById('desp-precio-plancha').value) || 0;
+            const precioTapacanto = parseFloat(document.getElementById('desp-precio-tapacanto').value) || 0;
+
+            if (planchaAncho <= 0 || planchaAlto <= 0) {
+                return mostrarToast('⚠️ Define el ancho y alto de la plancha.', 'warning');
+            }
+
+            const piezasValidas = despiecePiezas.filter(p => p.ancho > 0 && p.alto > 0 && p.cant > 0 && p.nombre.trim());
+            if (piezasValidas.length === 0) {
+                return mostrarToast('⚠️ Agrega al menos una pieza con nombre, medidas y cantidad.', 'warning');
+            }
+
+            // Expandir por cantidad: cada instancia individual entra al empacado por separado
+            const instancias = [];
+            piezasValidas.forEach(p => {
+                for (let i = 0; i < p.cant; i++) instancias.push({ nombre: p.nombre, ancho: p.ancho, alto: p.alto, veta: p.veta });
+            });
+
+            const planchas = empacarPiezasEnPlanchas(instancias, planchaAncho, planchaAlto, kerfCm);
+
+            // Tapacanto total (a partir de la lista agrupada, no de las instancias expandidas)
+            let tapacantoTotalCm = 0;
+            piezasValidas.forEach(p => {
+                const perimetroConTap =
+                    (p.tap.arriba ? p.ancho : 0) + (p.tap.abajo ? p.ancho : 0) +
+                    (p.tap.izq ? p.alto : 0) + (p.tap.der ? p.alto : 0);
+                tapacantoTotalCm += perimetroConTap * p.cant;
+            });
+            const tapacantoTotalM = Math.round((tapacantoTotalCm / 100) * 100) / 100;
+
+            const areaUtilCm2 = instancias.reduce((a, i) => a + i.ancho * i.alto, 0);
+            const areaPlanchaCm2 = planchaAncho * planchaAlto;
+            const areaTotalCm2 = areaPlanchaCm2 * planchas.length;
+            const aprovechamiento = areaTotalCm2 > 0 ? (areaUtilCm2 / areaTotalCm2) * 100 : 0;
+
+            const materiales = [
+                {
+                    desc: `Plancha de melamina ${espesor}`, unid: 'Und', cant: planchas.length,
+                    precio: precioPlancha || buscarPrecioEnCatalogo(`melamina ${espesor}`) || 0
+                },
+                {
+                    desc: 'Tapacanto PVC', unid: 'ml', cant: tapacantoTotalM,
+                    precio: precioTapacanto || buscarPrecioEnCatalogo('tapacanto') || 0
+                }
+            ];
+
+            // Tablero posterior (fondo): material aparte, calculado por área total de todos
+            // los módulos generados que lo incluyan (no se anida junto con la melamine principal).
+            if (despieceTapasPosteriores.length > 0) {
+                const espesorTapaPostTxt = document.getElementById('desp-espesor-tapa-post').value + 'mm';
+                const precioTapaPost = parseFloat(document.getElementById('desp-precio-tapa-post').value) || 0;
+                const areaTapaPostM2 = despieceTapasPosteriores.reduce((a, t) => a + (t.ancho * t.alto) / 10000, 0);
+                materiales.push({
+                    desc: `Tablero posterior / fondo ${espesorTapaPostTxt} (MDF/triplay delgado)`,
+                    unid: 'm²',
+                    cant: Math.round(areaTapaPostM2 * 100) / 100,
+                    precio: precioTapaPost || buscarPrecioEnCatalogo('tablero posterior') || buscarPrecioEnCatalogo('MDF') || 0
+                });
+            }
+
+            materiales.forEach(m => { m.subtotal = m.cant * m.precio; });
+
+            despieceUltimoResultado = {
+                planchas, materiales, tapacantoTotalM, aprovechamiento,
+                planchaAncho, planchaAlto,
+                hayAlgunaSobredimensionada: planchas.some(pl => pl.sobredimensionada)
+            };
+
+            document.getElementById('desp-nombre-seccion').value = 'MELAMINA - DESPIECE Y MATERIALES';
+            renderResultadoDespieceMelamina();
+        }
+
+        function renderResultadoDespieceMelamina() {
+            const r = despieceUltimoResultado;
+            document.getElementById('desp-resultado').style.display = 'block';
+            document.getElementById('desp-total-planchas').textContent = r.planchas.length;
+            document.getElementById('desp-aprovechamiento').textContent = r.aprovechamiento.toFixed(0) + '%';
+            document.getElementById('desp-tapacanto-total').textContent = r.tapacantoTotalM.toFixed(2) + ' ml';
+            const total = r.materiales.reduce((a, m) => a + m.subtotal, 0);
+            document.getElementById('desp-costo-total').textContent = 'S/ ' + (formatMonto ? formatMonto(total) : total.toFixed(2));
+
+            const aviso = document.getElementById('desp-aviso-sobredimension');
+            if (r.hayAlgunaSobredimensionada) {
+                aviso.style.display = 'block';
+                aviso.textContent = '⚠️ Alguna pieza es más grande que la plancha en ambos sentidos y no cupo completa — revisa las medidas.';
+            } else {
+                aviso.style.display = 'none';
+            }
+
+            // Diagrama visual: un recuadro a escala por plancha, con cada pieza dibujada y
+            // etiquetada dentro. La escala se calcula para que la plancha más grande mida
+            // como máximo 640px de ancho en pantalla.
+            const escala = Math.min(640 / r.planchaAncho, 3);
+            const paletaColores = ['#bae6fd','#fecaca','#bbf7d0','#fde68a','#ddd6fe','#fbcfe8','#fed7aa','#a5f3fc'];
+            const coloresPorNombre = {};
+            let colorIdx = 0;
+
+            document.getElementById('desp-diagramas').innerHTML = r.planchas.map((plancha, pIdx) => {
+                const anchoPx = r.planchaAncho * escala;
+                const altoPx  = r.planchaAlto * escala;
+                const piezasHtml = plancha.colocadas.map(inst => {
+                    if (!coloresPorNombre[inst.pieza.nombre]) {
+                        coloresPorNombre[inst.pieza.nombre] = paletaColores[colorIdx % paletaColores.length];
+                        colorIdx++;
+                    }
+                    const color = coloresPorNombre[inst.pieza.nombre];
+                    return `<div style="position:absolute; left:${inst.x*escala}px; top:${inst.y*escala}px;
+                        width:${inst.w*escala}px; height:${inst.h*escala}px; background:${color};
+                        border:1px solid #64748b; box-sizing:border-box; overflow:hidden;
+                        font-size:10px; padding:2px; color:#1e293b; line-height:1.2;">
+                        <strong>${inst.pieza.nombre}</strong><br>${inst.w}×${inst.h}cm
+                    </div>`;
+                }).join('');
+                return `
+                    <div style="margin-bottom:18px;">
+                        <div style="font-size:12px; font-weight:700; color:#475569; margin-bottom:6px;">
+                            Plancha ${pIdx + 1} de ${r.planchas.length}
+                        </div>
+                        <div style="position:relative; width:${anchoPx}px; height:${altoPx}px; background:#f8fafc; border:2px solid #334155;">
+                            ${piezasHtml}
+                        </div>
+                    </div>`;
+            }).join('');
+
+            const tbody = document.getElementById('desp-tabla-materiales');
+            tbody.innerHTML = r.materiales.map((m, i) => `
+                <tr>
+                    <td>${m.desc}</td>
+                    <td style="text-align:center;">${m.unid}</td>
+                    <td style="text-align:right;">
+                        <input type="number" value="${m.cant}" step="0.01" min="0" style="width:90px;text-align:right;padding:4px;"
+                            onchange="actualizarCantidadDespiece(${i}, this.value)">
+                    </td>
+                    <td style="text-align:right;">
+                        <input type="number" value="${m.precio.toFixed(2)}" step="0.01" min="0" style="width:90px;text-align:right;padding:4px;"
+                            onchange="actualizarPrecioDespiece(${i}, this.value)">
+                    </td>
+                    <td style="text-align:right;font-weight:700;">${formatMonto ? formatMonto(m.subtotal) : m.subtotal.toFixed(2)}</td>
+                </tr>`).join('');
+        }
+
+        function actualizarCantidadDespiece(i, valor) {
+            const m = despieceUltimoResultado.materiales[i];
+            m.cant = parseFloat(valor) || 0;
+            m.subtotal = m.cant * m.precio;
+            renderResultadoDespieceMelamina();
+        }
+
+        function actualizarPrecioDespiece(i, valor) {
+            const m = despieceUltimoResultado.materiales[i];
+            m.precio = parseFloat(valor) || 0;
+            m.subtotal = m.cant * m.precio;
+            renderResultadoDespieceMelamina();
+        }
+
+        function enviarDespieceACotizacion() {
+            const r = despieceUltimoResultado;
+            if (!r) return;
+            const nombreSeccion = (document.getElementById('desp-nombre-seccion').value || 'MELAMINA - DESPIECE Y MATERIALES').toUpperCase().trim();
+
+            let destino = seccionesCotizacion.find(s => s.nombre === nombreSeccion);
+            if (!destino) {
+                destino = { nombre: nombreSeccion, items: [] };
+                seccionesCotizacion.push(destino);
+            }
+            r.materiales.forEach(m => {
+                if (m.cant <= 0) return;
+                destino.items.push({
+                    desc: m.desc, tipoPrecio: 'A todo costo', unid: m.unid,
+                    cant: m.cant, precio: m.precio, subtotal: m.subtotal
+                });
+            });
+            seccionActualIdx = seccionesCotizacion.length - 1;
+            renderizarChipsSecciones();
+            actualizarContenedorCotizacion();
+            switchView('nueva-cotizacion');
+            mostrarToast('✅ Materiales del despiece agregados a la cotización.', 'success');
+        }
+
+        function enviarDespieceARequerimiento() {
+            const r = despieceUltimoResultado;
+            if (!r) return;
+            r.materiales.forEach(m => {
+                if (m.cant <= 0) return;
+                itemsRequerimiento.push({
+                    desc: m.desc, unidad: m.unid, cantidad: m.cant,
+                    obs: `Despiece de melamina — ${r.planchas.length} plancha(s), ${r.aprovechamiento.toFixed(0)}% de aprovechamiento`,
+                    categoria: 'Materiales'
+                });
+            });
+            switchView('requerimiento');
+            mostrarToast('✅ Materiales del despiece agregados al Requerimiento de Compras.', 'success');
+        }
+
         function fusionarSeccionesIA(seccionesIA) {
             seccionesIA.forEach(secIA => {
                 const nombre = (secIA.nombre || 'IA').toUpperCase().trim();
@@ -1826,6 +3346,9 @@ ${catalogoResumen || '(catálogo vacío)'}`;
             if (viewId === 'requerimiento') { inicializarRequerimiento(); }
             if (viewId === 'reporte-obra') { inicializarReporteObra(); }
             if (viewId === 'galeria') { inicializarGaleria(); }
+            if (viewId === 'gastos-obra') { inicializarGastosObra(); }
+            if (viewId === 'calculadora') { inicializarCalculadora(); }
+            if (viewId === 'despiece-melamina') { inicializarDespieceMelamina(); }
         }
 
         function inicializarModulos() {
@@ -1846,6 +3369,20 @@ ${catalogoResumen || '(catálogo vacío)'}`;
             const dlItem = document.getElementById('lista-items-modulo');
             dlItem.innerHTML = '';
             memoriaCatalogo.forEach(item => { dlItem.innerHTML += `<option value="${item.desc}"></option>`; });
+
+            // Suma como sugerencias cualquier unidad "personalizada" que ya se haya usado en
+            // el catálogo, sin perder las unidades base que ya vienen precargadas.
+            const dlUnid = document.getElementById('dl-unidades-medida');
+            if (dlUnid) {
+                const yaExisten = new Set(Array.from(dlUnid.options).map(o => o.value));
+                [...new Set(memoriaCatalogo.map(i => (i.unid || '').trim()).filter(Boolean))]
+                    .forEach(u => {
+                        if (!yaExisten.has(u)) {
+                            dlUnid.innerHTML += `<option value="${u.replace(/"/g, '&quot;')}">`;
+                            yaExisten.add(u);
+                        }
+                    });
+            }
 
             const logo = localStorage.getItem('logo-empresa');
             if(logo) {
@@ -4444,6 +5981,203 @@ function imprimirCotizacionActual() {
             });
         }
 
+        // ═══════════════ GASTOS DE OBRA ═══════════════
+        // Cada gasto puede ir "vinculado" a una cotización (comparando lo gastado contra lo
+        // cotizado, para ver la ganancia real) o quedar como gasto general sin vincular.
+        // Se guarda en memoriaGastos, persistido en la hoja "Gastos" — igual patrón que
+        // Clientes/Cuentas: índice del array como identificador, sin id propio.
+        function inicializarGastosObra() {
+            if (!document.getElementById('gas-fecha').value) {
+                document.getElementById('gas-fecha').value = new Date().toISOString().slice(0, 10);
+            }
+            poblarSelectCotizacionesGasto();
+            renderTablaGastos();
+            renderResumenRentabilidad();
+        }
+
+        function toggleCategoriaGastoOtro() {
+            const esOtro = document.getElementById('gas-categoria').value === 'Otro';
+            document.getElementById('gas-otro-wrap').style.display = esOtro ? 'block' : 'none';
+        }
+
+        function poblarSelectCotizacionesGasto() {
+            const cotizacionesOrdenadas = memoriaCotizaciones
+                .map((c, i) => ({ ...c, _idx: i }))
+                .sort((a, b) => (b.numero || '').localeCompare(a.numero || ''));
+
+            const selForm = document.getElementById('gas-cotizacion');
+            const valorForm = selForm.value;
+            selForm.innerHTML = '<option value="">— Sin vincular (gasto general) —</option>' +
+                cotizacionesOrdenadas.map(c => `<option value="${c.numero}">${c.numero} — ${c.cliente || ''}</option>`).join('');
+            if (valorForm) selForm.value = valorForm;
+
+            const selFiltro = document.getElementById('gas-filtro-cotizacion');
+            const valorFiltro = selFiltro.value;
+            selFiltro.innerHTML = '<option value="">Todas las cotizaciones (y sin vincular)</option>' +
+                '<option value="__ninguna__">Solo gastos sin vincular</option>' +
+                cotizacionesOrdenadas.map(c => `<option value="${c.numero}">${c.numero} — ${c.cliente || ''}</option>`).join('');
+            if (valorFiltro) selFiltro.value = valorFiltro;
+        }
+
+        function limpiarFormularioGasto() {
+            document.getElementById('gas-categoria').value = 'Materiales';
+            toggleCategoriaGastoOtro();
+            document.getElementById('gas-categoria-otro').value = '';
+            document.getElementById('gas-descripcion').value = '';
+            document.getElementById('gas-monto').value = '';
+            document.getElementById('gas-proveedor').value = '';
+            document.getElementById('gas-comprobante').value = '';
+            document.getElementById('gas-cotizacion').value = '';
+            document.getElementById('gas-fecha').value = new Date().toISOString().slice(0, 10);
+        }
+
+        async function guardarGasto() {
+            if (bloquearSiSoloLectura()) return;
+            const fecha        = document.getElementById('gas-fecha').value;
+            const categoriaSel = document.getElementById('gas-categoria').value;
+            const categoria    = categoriaSel === 'Otro' ? document.getElementById('gas-categoria-otro').value.trim() : categoriaSel;
+            const descripcion  = document.getElementById('gas-descripcion').value.trim();
+            const monto        = parseFloat(document.getElementById('gas-monto').value);
+            const proveedor    = document.getElementById('gas-proveedor').value.trim();
+            const comprobante  = document.getElementById('gas-comprobante').value.trim();
+            const cotizacionNumero = document.getElementById('gas-cotizacion').value;
+
+            if (!fecha || !categoria || !descripcion || isNaN(monto) || monto <= 0) {
+                return mostrarToast('⚠️ Completa fecha, categoría, descripción y un monto válido.', 'warning');
+            }
+
+            const gasto = { fecha, categoria, descripcion, monto, proveedor, comprobante, cotizacionNumero };
+            const btn = document.getElementById('btn-guardar-gasto');
+            btn.innerText = 'Guardando...'; btn.disabled = true;
+            try {
+                if (editIndexGasto === null) memoriaGastos.push(gasto);
+                else memoriaGastos[editIndexGasto] = gasto;
+                await guardarEnNube('Gastos', memoriaGastos);
+                mostrarToast('✅ Gasto guardado.', 'success');
+            } finally {
+                btn.disabled = false;
+                cancelarEdicionGasto();
+                renderTablaGastos();
+                renderResumenRentabilidad();
+            }
+        }
+
+        function cargarGastoEnFormulario(i) {
+            editIndexGasto = i;
+            const g = memoriaGastos[i];
+            document.getElementById('gas-fecha').value = g.fecha || '';
+            const categoriasFijas = ['Materiales', 'Mano de obra', 'Transporte y Viáticos', 'Herramientas y Equipos', 'Alquileres'];
+            if (categoriasFijas.includes(g.categoria)) {
+                document.getElementById('gas-categoria').value = g.categoria;
+                toggleCategoriaGastoOtro();
+            } else {
+                document.getElementById('gas-categoria').value = 'Otro';
+                toggleCategoriaGastoOtro();
+                document.getElementById('gas-categoria-otro').value = g.categoria || '';
+            }
+            document.getElementById('gas-descripcion').value = g.descripcion || '';
+            document.getElementById('gas-monto').value       = g.monto;
+            document.getElementById('gas-proveedor').value   = g.proveedor || '';
+            document.getElementById('gas-comprobante').value = g.comprobante || '';
+            poblarSelectCotizacionesGasto();
+            document.getElementById('gas-cotizacion').value  = g.cotizacionNumero || '';
+
+            document.getElementById('form-gasto-titulo').innerText = '⚠️ Editando Gasto';
+            document.getElementById('btn-guardar-gasto').innerText = 'Actualizar Gasto';
+            document.getElementById('btn-guardar-gasto').className = 'btn btn-warning';
+            document.getElementById('btn-cancelar-gasto').style.display = 'inline-flex';
+            document.getElementById('gastos-obra').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function cancelarEdicionGasto() {
+            editIndexGasto = null;
+            limpiarFormularioGasto();
+            document.getElementById('form-gasto-titulo').innerText = 'Registrar Gasto';
+            document.getElementById('btn-guardar-gasto').innerText = 'Guardar Gasto';
+            document.getElementById('btn-guardar-gasto').className = 'btn btn-primary';
+            document.getElementById('btn-cancelar-gasto').style.display = 'none';
+        }
+
+        async function eliminarGasto(i) {
+            if (bloquearSiSoloLectura()) return;
+            if (!confirm('¿Eliminar este gasto?')) return;
+            memoriaGastos.splice(i, 1);
+            await guardarEnNube('Gastos', memoriaGastos);
+            renderTablaGastos();
+            renderResumenRentabilidad();
+        }
+
+        function renderTablaGastos() {
+            const q = (document.getElementById('gas-buscador').value || '').toLowerCase();
+            const filtroCategoria = document.getElementById('gas-filtro-categoria').value;
+            const filtroCotizacion = document.getElementById('gas-filtro-cotizacion').value;
+
+            let filtrados = memoriaGastos.map((g, i) => ({ ...g, _idx: i }));
+            if (q) {
+                filtrados = filtrados.filter(g =>
+                    (g.descripcion || '').toLowerCase().includes(q) ||
+                    (g.proveedor || '').toLowerCase().includes(q) ||
+                    (g.comprobante || '').toLowerCase().includes(q));
+            }
+            if (filtroCategoria) filtrados = filtrados.filter(g => g.categoria === filtroCategoria);
+            if (filtroCotizacion === '__ninguna__') filtrados = filtrados.filter(g => !g.cotizacionNumero);
+            else if (filtroCotizacion) filtrados = filtrados.filter(g => g.cotizacionNumero === filtroCotizacion);
+
+            filtrados.sort((a, b) => (b.fecha || '').localeCompare(a.fecha || ''));
+
+            document.getElementById('gst-total-items').textContent = filtrados.length;
+            document.getElementById('gst-total-monto').textContent = 'S/ ' + formatMonto(filtrados.reduce((s, g) => s + (parseFloat(g.monto) || 0), 0));
+
+            const tbody = document.getElementById('tabla-gastos-body');
+            if (filtrados.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" style="color:#94a3b8;font-style:italic;font-size:12px;padding:10px 12px;">No hay gastos registrados con estos filtros.</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = filtrados.map(g => `
+                <tr>
+                    <td>${g.fecha || ''}</td>
+                    <td>${g.categoria || ''}</td>
+                    <td>${g.descripcion || ''}${g.comprobante ? `<div style="font-size:11px;color:#94a3b8;">📄 ${g.comprobante}</div>` : ''}</td>
+                    <td>${g.proveedor || '—'}</td>
+                    <td>${g.cotizacionNumero ? `<span style="background:#eff6ff;color:#1e40af;padding:2px 7px;border-radius:10px;font-size:11px;">${g.cotizacionNumero}</span>` : '<span style="color:#94a3b8;font-size:11px;">Sin vincular</span>'}</td>
+                    <td style="text-align:right;"><b>S/ ${formatMonto(g.monto)}</b></td>
+                    <td class="actions-cell">
+                        <button class="btn btn-edit" onclick="cargarGastoEnFormulario(${g._idx})">Editar</button>
+                        <button class="btn btn-danger" onclick="eliminarGasto(${g._idx})">Eliminar</button>
+                    </td>
+                </tr>`).join('');
+        }
+
+        function renderResumenRentabilidad() {
+            const tbody = document.getElementById('tabla-rentabilidad-body');
+            const porCotizacion = {};
+            memoriaGastos.forEach(g => {
+                if (!g.cotizacionNumero) return;
+                porCotizacion[g.cotizacionNumero] = (porCotizacion[g.cotizacionNumero] || 0) + (parseFloat(g.monto) || 0);
+            });
+            const numeros = Object.keys(porCotizacion);
+            if (numeros.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" style="color:#94a3b8;font-style:italic;font-size:12px;padding:10px 12px;">Aún no hay gastos vinculados a ninguna cotización.</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = numeros.sort().reverse().map(numero => {
+                const cot = memoriaCotizaciones.find(c => c.numero === numero);
+                const totalCotizado = cot ? (parseFloat(cot.total) || 0) : null;
+                const totalGastado = porCotizacion[numero];
+                const margen = totalCotizado !== null ? (totalCotizado - totalGastado) : null;
+                const margenPct = (totalCotizado && totalCotizado > 0) ? (margen / totalCotizado * 100) : null;
+                return `<tr>
+                    <td><b>${numero}</b></td>
+                    <td>${cot ? (cot.cliente || '') : '<span style="color:#94a3b8;font-size:11px;">Cotización no encontrada</span>'}</td>
+                    <td style="text-align:right;">${totalCotizado !== null ? 'S/ ' + formatMonto(totalCotizado) : '—'}</td>
+                    <td style="text-align:right;">S/ ${formatMonto(totalGastado)}</td>
+                    <td style="text-align:right;">${margen !== null
+                        ? `<b style="color:${margen >= 0 ? '#16a34a' : '#dc2626'};">S/ ${formatMonto(margen)}${margenPct !== null ? ` (${margenPct.toFixed(1)}%)` : ''}</b>`
+                        : '—'}</td>
+                </tr>`;
+            }).join('');
+        }
+
         // ═══════════════ CATÁLOGO DE COSTOS: vista tipo Guía de Precios (rubros + íconos) ═══════════════
         function obtenerCategoriasCatalogo() {
             return [...new Set(memoriaCatalogo.map(i => (i.tipo || '').trim()).filter(Boolean))]
@@ -4558,7 +6292,16 @@ function imprimirCotizacionActual() {
                     <div class="guia-items open" id="cat-items-${gi}">
                         ${g.items.map(it => `
                         <div class="cat-item-row">
-                            <div class="guia-item-desc">${it.desc}</div>
+                            <div class="guia-item-desc">
+                                ${it.desc}
+                                ${obtenerDistribuidoresItem(it).length > 0 ? `
+                                <div style="font-size:11px; color:#64748b; margin-top:3px;">
+                                    🏬 ${obtenerDistribuidoresItem(it)
+                                        .slice().sort((a, b) => a.precio - b.precio)
+                                        .map((d, di) => `<span style="${di === 0 ? 'color:#16a34a;font-weight:600;' : ''}">${d.nombre}: S/ ${formatMonto(d.precio)}</span>`)
+                                        .join(' · ')}
+                                </div>` : ''}
+                            </div>
                             <div class="guia-item-unid">${it.unid}</div>
                             <div class="guia-item-price">S/ ${formatMonto(it.precio)}</div>
                             <div class="cat-item-actions">
@@ -4591,11 +6334,7 @@ function imprimirCotizacionActual() {
                 const precioInput = document.getElementById('cot-precio');
                 if (itemInput)   itemInput.value   = it.desc;
                 if (precioInput) precioInput.value = it.precio.toFixed(2);
-                if (unidSel) {
-                    for (let opt of unidSel.options) {
-                        if (opt.value === it.unid) { unidSel.value = it.unid; break; }
-                    }
-                }
+                if (unidSel) unidSel.value = it.unid;
                 if (itemInput) itemInput.focus();
             }, 100);
         }
@@ -4669,6 +6408,58 @@ function imprimirCotizacionActual() {
         }
 
         // ── Catálogo CRUD ──────────────────────────────
+        // Comparación de precios por proveedor para materiales (ej. cemento S/32 en Sodimac,
+        // S/33 en Promart). Se guarda como item.distribuidores (JSON string, igual convención
+        // que "secciones"/"adjuntos" en Cotizaciones): un array [{nombre, precio}, ...]. El
+        // "Precio Base" del ítem siempre queda igual al más barato de esos proveedores, para
+        // que el resto del sistema (cotizaciones, "Usar precio", etc.) siga funcionando sin
+        // cambios — no necesita saber que existen varios proveedores detrás.
+        function obtenerDistribuidoresItem(item) {
+            try { return JSON.parse((item && item.distribuidores) || '[]'); } catch (e) { return []; }
+        }
+
+        function toggleDistribuidoresCatalogo() {
+            const activo = document.getElementById('cat-usar-distribuidores').checked;
+            const wrap = document.getElementById('cat-distribuidores-wrap');
+            const precioInput = document.getElementById('cat-nuevo-precio');
+            wrap.style.display = activo ? 'block' : 'none';
+            precioInput.readOnly = activo;
+            precioInput.style.background = activo ? '#f1f5f9' : '';
+            if (activo && document.getElementById('cat-distribuidores-lista').children.length === 0) {
+                agregarFilaDistribuidor(); agregarFilaDistribuidor();
+            }
+        }
+
+        function agregarFilaDistribuidor(nombre, precio) {
+            const cont = document.getElementById('cat-distribuidores-lista');
+            const fila = document.createElement('div');
+            fila.style.cssText = 'display:flex; gap:8px; margin-bottom:6px;';
+            fila.innerHTML = `
+                <input type="text" class="dist-nombre" placeholder="Proveedor (ej: Sodimac)" value="${(nombre || '').replace(/"/g,'&quot;')}"
+                    style="flex:2; padding:7px; border:1px solid #cbd5e1; border-radius:6px; font-size:13px;">
+                <input type="number" class="dist-precio" placeholder="Precio S/" value="${precio != null ? precio : ''}" step="0.01"
+                    oninput="recalcularPrecioBaseDesdeDistribuidores()"
+                    style="width:100px; padding:7px; border:1px solid #cbd5e1; border-radius:6px; font-size:13px; text-align:right;">
+                <button type="button" class="btn btn-danger" onclick="this.parentElement.remove(); recalcularPrecioBaseDesdeDistribuidores();"
+                    style="padding:6px 10px; font-size:12px;">✕</button>`;
+            cont.appendChild(fila);
+            recalcularPrecioBaseDesdeDistribuidores();
+        }
+
+        function leerFilasDistribuidores() {
+            return Array.from(document.querySelectorAll('#cat-distribuidores-lista > div')).map(fila => ({
+                nombre: fila.querySelector('.dist-nombre').value.trim(),
+                precio: parseFloat(fila.querySelector('.dist-precio').value)
+            })).filter(d => d.nombre && !isNaN(d.precio) && d.precio > 0);
+        }
+
+        function recalcularPrecioBaseDesdeDistribuidores() {
+            const validos = leerFilasDistribuidores();
+            if (validos.length > 0) {
+                document.getElementById('cat-nuevo-precio').value = Math.min(...validos.map(d => d.precio));
+            }
+        }
+
         function cargarItemEnFormulario(i) {
             editIndexCatalogo = i;
             const item = memoriaCatalogo[i];
@@ -4680,6 +6471,17 @@ function imprimirCotizacionActual() {
             document.getElementById('btn-guardar-catalogo').innerText = "Actualizar";
             document.getElementById('btn-guardar-catalogo').className = "btn btn-warning";
             document.getElementById('btn-cancelar-catalogo').style.display = "inline-flex";
+
+            document.getElementById('cat-distribuidores-lista').innerHTML = '';
+            const distribuidores = obtenerDistribuidoresItem(item);
+            const checkDist = document.getElementById('cat-usar-distribuidores');
+            const wrap = document.getElementById('cat-distribuidores-wrap');
+            const precioInput = document.getElementById('cat-nuevo-precio');
+            checkDist.checked = distribuidores.length > 0;
+            wrap.style.display = distribuidores.length > 0 ? 'block' : 'none';
+            precioInput.readOnly = distribuidores.length > 0;
+            precioInput.style.background = distribuidores.length > 0 ? '#f1f5f9' : '';
+            distribuidores.forEach(d => agregarFilaDistribuidor(d.nombre, d.precio));
         }
 
         function cancelarEdicionCatalogo() {
@@ -4692,22 +6494,37 @@ function imprimirCotizacionActual() {
             document.getElementById('btn-guardar-catalogo').innerText = "Guardar";
             document.getElementById('btn-guardar-catalogo').className = "btn btn-primary";
             document.getElementById('btn-cancelar-catalogo').style.display = "none";
+            document.getElementById('cat-usar-distribuidores').checked = false;
+            document.getElementById('cat-distribuidores-lista').innerHTML = '';
+            toggleDistribuidoresCatalogo();
         }
 
         async function guardarItemCatalogo() {
+            if (bloquearSiSoloLectura()) return;
             const tipo   = document.getElementById('cat-nuevo-tipo').value.trim();
             const desc   = document.getElementById('cat-nuevo-desc').value.trim();
             const unid   = document.getElementById('cat-nuevo-unid').value.trim();
-            const precio = parseFloat(document.getElementById('cat-nuevo-precio').value);
+            const usaDistribuidores = document.getElementById('cat-usar-distribuidores').checked;
+            const distribuidoresValidos = usaDistribuidores ? leerFilasDistribuidores() : [];
+            if (usaDistribuidores && distribuidoresValidos.length === 0) {
+                return alert("Agrega al menos un proveedor con su precio, o desmarca la comparación de precios.");
+            }
+            const precio = usaDistribuidores
+                ? Math.min(...distribuidoresValidos.map(d => d.precio))
+                : parseFloat(document.getElementById('cat-nuevo-precio').value);
             if (!tipo || !desc || !unid || isNaN(precio)) return alert("Complete todos los datos.");
 
             const btn = document.getElementById('btn-guardar-catalogo');
             btn.innerText = "Guardando...";
             btn.disabled  = true;
 
+            // "distribuidores" se guarda como texto JSON (misma convención que "secciones"/
+            // "adjuntos" en Cotizaciones) para que viaje sin problemas por la hoja de cálculo.
+            const distribuidores = usaDistribuidores ? JSON.stringify(distribuidoresValidos) : '';
+
             try {
-                if (editIndexCatalogo === null) memoriaCatalogo.push({tipo, desc, unid, precio});
-                else memoriaCatalogo[editIndexCatalogo] = {tipo, desc, unid, precio};
+                if (editIndexCatalogo === null) memoriaCatalogo.push({tipo, desc, unid, precio, distribuidores});
+                else memoriaCatalogo[editIndexCatalogo] = {tipo, desc, unid, precio, distribuidores};
                 await guardarEnNube("Catalogo", memoriaCatalogo);
             } finally {
                 btn.disabled = false;
@@ -4717,6 +6534,7 @@ function imprimirCotizacionActual() {
         }
 
         async function borrarDelCatalogo(i) {
+            if (bloquearSiSoloLectura()) return;
             if (!confirm("¿Eliminar este ítem del catálogo?")) return;
             memoriaCatalogo.splice(i, 1);
             await guardarEnNube("Catalogo", memoriaCatalogo);
@@ -5044,11 +6862,7 @@ async function borrarCuenta(i) {
                 if (itemInput)   itemInput.value   = it.desc;
                 if (precioInput) precioInput.value = it.precio.toFixed(2);
                 if (tipoSel)     tipoSel.value     = it.tipo;
-                if (unidSel) {
-                    for (let opt of unidSel.options) {
-                        if (opt.value === it.unid) { unidSel.value = it.unid; break; }
-                    }
-                }
+                if (unidSel) unidSel.value = it.unid;
                 if (itemInput) itemInput.focus();
             }, 100);
         }
