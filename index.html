@@ -1560,22 +1560,23 @@
 
             <div class="card no-print">
                 <p style="font-size:13px; color:#64748b; margin-bottom:14px;">
-                    Arma tu lista de piezas (despiece) y calcula cuántas planchas necesitas, cómo distribuir
-                    los cortes en cada una y cuántos metros de tapacanto usar. El acomodo usa un algoritmo de
-                    optimización tipo guillotina (reaprovecha los espacios sobrantes entre piezas, no solo filas)
-                    para minimizar el desperdicio — aun así, es una <strong>referencia automática</strong>:
-                    siempre revisa el diagrama antes de cortar, y ajústalo a mano si tu máquina o proveedor de
-                    corte trabaja distinto.
+                    Arma tu lista de piezas (despiece, en milímetros) y calcula cuántas planchas necesitas,
+                    cómo distribuir los cortes en cada una y cuántos metros de tapacanto usar. El acomodo usa
+                    un algoritmo de optimización tipo guillotina para minimizar el desperdicio, y después puedes
+                    <strong>arrastrar cualquier pieza con el mouse o el dedo</strong> para reacomodarla a tu
+                    gusto — se imanta a los bordes cercanos y esquiva sola a las demás piezas, para que nunca
+                    queden superpuestas, incluso si la pasas a otra plancha — como armar un rompecabezas. Aun así,
+                    es una <strong>referencia automática</strong>: siempre revisa el diagrama antes de cortar.
                 </p>
 
                 <div class="grid-form" style="grid-template-columns: repeat(5, 1fr); margin-bottom:4px;">
                     <div class="form-group">
-                        <label>Ancho de plancha (cm)</label>
-                        <input type="number" id="desp-plancha-ancho" value="244" min="1" step="1">
+                        <label>Ancho de plancha (mm)</label>
+                        <input type="number" id="desp-plancha-ancho" value="2440" min="1" step="1">
                     </div>
                     <div class="form-group">
-                        <label>Alto de plancha (cm)</label>
-                        <input type="number" id="desp-plancha-alto" value="183" min="1" step="1">
+                        <label>Alto de plancha (mm)</label>
+                        <input type="number" id="desp-plancha-alto" value="1830" min="1" step="1">
                     </div>
                     <div class="form-group">
                         <label>Espesor</label>
@@ -1626,16 +1627,16 @@
                         <input type="text" id="gen-nombre-mueble" placeholder="Ej: Barra de Cocina" value="Módulo">
                     </div>
                     <div class="form-group">
-                        <label>Largo / Ancho total (cm)</label>
-                        <input type="number" id="gen-ancho" value="220" min="1" step="0.5">
+                        <label>Largo / Ancho total (mm)</label>
+                        <input type="number" id="gen-ancho" value="2200" min="1" step="1">
                     </div>
                     <div class="form-group">
-                        <label>Alto total (cm)</label>
-                        <input type="number" id="gen-alto" value="120" min="1" step="0.5">
+                        <label>Alto total (mm)</label>
+                        <input type="number" id="gen-alto" value="1200" min="1" step="1">
                     </div>
                     <div class="form-group">
-                        <label>Fondo / Profundidad (cm)</label>
-                        <input type="number" id="gen-fondo" value="45" min="1" step="0.5">
+                        <label>Fondo / Profundidad (mm)</label>
+                        <input type="number" id="gen-fondo" value="450" min="1" step="1">
                     </div>
                 </div>
 
@@ -1648,8 +1649,8 @@
 
                 <div id="gen-zocalo-cont" style="display:none; max-width:220px; margin-bottom:14px;">
                     <div class="form-group">
-                        <label>Altura del zócalo (cm)</label>
-                        <input type="number" id="gen-zocalo-alto" value="10" min="1" step="0.5">
+                        <label>Altura del zócalo (mm)</label>
+                        <input type="number" id="gen-zocalo-alto" value="100" min="1" step="1">
                     </div>
                 </div>
 
@@ -1689,8 +1690,8 @@
                 <div class="table-scroll"><table>
                     <thead><tr>
                         <th>Nombre / referencia</th>
-                        <th style="width:90px;text-align:right;">Ancho (cm)</th>
-                        <th style="width:90px;text-align:right;">Alto (cm)</th>
+                        <th style="width:90px;text-align:right;">Ancho (mm)</th>
+                        <th style="width:90px;text-align:right;">Alto (mm)</th>
                         <th style="width:70px;text-align:center;">Cant.</th>
                         <th style="width:90px;text-align:center;">Veta fija</th>
                         <th style="width:190px;text-align:center;">Tapacanto en bordes</th>
@@ -2828,7 +2829,7 @@ ${catalogoResumen || '(catálogo vacío)'}`;
         function agregarPiezaDespiece() {
             despiecePiezas.push({
                 id: 'pz_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
-                nombre: '', ancho: 60, alto: 40, cant: 1, veta: false,
+                nombre: '', ancho: 600, alto: 400, cant: 1, veta: false,
                 tap: { arriba: false, abajo: false, izq: false, der: false }
             });
             renderTablaPiezasDespiece();
@@ -2859,8 +2860,8 @@ ${catalogoResumen || '(catálogo vacío)'}`;
                 return mostrarToast('⚠️ Ingresa el largo, alto y fondo del mueble (mayores a 0).', 'warning');
             }
 
-            const espesorMel = (parseFloat(document.getElementById('desp-espesor').value) || 18) / 10; // mm -> cm
-            const espesorTapaPost = (parseFloat(document.getElementById('desp-espesor-tapa-post').value) || 4) / 10; // mm -> cm
+            const espesorMel = parseFloat(document.getElementById('desp-espesor').value) || 18; // ya en mm
+            const espesorTapaPost = parseFloat(document.getElementById('desp-espesor-tapa-post').value) || 4; // ya en mm
 
             const llevaPiso     = document.getElementById('gen-lleva-piso').checked;
             const llevaTecho    = document.getElementById('gen-lleva-techo').checked;
@@ -2872,7 +2873,7 @@ ${catalogoResumen || '(catálogo vacío)'}`;
             const numEntrepanosPorC  = parseInt(document.getElementById('gen-num-entrepanos').value) || 0;
             const llevaPuertas       = document.getElementById('gen-lleva-puertas').checked;
             const puertasPorComp     = Math.max(1, parseInt(document.getElementById('gen-puertas-por-compartimento').value) || 1);
-            const holguraPuertaCm    = (parseFloat(document.getElementById('gen-holgura-puerta').value) || 0) / 10; // mm -> cm
+            const holguraPuertaMm    = parseFloat(document.getElementById('gen-holgura-puerta').value) || 0; // ya en mm
 
             const nuevasPiezas = [];
             const agregar = (sufijo, ancho, alto, cant, tap, veta = false) => {
@@ -2923,8 +2924,8 @@ ${catalogoResumen || '(catálogo vacío)'}`;
 
             // Puertas — cubren el frente de cada compartimento, con holgura alrededor
             if (llevaPuertas) {
-                const anchoPuerta = (anchoPorCompartimento / puertasPorComp) - 2 * holguraPuertaCm;
-                const altoPuerta  = altoCaja - 2 * holguraPuertaCm;
+                const anchoPuerta = (anchoPorCompartimento / puertasPorComp) - 2 * holguraPuertaMm;
+                const altoPuerta  = altoCaja - 2 * holguraPuertaMm;
                 agregar('Puerta', anchoPuerta, altoPuerta, puertasPorComp * numCompartimentos,
                     { arriba: true, abajo: true, izq: true, der: true });
             }
@@ -3092,7 +3093,7 @@ ${catalogoResumen || '(catálogo vacío)'}`;
         function calcularDespieceMelamina() {
             const planchaAncho = parseFloat(document.getElementById('desp-plancha-ancho').value) || 0;
             const planchaAlto  = parseFloat(document.getElementById('desp-plancha-alto').value) || 0;
-            const kerfCm       = (parseFloat(document.getElementById('desp-kerf').value) || 0) / 10; // mm -> cm
+            const kerfMm       = parseFloat(document.getElementById('desp-kerf').value) || 0; // ya en mm
             const espesor      = document.getElementById('desp-espesor').value;
             const precioPlancha   = parseFloat(document.getElementById('desp-precio-plancha').value) || 0;
             const precioTapacanto = parseFloat(document.getElementById('desp-precio-tapacanto').value) || 0;
@@ -3112,22 +3113,22 @@ ${catalogoResumen || '(catálogo vacío)'}`;
                 for (let i = 0; i < p.cant; i++) instancias.push({ nombre: p.nombre, ancho: p.ancho, alto: p.alto, veta: p.veta });
             });
 
-            const planchas = empacarPiezasEnPlanchas(instancias, planchaAncho, planchaAlto, kerfCm);
+            const planchas = empacarPiezasEnPlanchas(instancias, planchaAncho, planchaAlto, kerfMm);
 
             // Tapacanto total (a partir de la lista agrupada, no de las instancias expandidas)
-            let tapacantoTotalCm = 0;
+            let tapacantoTotalMm = 0;
             piezasValidas.forEach(p => {
                 const perimetroConTap =
                     (p.tap.arriba ? p.ancho : 0) + (p.tap.abajo ? p.ancho : 0) +
                     (p.tap.izq ? p.alto : 0) + (p.tap.der ? p.alto : 0);
-                tapacantoTotalCm += perimetroConTap * p.cant;
+                tapacantoTotalMm += perimetroConTap * p.cant;
             });
-            const tapacantoTotalM = Math.round((tapacantoTotalCm / 100) * 100) / 100;
+            const tapacantoTotalM = Math.round((tapacantoTotalMm / 1000) * 100) / 100;
 
-            const areaUtilCm2 = instancias.reduce((a, i) => a + i.ancho * i.alto, 0);
-            const areaPlanchaCm2 = planchaAncho * planchaAlto;
-            const areaTotalCm2 = areaPlanchaCm2 * planchas.length;
-            const aprovechamiento = areaTotalCm2 > 0 ? (areaUtilCm2 / areaTotalCm2) * 100 : 0;
+            const areaUtilMm2 = instancias.reduce((a, i) => a + i.ancho * i.alto, 0);
+            const areaPlanchaMm2 = planchaAncho * planchaAlto;
+            const areaTotalMm2 = areaPlanchaMm2 * planchas.length;
+            const aprovechamiento = areaTotalMm2 > 0 ? (areaUtilMm2 / areaTotalMm2) * 100 : 0;
 
             const materiales = [
                 {
@@ -3145,7 +3146,7 @@ ${catalogoResumen || '(catálogo vacío)'}`;
             if (despieceTapasPosteriores.length > 0) {
                 const espesorTapaPostTxt = document.getElementById('desp-espesor-tapa-post').value + 'mm';
                 const precioTapaPost = parseFloat(document.getElementById('desp-precio-tapa-post').value) || 0;
-                const areaTapaPostM2 = despieceTapasPosteriores.reduce((a, t) => a + (t.ancho * t.alto) / 10000, 0);
+                const areaTapaPostM2 = despieceTapasPosteriores.reduce((a, t) => a + (t.ancho * t.alto) / 1000000, 0);
                 materiales.push({
                     desc: `Tablero posterior / fondo ${espesorTapaPostTxt} (MDF/triplay delgado)`,
                     unid: 'm²',
@@ -3185,26 +3186,36 @@ ${catalogoResumen || '(catálogo vacío)'}`;
 
             // Diagrama visual: un recuadro a escala por plancha, con cada pieza dibujada y
             // etiquetada dentro. La escala se calcula para que la plancha más grande mida
-            // como máximo 640px de ancho en pantalla.
-            const escala = Math.min(640 / r.planchaAncho, 3);
+            // como máximo 640px de ancho en pantalla. Cada pieza se puede arrastrar con el
+            // mouse o el dedo para reacomodarla a mano, como armar un rompecabezas — incluso
+            // moviéndola a otra plancha si hay espacio.
+            const escala = Math.min(640 / r.planchaAncho, 0.3);
+            despieceEscalaActual = escala;
             const paletaColores = ['#bae6fd','#fecaca','#bbf7d0','#fde68a','#ddd6fe','#fbcfe8','#fed7aa','#a5f3fc'];
             const coloresPorNombre = {};
             let colorIdx = 0;
 
+            revisarSolapesDespiece();
+
             document.getElementById('desp-diagramas').innerHTML = r.planchas.map((plancha, pIdx) => {
                 const anchoPx = r.planchaAncho * escala;
                 const altoPx  = r.planchaAlto * escala;
-                const piezasHtml = plancha.colocadas.map(inst => {
+                const piezasHtml = plancha.colocadas.map((inst, cIdx) => {
                     if (!coloresPorNombre[inst.pieza.nombre]) {
                         coloresPorNombre[inst.pieza.nombre] = paletaColores[colorIdx % paletaColores.length];
                         colorIdx++;
                     }
                     const color = coloresPorNombre[inst.pieza.nombre];
-                    return `<div style="position:absolute; left:${inst.x*escala}px; top:${inst.y*escala}px;
+                    const borde = inst.solapada ? '2px solid #dc2626' : '1px solid #64748b';
+                    return `<div class="desp-pieza-arrastrable" style="position:absolute; left:${inst.x*escala}px; top:${inst.y*escala}px;
                         width:${inst.w*escala}px; height:${inst.h*escala}px; background:${color};
-                        border:1px solid #64748b; box-sizing:border-box; overflow:hidden;
-                        font-size:10px; padding:2px; color:#1e293b; line-height:1.2;">
-                        <strong>${inst.pieza.nombre}</strong><br>${inst.w}×${inst.h}cm
+                        border:${borde}; box-sizing:border-box; overflow:hidden; cursor:grab; touch-action:none;
+                        font-size:10px; padding:2px; color:#1e293b; line-height:1.2; user-select:none;"
+                        onpointerdown="iniciarArrastrePieza(event, ${pIdx}, ${cIdx})"
+                        onpointermove="arrastrarPieza(event)"
+                        onpointerup="soltarPieza(event)">
+                        <strong>${inst.pieza.nombre}</strong><br>${Math.round(inst.w)}×${Math.round(inst.h)}mm
+                        ${inst.solapada ? '<br>⚠️ se superpone' : ''}
                     </div>`;
                 }).join('');
                 return `
@@ -3212,11 +3223,17 @@ ${catalogoResumen || '(catálogo vacío)'}`;
                         <div style="font-size:12px; font-weight:700; color:#475569; margin-bottom:6px;">
                             Plancha ${pIdx + 1} de ${r.planchas.length}
                         </div>
-                        <div style="position:relative; width:${anchoPx}px; height:${altoPx}px; background:#f8fafc; border:2px solid #334155;">
+                        <div class="desp-plancha-canvas" data-plancha-idx="${pIdx}"
+                            style="position:relative; width:${anchoPx}px; height:${altoPx}px; background:#f8fafc; border:2px solid #334155;">
                             ${piezasHtml}
                         </div>
                     </div>`;
-            }).join('');
+            }).join('') + `
+                <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:6px;">
+                    <button type="button" class="btn" style="background:#f1f5f9;color:#334155;border:1.5px solid #cbd5e1;" onclick="agregarPlanchaVacia()">➕ Agregar plancha vacía</button>
+                    <button type="button" class="btn" style="background:#fef2f2;color:#b91c1c;border:1.5px solid #fecaca;" onclick="calcularDespieceMelamina()">↩️ Deshacer y reordenar automáticamente</button>
+                </div>
+                <p style="font-size:11px;color:#94a3b8;margin-top:8px;">💡 Arrastra cualquier pieza: se imanta a los bordes cercanos y esquiva a las demás piezas sola, para que nunca queden superpuestas. Puedes moverla dentro de la misma plancha o soltarla en otra.</p>`;
 
             const tbody = document.getElementById('desp-tabla-materiales');
             tbody.innerHTML = r.materiales.map((m, i) => `
@@ -3233,6 +3250,199 @@ ${catalogoResumen || '(catálogo vacío)'}`;
                     </td>
                     <td style="text-align:right;font-weight:700;">${formatMonto ? formatMonto(m.subtotal) : m.subtotal.toFixed(2)}</td>
                 </tr>`).join('');
+        }
+
+        // ── Arrastrar y soltar piezas (reacomodo manual con auto-encaje, "como armar un
+        // rompecabezas"): mientras arrastras, la pieza se imanta a los bordes cercanos
+        // (de otras piezas o de la plancha) y esquiva automáticamente a las que ya están
+        // colocadas — nunca se suelta encima de otra.
+        let despieceEscalaActual = 0.2; // px por mm, se actualiza en cada render
+        let despieceArrastre = null;    // { pIdxOrigen, cIdx, pieza, offsetXmm, offsetYmm, elemento, nuevoX, nuevoY, pIdxDestino }
+        const DESP_UMBRAL_IMAN_MM = 10; // distancia máxima para que un borde "salte" a pegarse a otro cercano
+
+        function iniciarArrastrePieza(e, pIdx, cIdx) {
+            e.preventDefault();
+            const plancha = despieceUltimoResultado.planchas[pIdx];
+            const pieza = plancha.colocadas[cIdx];
+            const contenedor = e.currentTarget.closest('.desp-plancha-canvas');
+            const rectCont = contenedor.getBoundingClientRect();
+
+            despieceArrastre = {
+                pIdxOrigen: pIdx, cIdx, pieza,
+                offsetXmm: (e.clientX - rectCont.left) / despieceEscalaActual - pieza.x,
+                offsetYmm: (e.clientY - rectCont.top) / despieceEscalaActual - pieza.y,
+                elemento: e.currentTarget,
+                nuevoX: pieza.x, nuevoY: pieza.y, pIdxDestino: pIdx
+            };
+            e.currentTarget.setPointerCapture(e.pointerId);
+            e.currentTarget.style.zIndex = '1000';
+            e.currentTarget.style.opacity = '0.85';
+            e.currentTarget.style.cursor = 'grabbing';
+        }
+
+        function seSuperponenRect(a, b) {
+            return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+        }
+
+        // Intenta alinear el borde inicial O el borde final de la pieza con alguna "línea"
+        // cercana (bordes de la plancha o de otras piezas), como un imán.
+        function calcularSnapEje(valorDeseado, tamano, limiteMax, lineasCandidatas) {
+            let mejor = valorDeseado, mejorDist = DESP_UMBRAL_IMAN_MM;
+            lineasCandidatas.forEach(linea => {
+                const dInicio = Math.abs(valorDeseado - linea);
+                if (dInicio < mejorDist) { mejor = linea; mejorDist = dInicio; }
+                const dFin = Math.abs((valorDeseado + tamano) - linea);
+                if (dFin < mejorDist) { mejor = linea - tamano; mejorDist = dFin; }
+            });
+            return Math.max(0, Math.min(mejor, limiteMax - tamano));
+        }
+
+        // Si la posición deseada choca con alguna pieza, busca la posición válida más
+        // cercana deslizando la pieza junto al obstáculo (izquierda/derecha/arriba/abajo).
+        // Devuelve null si no encuentra ningún lugar libre cerca.
+        function resolverColision(piezaW, piezaH, xDeseado, yDeseado, otras, planchaAncho, planchaAlto) {
+            const candidato = { x: xDeseado, y: yDeseado, w: piezaW, h: piezaH };
+            const enColision = otras.filter(o => seSuperponenRect(candidato, o));
+            if (enColision.length === 0) return { x: xDeseado, y: yDeseado };
+
+            let mejor = null, mejorDist = Infinity;
+            enColision.forEach(o => {
+                const opciones = [
+                    { x: o.x - piezaW, y: yDeseado },
+                    { x: o.x + o.w,    y: yDeseado },
+                    { x: xDeseado, y: o.y - piezaH },
+                    { x: xDeseado, y: o.y + o.h }
+                ];
+                opciones.forEach(op => {
+                    if (op.x < -0.01 || op.y < -0.01 || op.x + piezaW > planchaAncho + 0.01 || op.y + piezaH > planchaAlto + 0.01) return;
+                    op.x = Math.max(0, op.x); op.y = Math.max(0, op.y);
+                    const cand = { x: op.x, y: op.y, w: piezaW, h: piezaH };
+                    if (otras.some(o2 => seSuperponenRect(cand, o2))) return;
+                    const dist = Math.hypot(op.x - xDeseado, op.y - yDeseado);
+                    if (dist < mejorDist) { mejorDist = dist; mejor = op; }
+                });
+            });
+            return mejor;
+        }
+
+        // Combina el imán a bordes cercanos + la resolución de colisiones: dado dónde el
+        // usuario quiere soltar la pieza, devuelve la posición válida más parecida a esa
+        // (o null si esa plancha ya no tiene ningún hueco libre para ella).
+        function calcularPosicionValida(pieza, xDeseado, yDeseado, pIdxDestino) {
+            const r = despieceUltimoResultado;
+            const planchaDestino = r.planchas[pIdxDestino];
+            const otras = planchaDestino.colocadas.filter(p => p !== pieza);
+
+            const lineasV = [0, r.planchaAncho, ...otras.flatMap(o => [o.x, o.x + o.w])];
+            const lineasH = [0, r.planchaAlto, ...otras.flatMap(o => [o.y, o.y + o.h])];
+            const xSnap = calcularSnapEje(xDeseado, pieza.w, r.planchaAncho, lineasV);
+            const ySnap = calcularSnapEje(yDeseado, pieza.h, r.planchaAlto, lineasH);
+
+            return resolverColision(pieza.w, pieza.h, xSnap, ySnap, otras, r.planchaAncho, r.planchaAlto);
+        }
+
+        function arrastrarPieza(e) {
+            const a = despieceArrastre;
+            if (!a) return;
+            e.preventDefault();
+
+            // Detectar sobre qué plancha está el puntero ahora mismo, para poder soltar la
+            // pieza en una plancha distinta a la que salió.
+            let pIdxDestino = a.pIdxOrigen;
+            let contenedorDestino = null;
+            document.querySelectorAll('.desp-plancha-canvas').forEach(el => {
+                const rect = el.getBoundingClientRect();
+                if (e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom) {
+                    pIdxDestino = parseInt(el.dataset.planchaIdx, 10);
+                    contenedorDestino = el;
+                }
+            });
+            if (!contenedorDestino) {
+                contenedorDestino = document.querySelector(`.desp-plancha-canvas[data-plancha-idx="${a.pIdxOrigen}"]`);
+                pIdxDestino = a.pIdxOrigen;
+            }
+
+            const rectCont = contenedorDestino.getBoundingClientRect();
+            const planchaAncho = despieceUltimoResultado.planchaAncho;
+            const planchaAlto  = despieceUltimoResultado.planchaAlto;
+
+            let xDeseado = (e.clientX - rectCont.left) / despieceEscalaActual - a.offsetXmm;
+            let yDeseado = (e.clientY - rectCont.top) / despieceEscalaActual - a.offsetYmm;
+            xDeseado = Math.max(0, Math.min(xDeseado, planchaAncho - a.pieza.w));
+            yDeseado = Math.max(0, Math.min(yDeseado, planchaAlto - a.pieza.h));
+
+            // Auto-encaje en tiempo real: la pieza salta a la posición válida (imantada y sin
+            // choques) más cercana al puntero; si esa plancha ya no tiene hueco, se queda en
+            // la última posición válida conocida.
+            const valida = calcularPosicionValida(a.pieza, xDeseado, yDeseado, pIdxDestino);
+            if (valida) { a.nuevoX = valida.x; a.nuevoY = valida.y; a.pIdxDestino = pIdxDestino; }
+
+            const rectDestinoFinal = document.querySelector(`.desp-plancha-canvas[data-plancha-idx="${a.pIdxDestino}"]`).getBoundingClientRect();
+            a.elemento.style.position = 'fixed';
+            a.elemento.style.left = (rectDestinoFinal.left + a.nuevoX * despieceEscalaActual) + 'px';
+            a.elemento.style.top = (rectDestinoFinal.top + a.nuevoY * despieceEscalaActual) + 'px';
+        }
+
+        // Recalcula el % de aprovechamiento tras un reacomodo manual (mover piezas entre
+        // planchas, o agregar una plancha vacía, cambia el total de área disponible).
+        function recalcularResumenDespiece() {
+            const r = despieceUltimoResultado;
+            const areaUtilMm2 = r.planchas.reduce((acc, pl) => acc + pl.colocadas.reduce((a, c) => a + c.w * c.h, 0), 0);
+            const areaTotalMm2 = r.planchaAncho * r.planchaAlto * r.planchas.length;
+            r.aprovechamiento = areaTotalMm2 > 0 ? (areaUtilMm2 / areaTotalMm2) * 100 : 0;
+        }
+
+        function soltarPieza(e) {
+            const a = despieceArrastre;
+            if (!a) return;
+            e.preventDefault();
+            try { a.elemento.releasePointerCapture(e.pointerId); } catch (err) { /* no-op */ }
+
+            // a.nuevoX/a.nuevoY/a.pIdxDestino ya son la última posición válida (imantada y
+            // sin choques) calculada durante el arrastre — se guarda tal cual.
+            const r = despieceUltimoResultado;
+            const planchaOrigen = r.planchas[a.pIdxOrigen];
+
+            if (a.pIdxDestino === a.pIdxOrigen) {
+                a.pieza.x = a.nuevoX;
+                a.pieza.y = a.nuevoY;
+            } else {
+                planchaOrigen.colocadas.splice(a.cIdx, 1);
+                a.pieza.x = a.nuevoX;
+                a.pieza.y = a.nuevoY;
+                r.planchas[a.pIdxDestino].colocadas.push(a.pieza);
+                // Si la plancha de origen quedó sin piezas, se elimina de la lista.
+                if (planchaOrigen.colocadas.length === 0) {
+                    r.planchas = r.planchas.filter(pl => pl !== planchaOrigen);
+                }
+            }
+
+            despieceArrastre = null;
+            recalcularResumenDespiece();
+            renderResultadoDespieceMelamina();
+        }
+
+        // Red de seguridad: verifica que ninguna pieza quede superpuesta con otra (no debería
+        // pasar nunca gracias al auto-encaje, pero por si acaso queda un aviso visual).
+        function revisarSolapesDespiece() {
+            despieceUltimoResultado.planchas.forEach(plancha => {
+                plancha.colocadas.forEach(p => { p.solapada = false; });
+                for (let i = 0; i < plancha.colocadas.length; i++) {
+                    for (let j = i + 1; j < plancha.colocadas.length; j++) {
+                        const a = plancha.colocadas[i], b = plancha.colocadas[j];
+                        if (seSuperponenRect(a, b)) { a.solapada = true; b.solapada = true; }
+                    }
+                }
+            });
+        }
+
+        // Agrega una plancha vacía al resultado, por si el usuario quiere repartir piezas a
+        // mano en más planchas de las que sugirió el algoritmo (por ejemplo, para dejar
+        // espacio libre para cortes futuros).
+        function agregarPlanchaVacia() {
+            despieceUltimoResultado.planchas.push({ colocadas: [] });
+            recalcularResumenDespiece();
+            renderResultadoDespieceMelamina();
         }
 
         function actualizarCantidadDespiece(i, valor) {
