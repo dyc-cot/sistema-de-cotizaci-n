@@ -480,20 +480,12 @@
             .rep-foto-item .rep-foto-controles { display: none !important; }
             .rep-foto-item img { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 
-            /* CORRECCIÓN: antes se forzaba una grilla fija de 2 columnas en impresión,
-               ignorando por completo el tamaño (Pequeña/Mediana/Grande/Ancho completo) que el
-               usuario elige para cada foto — por eso el tamaño elegido nunca se veía reflejado
-               en el PDF ni en la vista previa de impresión. Ahora usamos una grilla de 12
-               columnas y cada foto ocupa la cantidad de columnas que le corresponde según su
-               tamaño (ver --print-span, calculado en JS a partir de widthPct). Esto respeta el
-               tamaño elegido por el usuario y, al ser una grilla real (no un cálculo manual de
-               ancho en %), tampoco se desborda del margen de la página. */
-            .rep-foto-grid { display: grid !important; grid-template-columns: repeat(12, 1fr) !important; gap: 10px !important; }
-            .rep-foto-item {
-                width: auto !important;
-                box-sizing: border-box !important;
-                grid-column: span var(--print-span, 6) !important;
-            }
+            /* Las fotos usan en impresión EXACTAMENTE el mismo diseño flexible que en pantalla
+               (variables --span, --rep-gap y --rep-just), así lo que ves es lo que se imprime:
+               tamaños, proporciones, encuadre y alineación de la última fila. */
+            .rep-foto-grid { display: flex !important; flex-wrap: wrap !important; }
+            .rep-foto-item { box-sizing: border-box !important; }
+            .rep-foto-img-wrap { cursor: default !important; }
             /* CORRECCIÓN "Foto completa": antes se forzaba a ocupar las 2 columnas (grid-column:
                1/-1), lo cual no coincidía con lo que se veía en la vista previa en pantalla (donde
                el usuario suele dejarla en 1 columna, p.ej. tamaño "Grande") y además, al no tener
@@ -528,10 +520,31 @@
         .rep-etapa-titulo.proceso { background: var(--warning); }
         .rep-etapa-titulo.finalizado { background: var(--success); }
         .rep-etapa-desc { font-size: 13px; color: var(--text); margin: 6px 0 10px 0; white-space: pre-line; text-align: justify; }
-        .rep-foto-grid { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-start; }
-        .rep-foto-item { border: 1px solid #e2e8f0; border-radius: 6px; padding: 6px; background: #f8fafc; }
-        .rep-foto-img-wrap { position: relative; width: 100%; overflow: hidden; border-radius: 4px; background: #e2e8f0; }
-        .rep-foto-img-wrap img { display: block; width: 100%; height: 100%; object-fit: cover; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        /* Diseño de fotos: cada foto ocupa --span de 12 columnas virtuales; --rep-gap es el espacio entre fotos
+           y --rep-just alinea las filas incompletas (izquierda / centro / derecha / parejo). */
+        .rep-foto-grid { display: flex; flex-wrap: wrap; gap: var(--rep-gap, 12px); align-items: flex-start; justify-content: var(--rep-just, flex-start); }
+        .rep-foto-item { --span: 4; border: 1px solid #e2e8f0; border-radius: 6px; padding: 6px; background: #f8fafc;
+            width: calc((100% - 11 * var(--rep-gap, 12px)) * var(--span) / 12 + (var(--span) - 1) * var(--rep-gap, 12px) - 0.5px); }
+        .rep-foto-img-wrap { position: relative; width: 100%; overflow: hidden; border-radius: 4px; background: #e2e8f0; cursor: grab; touch-action: auto; }
+        .rep-foto-img-wrap.arrastrando { cursor: grabbing; }
+        .rep-foto-img-wrap.encuadrando { touch-action: none; outline: 2px dashed var(--accent); outline-offset: -2px; }
+        .rep-foto-img-wrap img { display: block; width: 100%; height: 100%; object-fit: cover; -webkit-print-color-adjust: exact; print-color-adjust: exact; user-select: none; -webkit-user-drag: none; pointer-events: none; }
+        .rep-foto-img-wrap .rep-foto-tag { pointer-events: none; }
+        .rep-foto-item.foto-completa .rep-foto-img-wrap { cursor: default; }
+        .rep-foto-ajustes { width: 100%; margin-top: 4px; border: 1px solid #e2e8f0; border-radius: 4px; background: #fff; }
+        .rep-foto-ajustes > summary { font-size: 10px; font-weight: 700; color: #475569; padding: 4px 6px; cursor: pointer; list-style: none; text-align: center; }
+        .rep-foto-ajustes > summary::-webkit-details-marker { display: none; }
+        .rep-foto-ajustes-body { display: flex; flex-direction: column; gap: 5px; padding: 6px; }
+        .rep-foto-ajustes-body label { font-size: 10px; font-weight: 600; color: #64748b; display: flex; flex-direction: column; gap: 2px; }
+        .rep-foto-ajustes-body select, .rep-foto-ajustes-body input[type="range"] { width: 100%; font-size: 11px; padding: 3px 4px; }
+        .rep-foto-ajustes-body input[type="range"] { padding: 0; }
+        .rep-layout-bar { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 8px; padding: 8px 10px; background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 6px; }
+        .rep-layout-bar > span { font-size: 11px; font-weight: 700; color: #0369a1; }
+        .rep-layout-bar select, .rep-layout-bar button { font-size: 11px; padding: 4px 6px; }
+        .rep-mostrar-row { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; margin: 4px 0 12px 0; padding: 8px 12px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; }
+        .rep-mostrar-row > span { font-size: 12px; font-weight: 700; color: #475569; }
+        .rep-mostrar-row label { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; color: #334155; cursor: pointer; }
+        .rep-mostrar-row input[type="checkbox"] { width: 16px; height: 16px; padding: 0; accent-color: var(--accent); }
         .rep-foto-item.foto-horizontal .rep-foto-img-wrap { aspect-ratio: 4 / 3; }
         .rep-foto-item.foto-vertical   .rep-foto-img-wrap { aspect-ratio: 3 / 4; }
         /* Foto completa: sin recorte forzado, se respeta la proporción real de la imagen (panorámicas, detalles, etc.) */
@@ -546,9 +559,12 @@
         .rep-referencia-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
         .rep-guardados-lista { display: flex; flex-direction: column; gap: 6px; max-height: 220px; overflow-y: auto; }
         .rep-guardado-item { display: flex; justify-content: space-between; align-items: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px 12px; font-size: 13px; }
-        @media (max-width: 700px) {
+        @media screen and (max-width: 700px) {
             .rep-referencia-row { grid-template-columns: 1fr; }
-            .rep-foto-item { width: calc(50% - 6px) !important; }
+            /* En celular (solo en pantalla) las fotos se muestran más grandes para poder tocarlas;
+               al imprimir se respeta el tamaño elegido. */
+            .rep-foto-item:not([data-full]) { width: calc(50% - var(--rep-gap, 12px) / 2 - 0.5px) !important; }
+            .rep-foto-item[data-full] { width: 100% !important; }
         }
 
         /* ═══════════════ GALERÍA FOTOGRÁFICA ═══════════════ */
@@ -1988,7 +2004,36 @@ async function guardarEnNube(nombreTabla, datosArray) {
 }
         
         // ═══════════════ ASISTENTE IA (Gemini): precios de mercado + armado automático ═══════════════
-        const GEMINI_MODELO = "gemini-2.5-flash";
+        // Gemini 2.5 ya no tiene soporte (la API devuelve 404). Usamos Gemini 3.8 Flash y, por si
+        // Google vuelve a retirar un modelo, se prueban los siguientes de la lista automáticamente.
+        const GEMINI_MODELOS = ["gemini-3.8-flash", "gemini-3.6-flash", "gemini-3.5-flash"];
+        const GEMINI_MODELO = GEMINI_MODELOS[0];
+
+        async function fetchGemini(cuerpo) {
+            let ultimoError = null;
+            for (const modelo of GEMINI_MODELOS) {
+                const response = await fetch(
+                    `https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent`,
+                    {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json", "x-goog-api-key": GEMINI_API_KEY },
+                        body: JSON.stringify(cuerpo)
+                    }
+                );
+                const data = await response.json();
+                if (data.error) {
+                    const msg = data.error.message || "Error de la API";
+                    // Modelo retirado / no encontrado → probamos el siguiente de la lista
+                    if (response.status === 404 || /no longer available|not found|NOT_FOUND/i.test(msg)) {
+                        ultimoError = new Error(msg);
+                        continue;
+                    }
+                    throw new Error(msg);
+                }
+                return data;
+            }
+            throw ultimoError || new Error("No hay ningún modelo de Gemini disponible.");
+        }
         let GEMINI_API_KEY = localStorage.getItem('gemini_api_key') || '';
 
         // ── Adjuntos de referencia para la IA (imágenes / PDF) ──
@@ -2100,27 +2145,11 @@ ${catalogoResumen || '(catálogo vacío)'}`;
             });
 
             try {
-                const response = await fetch(
-                    `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODELO}:generateContent`,
-                    {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json",
-                            "x-goog-api-key": GEMINI_API_KEY
-                        },
-                        body: JSON.stringify({
+                const data = await fetchGemini({
                             system_instruction: { parts: [{ text: systemPrompt }] },
                             contents: [{ role: "user", parts: userParts }],
                             tools: [{ google_search: {} }]
-                        })
-                    }
-                );
-
-                const data = await response.json();
-
-                if (data.error) {
-                    throw new Error(data.error.message || "Error de la API");
-                }
+                        });
 
                 const partes = (data.candidates && data.candidates[0] && data.candidates[0].content
                     ? data.candidates[0].content.parts : []) || [];
@@ -3883,24 +3912,11 @@ Responde ÚNICAMENTE con un JSON válido, sin texto adicional, sin markdown, con
             });
 
             try {
-                const response = await fetch(
-                    `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODELO}:generateContent`,
-                    {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json",
-                            "x-goog-api-key": GEMINI_API_KEY
-                        },
-                        body: JSON.stringify({
+                const data = await fetchGemini({
                             system_instruction: { parts: [{ text: systemPrompt }] },
                             contents: [{ role: "user", parts: userParts }],
                             tools: [{ google_search: {} }]
-                        })
-                    }
-                );
-
-                const data = await response.json();
-                if (data.error) throw new Error(data.error.message || "Error de la API");
+                        });
 
                 const partes = (data.candidates && data.candidates[0] && data.candidates[0].content
                     ? data.candidates[0].content.parts : []) || [];
@@ -4011,6 +4027,272 @@ Responde ÚNICAMENTE con un JSON válido, sin texto adicional, sin markdown, con
             incidente: '#be123c'
         };
 
+
+        // ── Proporciones (relación de aspecto) disponibles para el recuadro de cada foto ──
+        const REP_RATIOS = [
+            { v: 'orig',  label: '🖼️ Original (sin recortar)' },
+            { v: '4:3',   label: '▭ 4:3 Horizontal clásica' },
+            { v: '3:2',   label: '▭ 3:2 Horizontal (cámara)' },
+            { v: '16:9',  label: '▭ 16:9 Panorámica' },
+            { v: '21:9',  label: '▬ 21:9 Ultra panorámica' },
+            { v: '2:1',   label: '▬ 2:1 Banner' },
+            { v: '5:4',   label: '▭ 5:4 Casi cuadrada' },
+            { v: '1:1',   label: '■ 1:1 Cuadrada' },
+            { v: '4:5',   label: '▯ 4:5 Vertical suave' },
+            { v: '3:4',   label: '▯ 3:4 Vertical clásica' },
+            { v: '2:3',   label: '▯ 2:3 Vertical (cámara)' },
+            { v: '9:16',  label: '▯ 9:16 Vertical celular' }
+        ];
+        const REP_TAMANOS = [
+            { v: 25,  label: 'Pequeña (25%)' },
+            { v: 33,  label: 'Mediana (33%)' },
+            { v: 50,  label: 'Grande (50%)' },
+            { v: 66,  label: 'Extra grande (66%)' },
+            { v: 75,  label: 'Muy grande (75%)' },
+            { v: 100, label: 'Ancho completo' }
+        ];
+        const REP_ALINEACIONES = [
+            { v: 'flex-start',   label: '⬅ Fotos a la izquierda' },
+            { v: 'center',       label: '⬌ Centrar fotos' },
+            { v: 'flex-end',     label: '➡ Fotos a la derecha' },
+            { v: 'space-evenly', label: '↔ Repartir parejo' }
+        ];
+        const REP_ESPACIADOS = [
+            { v: 6,  label: 'Espacio: compacto' },
+            { v: 12, label: 'Espacio: normal' },
+            { v: 18, label: 'Espacio: amplio' },
+            { v: 26, label: 'Espacio: muy amplio' }
+        ];
+
+        // Compatibilidad: los reportes viejos solo tenían orientacion ('horizontal' | 'vertical' | 'completa').
+        function ratioDeFoto(f) {
+            if (f.ratio) return f.ratio;
+            if (f.orientacion === 'vertical') return '3:4';
+            if (f.orientacion === 'completa') return 'orig';
+            return '4:3';
+        }
+        function orientacionLegacyDesdeRatio(r) {
+            if (r === 'orig') return 'completa';
+            const [a, b] = r.split(':').map(Number);
+            return b > a ? 'vertical' : 'horizontal';
+        }
+        function invertirRatio(r) {
+            if (r === 'orig') return 'orig';
+            const [a, b] = r.split(':');
+            return b + ':' + a;
+        }
+        function esFotoVertical(f) {
+            const r = ratioDeFoto(f);
+            if (r === 'orig') return f.orientacion === 'vertical';
+            const [a, b] = r.split(':').map(Number);
+            return b > a;
+        }
+
+        function layoutDeEtapa(destino) {
+            const l = (destino && destino.layout) || {};
+            return { alinear: l.alinear || 'flex-start', gap: l.gap || 12 };
+        }
+
+        // Qué datos de cabecera se muestran en el reporte (por defecto todos, como antes).
+        function mostrarDeObra(obra) {
+            const m = obra.mostrar || {};
+            const v = (k) => m[k] === undefined ? true : !!m[k];
+            return { cliente: v('cliente'), ubicacion: v('ubicacion'), responsable: v('responsable'), fecha: v('fecha'), fechaEtapas: v('fechaEtapas') };
+        }
+        function actualizarMostrarObra(idObra, campo, valor) {
+            const obra = obtenerObraReporte(idObra);
+            if (!obra) return;
+            obra.mostrar = Object.assign(mostrarDeObra(obra), { [campo]: !!valor });
+            renderReporteObra();
+        }
+        function aplicarMostrarATodasLasObras(idObra) {
+            const origen = obtenerObraReporte(idObra);
+            if (!origen) return;
+            const m = mostrarDeObra(origen);
+            reporteObraState.obras.forEach(o => { o.mostrar = Object.assign({}, m); });
+            renderReporteObra();
+            mostrarToast('✅ Esa configuración se aplicó a todas las obras del reporte.', 'success');
+        }
+
+        function obtenerFotoReporte(idObra, etapaKey, idx) {
+            const obra = obtenerObraReporte(idObra);
+            if (!obra) return null;
+            const destino = etapaKey === 'avance' ? obra.avance : obra.etapas[etapaKey];
+            if (!destino || !destino.fotos[idx]) return null;
+            return { obra, destino, foto: destino.fotos[idx] };
+        }
+
+        function aplicarEstiloEncuadre(img, f) {
+            if (!img) return;
+            const x = f.posX === undefined ? 50 : f.posX, y = f.posY === undefined ? 50 : f.posY, z = f.zoom || 1;
+            img.style.objectPosition = x + '% ' + y + '%';
+            img.style.transformOrigin = x + '% ' + y + '%';
+            img.style.transform = z > 1 ? 'scale(' + z + ')' : 'none';
+        }
+
+        // ── Reencuadre: arrastrar la foto dentro de su recuadro para elegir qué parte se ve ──
+        // Con el mouse basta arrastrar. En celular/tablet primero se toca "✥ Encuadrar" en esa foto
+        // (así no se bloquea el scroll normal de la página al deslizar el dedo sobre las fotos).
+        let repArrastre = null;
+        function iniciarArrastreFoto(e, idObra, etapaKey, idx) {
+            const ctx = obtenerFotoReporte(idObra, etapaKey, idx);
+            if (!ctx) return;
+            const f = ctx.foto;
+            if (ratioDeFoto(f) === 'orig') return;
+            const wrap = e.currentTarget;
+            if (e.pointerType === 'touch' && !wrap.classList.contains('encuadrando')) return;
+            const img = wrap.querySelector('img');
+            if (!img || !img.naturalWidth) return;
+            const w = wrap.clientWidth, h = wrap.clientHeight;
+            const escala = Math.max(w / img.naturalWidth, h / img.naturalHeight) * (f.zoom || 1);
+            repArrastre = {
+                f, img, wrap, x0: f.posX === undefined ? 50 : f.posX, y0: f.posY === undefined ? 50 : f.posY,
+                startX: e.clientX, startY: e.clientY,
+                sobraX: img.naturalWidth * escala - w, sobraY: img.naturalHeight * escala - h
+            };
+            try { wrap.setPointerCapture(e.pointerId); } catch (err) {}
+            wrap.classList.add('arrastrando');
+            e.preventDefault();
+        }
+        function moverArrastreFoto(e) {
+            const a = repArrastre;
+            if (!a) return;
+            const limitar = (v) => Math.max(0, Math.min(100, v));
+            if (a.sobraX > 0.5) a.f.posX = Math.round(limitar(a.x0 - (e.clientX - a.startX) / a.sobraX * 100) * 10) / 10;
+            if (a.sobraY > 0.5) a.f.posY = Math.round(limitar(a.y0 - (e.clientY - a.startY) / a.sobraY * 100) * 10) / 10;
+            aplicarEstiloEncuadre(a.img, a.f);
+        }
+        function terminarArrastreFoto() {
+            if (!repArrastre) return;
+            repArrastre.wrap.classList.remove('arrastrando');
+            repArrastre = null;
+        }
+        function alternarEncuadreTactil(btn) {
+            const wrap = btn.closest('.rep-foto-item').querySelector('.rep-foto-img-wrap');
+            const activo = wrap.classList.toggle('encuadrando');
+            btn.textContent = activo ? '✔ Listo' : '✥ Encuadrar';
+            btn.style.background = activo ? '#dcfce7' : '';
+        }
+        function actualizarZoomFotoLive(idObra, etapaKey, idx, valor) {
+            const ctx = obtenerFotoReporte(idObra, etapaKey, idx);
+            if (!ctx) return;
+            ctx.foto.zoom = Math.max(1, Math.min(3, parseInt(valor, 10) / 100));
+            const img = document.getElementById('rep-img-' + ctx.foto.id);
+            aplicarEstiloEncuadre(img, ctx.foto);
+            const lbl = document.getElementById('rep-zoom-lbl-' + ctx.foto.id);
+            if (lbl) lbl.textContent = Math.round(ctx.foto.zoom * 100) + '%';
+        }
+        function resetEncuadreFoto(idObra, etapaKey, idx) {
+            const ctx = obtenerFotoReporte(idObra, etapaKey, idx);
+            if (!ctx) return;
+            ctx.foto.posX = 50; ctx.foto.posY = 50; ctx.foto.zoom = 1;
+            renderReporteObra();
+        }
+
+        const repAjustesAbiertos = new Set();
+        function alternarAjustesFoto(fotoId, abierto) {
+            if (abierto) repAjustesAbiertos.add(fotoId); else repAjustesAbiertos.delete(fotoId);
+        }
+
+        function actualizarRatioFoto(idObra, etapaKey, idx, valor) {
+            const ctx = obtenerFotoReporte(idObra, etapaKey, idx);
+            if (!ctx) return;
+            ctx.foto.ratio = valor;
+            ctx.foto.orientacion = orientacionLegacyDesdeRatio(valor); // la Galería usa este campo
+            if (valor === 'orig') { ctx.foto.posX = 50; ctx.foto.posY = 50; ctx.foto.zoom = 1; }
+            renderReporteObra();
+        }
+
+        function moverFotoPosicion(idObra, etapaKey, idx, dir) {
+            const ctx = obtenerFotoReporte(idObra, etapaKey, idx);
+            if (!ctx) return;
+            const fotos = ctx.destino.fotos, nuevo = idx + dir;
+            if (nuevo < 0 || nuevo >= fotos.length) return;
+            [fotos[idx], fotos[nuevo]] = [fotos[nuevo], fotos[idx]];
+            renderReporteObra();
+        }
+
+        function actualizarLayoutEtapa(idObra, etapaKey, campo, valor) {
+            const obra = obtenerObraReporte(idObra);
+            if (!obra) return;
+            const destino = etapaKey === 'avance' ? obra.avance : obra.etapas[etapaKey];
+            if (!destino) return;
+            destino.layout = Object.assign(layoutDeEtapa(destino), { [campo]: campo === 'gap' ? parseInt(valor, 10) : valor });
+            renderReporteObra();
+        }
+
+        function aplicarATodasFotos(idObra, etapaKey, campo, valor) {
+            if (valor === '') return;
+            const obra = obtenerObraReporte(idObra);
+            if (!obra) return;
+            const destino = etapaKey === 'avance' ? obra.avance : obra.etapas[etapaKey];
+            (destino.fotos || []).forEach(f => {
+                if (campo === 'ratio') {
+                    f.ratio = valor;
+                    f.orientacion = orientacionLegacyDesdeRatio(valor);
+                    if (valor === 'orig') { f.posX = 50; f.posY = 50; f.zoom = 1; }
+                } else if (campo === 'widthPct') {
+                    f.widthPct = parseInt(valor, 10);
+                }
+            });
+            renderReporteObra();
+        }
+
+        // ✨ Acomoda automáticamente las fotos de una etapa para que queden parejas y bien repartidas:
+        // mismo tamaño según la cantidad, misma proporción y la última fila centrada.
+        function autoOrdenarFotos(idObra, etapaKey) {
+            const obra = obtenerObraReporte(idObra);
+            if (!obra) return;
+            const destino = etapaKey === 'avance' ? obra.avance : obra.etapas[etapaKey];
+            const fotos = destino.fotos || [];
+            const n = fotos.length;
+            if (n === 0) return;
+            const tamPorCantidad = { 1: 66, 2: 50, 3: 33, 4: 50, 5: 33, 6: 33 };
+            const pct = tamPorCantidad[n] || 25;
+            const verticales = fotos.filter(esFotoVertical).length;
+            let ratio = verticales === 0 ? '4:3' : (verticales === n ? '3:4' : '1:1');
+            if (n === 1) ratio = esFotoVertical(fotos[0]) ? '3:4' : '4:3';
+            fotos.forEach(f => {
+                f.widthPct = pct;
+                f.ratio = ratio;
+                f.orientacion = orientacionLegacyDesdeRatio(ratio);
+            });
+            destino.layout = { alinear: 'center', gap: 12 };
+            renderReporteObra();
+            mostrarToast('✨ Fotos acomodadas. Puedes ajustar el encuadre de cada una arrastrándola.', 'success');
+        }
+
+        function htmlBarraLayoutFotos(idObra, etapaKey, destino) {
+            if (!destino || !destino.fotos || destino.fotos.length === 0) return '';
+            const lay = layoutDeEtapa(destino);
+            const opts = (lista, actual) => lista.map(o => `<option value="${o.v}" ${String(o.v) === String(actual) ? 'selected' : ''}>${o.label}</option>`).join('');
+            return `
+                <div class="rep-layout-bar">
+                    <span>🧩 Diseño de las fotos (${destino.fotos.length}):</span>
+                    <select title="Cómo se alinean las fotos cuando la última fila queda incompleta (ej. 3 fotos: 2 arriba y 1 abajo)"
+                        onchange="actualizarLayoutEtapa('${idObra}','${etapaKey}','alinear', this.value)">${opts(REP_ALINEACIONES, lay.alinear)}</select>
+                    <select onchange="actualizarLayoutEtapa('${idObra}','${etapaKey}','gap', this.value)">${opts(REP_ESPACIADOS, lay.gap)}</select>
+                    <select title="Cambia la proporción de TODAS las fotos de esta etapa" onchange="aplicarATodasFotos('${idObra}','${etapaKey}','ratio', this.value)">
+                        <option value="">Proporción de todas…</option>${opts(REP_RATIOS, '')}</select>
+                    <select title="Cambia el tamaño de TODAS las fotos de esta etapa" onchange="aplicarATodasFotos('${idObra}','${etapaKey}','widthPct', this.value)">
+                        <option value="">Tamaño de todas…</option>${opts(REP_TAMANOS, '')}</select>
+                    <button type="button" class="btn" style="background:#dcfce7; color:#166534; border:1px solid #86efac;"
+                        onclick="autoOrdenarFotos('${idObra}','${etapaKey}')">✨ Auto-ordenar</button>
+                </div>
+                <p style="font-size:11px; color:#64748b; margin-top:4px;">💡 En la vista previa, arrastra cada foto dentro de su recuadro para elegir qué parte se ve (doble clic = centrar). En celular toca "✥ Encuadrar" y luego desliza.</p>`;
+        }
+
+        function htmlControlMostrarDatos(obra) {
+            const m = mostrarDeObra(obra);
+            const chk = (k, lbl) => `<label><input type="checkbox" ${m[k] ? 'checked' : ''} onchange="actualizarMostrarObra('${obra.id}','${k}', this.checked)"> ${lbl}</label>`;
+            return `
+                <div class="rep-mostrar-row">
+                    <span>👁️ Mostrar en el reporte:</span>
+                    ${chk('cliente', 'Cliente')}${chk('ubicacion', 'Ubicación')}${chk('responsable', 'Responsable')}${chk('fecha', 'Fecha')}${chk('fechaEtapas', 'Fecha de cada etapa')}
+                    ${reporteObraState.obras.length > 1 ? `<button type="button" class="btn" style="font-size:11px; padding:3px 8px; margin-left:auto;" onclick="aplicarMostrarATodasLasObras('${obra.id}')">Aplicar a todas las obras</button>` : ''}
+                </div>`;
+        }
+
         function inicializarReporteObra() {
             const logo = localStorage.getItem('logo-empresa');
             if (logo) {
@@ -4037,11 +4319,12 @@ Responde ÚNICAMENTE con un JSON válido, sin texto adicional, sin markdown, con
                 materiales: '',
                 incidentes: '',
                 etapas: {
-                    inicio:      { descripcion: '', fecha: '', fotos: [] },
-                    proceso:     { descripcion: '', fecha: '', fotos: [] },
-                    finalizado:  { descripcion: '', fecha: '', fotos: [] }
+                    inicio:      { descripcion: '', fecha: '', fotos: [], layout: { alinear: 'center', gap: 12 } },
+                    proceso:     { descripcion: '', fecha: '', fotos: [], layout: { alinear: 'center', gap: 12 } },
+                    finalizado:  { descripcion: '', fecha: '', fotos: [], layout: { alinear: 'center', gap: 12 } }
                 },
-                avance: { porcentaje: 0, descripcion: '', fecha: new Date().toLocaleDateString('es-PE'), fotos: [] }
+                avance: { porcentaje: 0, descripcion: '', fecha: new Date().toLocaleDateString('es-PE'), fotos: [], layout: { alinear: 'center', gap: 12 } },
+                mostrar: { cliente: true, ubicacion: true, responsable: true, fecha: true, fechaEtapas: true }
             };
         }
 
@@ -4198,7 +4481,8 @@ Responde ÚNICAMENTE con un JSON válido, sin texto adicional, sin markdown, con
                 try {
                     const resultado = await comprimirImagenReporte(file);
                     const orientacionAuto = resultado.height > resultado.width ? 'vertical' : 'horizontal';
-                    const nuevaFoto = { id: generarIdFoto(), src: resultado.src, caption: '', widthPct: orientacionAuto === 'vertical' ? 25 : 33, etiqueta: '', ubicacion: '', orientacion: orientacionAuto };
+                    const nuevaFoto = { id: generarIdFoto(), src: resultado.src, caption: '', widthPct: orientacionAuto === 'vertical' ? 25 : 33, etiqueta: '', ubicacion: '', orientacion: orientacionAuto,
+                        ratio: orientacionAuto === 'vertical' ? '3:4' : '4:3', posX: 50, posY: 50, zoom: 1 };
                     destino.fotos.push(nuevaFoto);
                     renderReporteObra();
                     // Subimos de a una foto por vez (await): si se suben varias juntas y
@@ -4266,8 +4550,8 @@ Responde ÚNICAMENTE con un JSON válido, sin texto adicional, sin markdown, con
         // de una grilla de 12 debe ocupar la foto al imprimir/generar el PDF, para que el
         // tamaño elegido por el usuario se respete también ahí (ver @media print).
         function spanImpresionDesdeWidthPct(widthPct) {
-            const mapa = { 25: 3, 33: 4, 50: 6, 100: 12 };
-            return mapa[widthPct] || 6;
+            const mapa = { 25: 3, 33: 4, 50: 6, 66: 8, 75: 9, 100: 12 };
+            return mapa[widthPct] || Math.max(1, Math.min(12, Math.round((widthPct || 50) * 12 / 100)));
         }
 
         function actualizarTamanoFoto(idObra, etapaKey, idx, valor) {
@@ -4309,6 +4593,8 @@ Responde ÚNICAMENTE con un JSON válido, sin texto adicional, sin markdown, con
                 foto.src = canvas.toDataURL('image/jpeg', 0.85);
                 // Al girar 90° la foto cambia de horizontal a vertical (o viceversa)
                 foto.orientacion = foto.orientacion === 'vertical' ? 'horizontal' : 'vertical';
+                foto.ratio = invertirRatio(ratioDeFoto(foto));
+                foto.posX = 50; foto.posY = 50;
                 renderReporteObra();
                 // La imagen cambió: sube la versión girada a Drive y borra la anterior
                 programarSincronizacionFoto(idObra, etapaKey, foto.id, 50);
@@ -4345,12 +4631,24 @@ Responde ÚNICAMENTE con un JSON válido, sin texto adicional, sin markdown, con
             return `<span class="rep-foto-tag" style="background:${color};">${info ? info.label : etiqueta}</span>`;
         }
 
-        function htmlControlesFotos(idObra, etapaKey, fotos) {
+        function htmlControlesFotos(idObra, etapaKey, fotos, destino) {
             if (!fotos || fotos.length === 0) return '';
-            return `<div class="rep-foto-grid">` + fotos.map((f, idx) => `
-                <div class="rep-foto-item foto-${f.orientacion === 'vertical' ? 'vertical' : f.orientacion === 'completa' ? 'completa' : 'horizontal'}" style="width:calc(${f.widthPct}% - 12px); --print-span:${spanImpresionDesdeWidthPct(f.widthPct)};">
-                    <div class="rep-foto-img-wrap">
-                        <img src="${srcDeFoto(f)}" onerror="this.closest('.rep-foto-img-wrap').classList.add('foto-sin-preview')">
+            const lay = layoutDeEtapa(destino);
+            const opts = (lista, actual) => lista.map(o => `<option value="${o.v}" ${String(o.v) === String(actual) ? 'selected' : ''}>${o.label}</option>`).join('');
+            return `<div class="rep-foto-grid" style="--rep-gap:${lay.gap}px; --rep-just:${lay.alinear};">` + fotos.map((f, idx) => {
+                if (!f.id) f.id = generarIdFoto();
+                const ratio = ratioDeFoto(f);
+                const esOrig = ratio === 'orig';
+                const span = spanImpresionDesdeWidthPct(f.widthPct);
+                const zoomPct = Math.round((f.zoom || 1) * 100);
+                const x = f.posX === undefined ? 50 : f.posX, y = f.posY === undefined ? 50 : f.posY;
+                const estiloWrap = esOrig ? '' : `aspect-ratio:${ratio.replace(':', ' / ')};`;
+                const estiloImg = esOrig ? '' : `object-position:${x}% ${y}%; transform-origin:${x}% ${y}%; ${(f.zoom || 1) > 1 ? `transform:scale(${f.zoom});` : ''}`;
+                return `
+                <div class="rep-foto-item ${esOrig ? 'foto-completa' : 'foto-recortada'}" ${span >= 9 ? 'data-full="1"' : ''} style="--span:${span};">
+                    <div class="rep-foto-img-wrap" style="${estiloWrap}"
+                        ${esOrig ? '' : `onpointerdown="iniciarArrastreFoto(event,'${idObra}','${etapaKey}',${idx})" onpointermove="moverArrastreFoto(event)" onpointerup="terminarArrastreFoto()" onpointercancel="terminarArrastreFoto()" ondblclick="resetEncuadreFoto('${idObra}','${etapaKey}',${idx})" title="Arrastra para elegir qué parte de la foto se ve (doble clic: centrar)"`}>
+                        <img id="rep-img-${f.id}" draggable="false" src="${srcDeFoto(f)}" style="${estiloImg}" onerror="this.closest('.rep-foto-img-wrap').classList.add('foto-sin-preview')">
                         ${!srcDeFoto(f) ? '<div class="foto-sin-preview-msg">☁️ Foto respaldada en Drive<br>(sin vista previa aquí)</div>' : ''}
                         ${htmlBadgeEtiquetaFoto(f.etiqueta)}
                     </div>
@@ -4364,24 +4662,35 @@ Responde ÚNICAMENTE con un JSON válido, sin texto adicional, sin markdown, con
                             value="${(f.ubicacion || '').replace(/"/g, '&quot;')}"
                             oninput="actualizarUbicacionFoto('${idObra}','${etapaKey}',${idx}, this.value)">
                         <div style="display:flex; gap:4px; width:100%; justify-content:center; flex-wrap:wrap; margin-top:4px;">
-                            ${htmlSelectorEtiquetaFoto(idObra, etapaKey, idx, f.etiqueta)}
-                            <select onchange="actualizarTamanoFoto('${idObra}','${etapaKey}',${idx}, this.value)">
-                                <option value="25" ${f.widthPct==25?'selected':''}>Pequeña</option>
-                                <option value="33" ${f.widthPct==33?'selected':''}>Mediana</option>
-                                <option value="50" ${f.widthPct==50?'selected':''}>Grande</option>
-                                <option value="100" ${f.widthPct==100?'selected':''}>Ancho completo</option>
-                            </select>
-                            <select onchange="actualizarOrientacionFoto('${idObra}','${etapaKey}',${idx}, this.value)" title="Formato de la foto">
-                                <option value="horizontal" ${f.orientacion!=='vertical' && f.orientacion!=='completa'?'selected':''}>▭ Horizontal</option>
-                                <option value="vertical" ${f.orientacion==='vertical'?'selected':''}>▯ Vertical</option>
-                                <option value="completa" ${f.orientacion==='completa'?'selected':''}>🖼️ Foto completa</option>
-                            </select>
+                            <button class="btn" title="Mover antes" onclick="moverFotoPosicion('${idObra}','${etapaKey}',${idx},-1)" style="padding:3px 8px;" ${idx === 0 ? 'disabled' : ''}>◀</button>
+                            <button class="btn" title="Mover después" onclick="moverFotoPosicion('${idObra}','${etapaKey}',${idx},1)" style="padding:3px 8px;" ${idx === fotos.length - 1 ? 'disabled' : ''}>▶</button>
+                            ${esOrig ? '' : `<button class="btn" title="Activa el arrastre con el dedo para reencuadrar" onclick="alternarEncuadreTactil(this)" style="padding:3px 8px;">✥ Encuadrar</button>`}
                             <button class="btn" onclick="rotarFotoReporte('${idObra}','${etapaKey}',${idx})" style="padding:3px 8px;">↻ Girar</button>
                             <button class="btn btn-danger" onclick="eliminarFotoReporte('${idObra}','${etapaKey}',${idx})" style="padding:3px 8px;">✕</button>
                         </div>
+                        <details class="rep-foto-ajustes" ${repAjustesAbiertos.has(f.id) ? 'open' : ''} ontoggle="alternarAjustesFoto('${f.id}', this.open)">
+                            <summary>⚙️ Ajustes de la foto</summary>
+                            <div class="rep-foto-ajustes-body">
+                                <label>Proporción del recuadro
+                                    <select onchange="actualizarRatioFoto('${idObra}','${etapaKey}',${idx}, this.value)">${opts(REP_RATIOS, ratio)}</select>
+                                </label>
+                                <label>Tamaño en la hoja
+                                    <select onchange="actualizarTamanoFoto('${idObra}','${etapaKey}',${idx}, this.value)">${opts(REP_TAMANOS, f.widthPct)}</select>
+                                </label>
+                                ${esOrig ? '' : `
+                                <label>Zoom: <b id="rep-zoom-lbl-${f.id}">${zoomPct}%</b>
+                                    <input type="range" min="100" max="300" step="5" value="${zoomPct}"
+                                        oninput="actualizarZoomFotoLive('${idObra}','${etapaKey}',${idx}, this.value)">
+                                </label>
+                                <button class="btn" onclick="resetEncuadreFoto('${idObra}','${etapaKey}',${idx})" style="padding:3px 8px;">🎯 Centrar y quitar zoom</button>`}
+                                <label>Etiqueta
+                                    ${htmlSelectorEtiquetaFoto(idObra, etapaKey, idx, f.etiqueta)}
+                                </label>
+                            </div>
+                        </details>
                     </div>
-                </div>
-            `).join('') + `</div>`;
+                </div>`;
+            }).join('') + `</div>`;
         }
 
         function htmlControlEtapaPanel(idObra, etapaKey, etapa, label, colorClase) {
@@ -4400,7 +4709,7 @@ Responde ÚNICAMENTE con un JSON válido, sin texto adicional, sin markdown, con
                         <input type="file" accept="image/*" multiple
                             onchange="manejarFotosEtapa('${idObra}','${etapaKey}', this.files)">
                     </div>
-                    ${etapa.fotos.length ? `<p style="font-size:11px; color:#64748b; margin-top:6px;">${etapa.fotos.length} foto(s) agregada(s) — ajústalas en la vista previa de abajo.</p>` : ''}
+                    ${htmlBarraLayoutFotos(idObra, etapaKey, etapa)}
                 </div>
             `;
         }
@@ -4456,6 +4765,7 @@ Responde ÚNICAMENTE con un JSON válido, sin texto adicional, sin markdown, con
                         <input type="text" value="${obra.fecha}" onchange="actualizarCampoObra('${obra.id}','fecha', this.value)">
                     </div>
                 </div>
+                ${htmlControlMostrarDatos(obra)}
                 <div class="form-group">
                     <label style="display:flex; align-items:center; justify-content:space-between;">
                         <span>Descripción general de la obra (opcional)</span>
@@ -4484,6 +4794,7 @@ Responde ÚNICAMENTE con un JSON válido, sin texto adicional, sin markdown, con
                         <input type="file" accept="image/*" multiple
                             onchange="manejarFotosEtapa('${obra.id}','avance', this.files)">
                     </div>
+                    ${htmlBarraLayoutFotos(obra.id, 'avance', obra.avance)}
                 `}
 
                 <div class="form-group" style="margin-top:16px; border-top:1px dashed #e2e8f0; padding-top:12px;">
@@ -4510,30 +4821,34 @@ Responde ÚNICAMENTE con un JSON válido, sin texto adicional, sin markdown, con
         function renderPanelObraPreview(obra, esPrimera) {
             const esCompleto = obra.modo === 'completo';
             const claseSalto = esPrimera ? '' : ' rep-salto-pagina';
+            const m = mostrarDeObra(obra);
+            const lineasMeta = [];
+            if (m.cliente) lineasMeta.push(`<p><strong>Cliente:</strong> ${obra.cliente || '---'}</p>`);
+            if (m.ubicacion) lineasMeta.push(`<p><strong>Ubicación:</strong> ${obra.direccion || '---'}</p>`);
+            const respFecha = [];
+            if (m.responsable) respFecha.push(`<strong>Responsable:</strong> ${obra.responsable || '---'}`);
+            if (m.fecha) respFecha.push(`<strong>Fecha:</strong> ${obra.fecha}`);
+            if (respFecha.length) lineasMeta.push(`<p>${respFecha.join(' &nbsp;|&nbsp; ')}</p>`);
             return `
             <div class="rep-obra-bloque${claseSalto}">
                 <div class="rep-obra-cabecera">
                     <div>
                         <h3>${obra.nombreObra || 'Obra sin nombre'}</h3>
-                        <div class="rep-obra-meta">
-                            <p><strong>Cliente:</strong> ${obra.cliente || '---'}</p>
-                            <p><strong>Ubicación:</strong> ${obra.direccion || '---'}</p>
-                            <p><strong>Responsable:</strong> ${obra.responsable || '---'} &nbsp;|&nbsp; <strong>Fecha:</strong> ${obra.fecha}</p>
-                        </div>
+                        ${lineasMeta.length ? `<div class="rep-obra-meta">${lineasMeta.join('')}</div>` : ''}
                     </div>
                     <span class="rep-obra-modo-tag">${esCompleto ? 'REPORTE POR ETAPAS' : 'AVANCE DE OBRA'}</span>
                 </div>
                 <p id="rep-prev-desc-${obra.id}" class="rep-etapa-desc" style="${obra.descripcion?'':'display:none;'}">${obra.descripcion || ''}</p>
 
                 ${esCompleto ? `
-                    ${renderEtapaPreview(obra.id, 'inicio', obra.etapas.inicio, 'INICIO DE OBRA', 'inicio')}
-                    ${renderEtapaPreview(obra.id, 'proceso', obra.etapas.proceso, 'PROCESO CONSTRUCTIVO', 'proceso')}
-                    ${renderEtapaPreview(obra.id, 'finalizado', obra.etapas.finalizado, 'OBRA FINALIZADA / ENTREGA', 'finalizado')}
+                    ${renderEtapaPreview(obra.id, 'inicio', obra.etapas.inicio, 'INICIO DE OBRA', 'inicio', m.fechaEtapas)}
+                    ${renderEtapaPreview(obra.id, 'proceso', obra.etapas.proceso, 'PROCESO CONSTRUCTIVO', 'proceso', m.fechaEtapas)}
+                    ${renderEtapaPreview(obra.id, 'finalizado', obra.etapas.finalizado, 'OBRA FINALIZADA / ENTREGA', 'finalizado', m.fechaEtapas)}
                 ` : `
                     <div class="rep-etapa">
-                        <span class="rep-etapa-titulo inicio">AVANCE DE OBRA ${obra.avance.fecha ? '— ' + obra.avance.fecha : ''}</span>
+                        <span class="rep-etapa-titulo inicio">AVANCE DE OBRA ${(m.fechaEtapas && obra.avance.fecha) ? '— ' + obra.avance.fecha : ''}</span>
                         <p id="rep-prev-avance-desc-${obra.id}" class="rep-etapa-desc" style="${obra.avance.descripcion?'':'display:none;'}">${obra.avance.descripcion || ''}</p>
-                        ${htmlControlesFotos(obra.id, 'avance', obra.avance.fotos)}
+                        ${htmlControlesFotos(obra.id, 'avance', obra.avance.fotos, obra.avance)}
                     </div>
                 `}
 
@@ -4551,16 +4866,16 @@ Responde ÚNICAMENTE con un JSON válido, sin texto adicional, sin markdown, con
             </div>`;
         }
 
-        function renderEtapaPreview(idObra, etapaKey, etapa, label, colorClase) {
+        function renderEtapaPreview(idObra, etapaKey, etapa, label, colorClase, mostrarFecha = true) {
             const previewElId = `rep-prev-etapa-${idObra}-${etapaKey}`;
             if (!etapa.descripcion && etapa.fotos.length === 0 && !etapa.fecha) {
                 return `<div id="${previewElId}" style="display:none;"></div>`;
             }
             return `
                 <div class="rep-etapa">
-                    <span class="rep-etapa-titulo ${colorClase}">${label} ${etapa.fecha ? '— ' + etapa.fecha : ''}</span>
+                    <span class="rep-etapa-titulo ${colorClase}">${label} ${(mostrarFecha && etapa.fecha) ? '— ' + etapa.fecha : ''}</span>
                     <p id="${previewElId}" class="rep-etapa-desc" style="${etapa.descripcion?'':'display:none;'}">${etapa.descripcion || ''}</p>
-                    ${htmlControlesFotos(idObra, etapaKey, etapa.fotos)}
+                    ${htmlControlesFotos(idObra, etapaKey, etapa.fotos, etapa)}
                 </div>
             `;
         }
@@ -4639,22 +4954,10 @@ Reglas:
 Contexto de la obra: ${contexto}`;
 
             try {
-                const response = await fetch(
-                    `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODELO}:generateContent`,
-                    {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json",
-                            "x-goog-api-key": GEMINI_API_KEY
-                        },
-                        body: JSON.stringify({
+                const data = await fetchGemini({
                             system_instruction: { parts: [{ text: systemPrompt }] },
                             contents: [{ role: "user", parts: [{ text: "Notas del supervisor: " + notaActual }] }]
-                        })
-                    }
-                );
-                const data = await response.json();
-                if (data.error) throw new Error(data.error.message || "Error de la API");
+                        });
 
                 const partes = (data.candidates && data.candidates[0] && data.candidates[0].content
                     ? data.candidates[0].content.parts : []) || [];
