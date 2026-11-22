@@ -484,7 +484,9 @@
             /* Las fotos usan en impresión EXACTAMENTE el mismo diseño flexible que en pantalla
                (variables --span, --rep-gap y --rep-just), así lo que ves es lo que se imprime:
                tamaños, proporciones, encuadre y alineación de la última fila. */
-            .rep-foto-grid { display: flex !important; flex-wrap: wrap !important; }
+            .rep-foto-grid:not(.rep-mosaico) { display: flex !important; flex-wrap: wrap !important; }
+            .rep-foto-grid.rep-mosaico { display: block !important; column-count: var(--rep-cols, 2) !important; }
+            .rep-foto-grid.rep-mosaico .rep-foto-item { width: 100% !important; break-inside: avoid !important; }
             .rep-foto-item { box-sizing: border-box !important; }
             .rep-foto-img-wrap { cursor: default !important; }
             /* CORRECCIÓN "Foto completa": antes se forzaba a ocupar las 2 columnas (grid-column:
@@ -556,6 +558,16 @@
         .rep-foto-controles { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; align-items: center; justify-content: center; }
         .rep-foto-controles select, .rep-foto-controles button { font-size: 10px; padding: 3px 6px; }
         .rep-foto-controles input[type="text"] { font-size: 11px; padding: 3px 5px; width: 100%; margin-top: 4px; border: 1px solid #cbd5e1; border-radius: 4px; }
+
+        /* Modo MOSAICO: las fotos fluyen en columnas (el navegador las balancea), así una foto
+           vertical alta queda a un lado y 2 horizontales se apilan al otro, sin huecos vacíos.
+           "Ancho completo" cruza todas las columnas. */
+        .rep-foto-grid.rep-mosaico { display: block; column-count: var(--rep-cols, 2); column-gap: var(--rep-gap, 12px); }
+        .rep-foto-grid.rep-mosaico .rep-foto-item { width: 100% !important; display: inline-block; vertical-align: top;
+            break-inside: avoid; page-break-inside: avoid; margin: 0 0 var(--rep-gap, 12px) 0; }
+        .rep-foto-grid.rep-mosaico .rep-foto-item[data-full] { column-span: all; }
+        .rep-foto-grid.rep-mosaico .rep-foto-item.foto-completa .rep-foto-img-wrap { display: block; max-height: none; }
+        .rep-foto-grid.rep-mosaico .rep-foto-item.foto-completa .rep-foto-img-wrap img { width: 100% !important; max-height: 560px; object-fit: contain; }
         .rep-obra-modo-tag { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 12px; background: #f0f9ff; color: #0369a1; border: 1px solid #bae6fd; }
         .rep-referencia-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
         .rep-guardados-lista { display: flex; flex-direction: column; gap: 6px; max-height: 220px; overflow-y: auto; }
@@ -564,8 +576,9 @@
             .rep-referencia-row { grid-template-columns: 1fr; }
             /* En celular (solo en pantalla) las fotos se muestran más grandes para poder tocarlas;
                al imprimir se respeta el tamaño elegido. */
-            .rep-foto-item:not([data-full]) { width: calc(50% - var(--rep-gap, 12px) / 2 - 0.5px) !important; }
-            .rep-foto-item[data-full] { width: 100% !important; }
+            .rep-foto-grid:not(.rep-mosaico) .rep-foto-item:not([data-full]) { width: calc(50% - var(--rep-gap, 12px) / 2 - 0.5px) !important; }
+            .rep-foto-grid:not(.rep-mosaico) .rep-foto-item[data-full] { width: 100% !important; }
+            .rep-foto-grid.rep-mosaico { column-count: 2; }
         }
 
         /* ═══════════════ GALERÍA FOTOGRÁFICA ═══════════════ */
@@ -601,6 +614,29 @@
             .gal-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
             .gal-comparativo-row { grid-template-columns: 1fr; }
         }
+
+        /* ── Tema oscuro (la vista de documentos/impresión conserva fondo blanco) ── */
+        body.tema-oscuro { --bg:#0b1220; --text:#dbe4f0; --primary:#111c2e; --accent:#38bdf8; }
+        body.tema-oscuro .main-content { background:#0b1220; }
+        body.tema-oscuro h1, body.tema-oscuro h2, body.tema-oscuro h3 { color:#e5edf7; }
+        body.tema-oscuro .card, body.tema-oscuro .view > .card { background:#172235; color:#dbe4f0; border:1px solid #29384f; box-shadow:0 4px 12px #0003; }
+        body.tema-oscuro label { color:#b7c5d8; }
+        body.tema-oscuro input:not([type="file"]), body.tema-oscuro select, body.tema-oscuro textarea { background:#0f1a2b; color:#e5edf7; border-color:#3a4a61; }
+        body.tema-oscuro input::placeholder, body.tema-oscuro textarea::placeholder { color:#8191a8; }
+        body.tema-oscuro table { background:#172235; color:#dbe4f0; }
+        body.tema-oscuro th { background:#223149; color:#e5edf7; border-color:#34445c; }
+        body.tema-oscuro td { border-color:#2b3a50; color:#dbe4f0; }
+        body.tema-oscuro .menu-btn:hover, body.tema-oscuro .menu-btn.active { background:#26364e; }
+        body.tema-oscuro .topbar { background:#111c2e; }
+        body.tema-oscuro .bank-card, body.tema-oscuro .summary-row.total-final { background:#223149; color:#e5edf7; }
+        body.tema-oscuro .invoice-box, body.tema-oscuro .invoice-box * { color:initial; }
+        body.tema-oscuro .invoice-box { background:#fff; color:#334155; }
+        body.tema-oscuro .invoice-box h2, body.tema-oscuro .invoice-box h3 { color:#0f172a; }
+        body.tema-oscuro .invoice-box table { background:#fff; color:#334155; }
+        body.tema-oscuro .invoice-box td { color:#334155; border-color:#edf2f7; }
+        body.tema-oscuro .invoice-box th { color:#475569; background:#f1f5f9; }
+        body.tema-oscuro .version-entry { border-color:#34445c !important; }
+        body.tema-oscuro .version-entry small { color:#a9b8cc !important; }
     </style>
 </head>
 <body>
@@ -659,11 +695,13 @@
             style="display:none; align-items:center; gap:8px; background:#0284c7; color:white; margin-top:10px;">
             ⬇️ Instalar App
         </button>
+        <button class="menu-btn" onclick="switchView('historial-versiones')">🧾 Historial de versiones</button>
+        <button class="menu-btn" id="btn-tema" onclick="alternarTema()" aria-label="Cambiar tema">🌙 Modo oscuro</button>
         <button class="menu-btn" onclick="cerrarSesionSistema()"
             style="display:flex; align-items:center; gap:8px; background:transparent; color:#94a3b8; margin-top:6px; font-size:12px;">
             🔒 Cerrar sesión
         </button>
-        <div style="margin-top: auto; padding: 20px; font-size: 11px; color: #64748b; text-align: center;">Alexander Diseño & Construcción v3.0 📱</div>
+        <div style="margin-top: auto; padding: 20px; font-size: 11px; color: #64748b; text-align: center;"><span id="app-version-label">Alexander Diseño &amp; Construcción v4.0.0 📱</span></div>
     </div>
 
     <!-- CONTENIDO PRINCIPAL -->
@@ -1837,9 +1875,335 @@
             </div>
         </div>
 
+        <!-- VISTA: HISTORIAL DE VERSIONES -->
+        <div id="historial-versiones" class="view">
+            <h1>🧾 Historial de versiones</h1>
+            <div class="card">
+                <p style="margin-bottom:10px;">El sistema detecta cambios en el código cuando se carga una versión nueva. El historial se conserva localmente y puede sincronizarse con Google Sheets para consultarlo desde otros dispositivos.</p>
+                <div id="version-resumen" style="font-weight:700;margin-bottom:10px;"></div>
+                <div id="version-sync-status" style="font-size:12px;margin-bottom:14px;padding:10px 12px;border-radius:7px;background:#f1f5f9;color:#475569;">Historial local disponible. Google Sheets está preparado para guardar y devolver la hoja Versiones.</div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">
+                    <button class="btn btn-primary" onclick="describirUltimaVersion()">✏️ Describir último cambio</button>
+                    <button class="btn btn-success" style="width:auto;font-size:13px;padding:8px 12px;" onclick="sincronizarHistorialVersiones()">☁️ Sincronizar con Sheets</button>
+                    <button class="btn btn-edit" onclick="exportarHistorialVersiones()">⬇️ Exportar historial</button>
+                    <label class="btn btn-edit" style="cursor:pointer;">⬆️ Importar historial<input type="file" accept="application/json" onchange="importarHistorialVersiones(event)" style="display:none;"></label>
+                    <label class="btn btn-edit" style="cursor:pointer;">📄 Seleccionar Code.gs<input type="file" id="input-codigo-gs" accept=".gs,.txt,.js,text/plain" style="display:none;" onchange="mostrarArchivoGsSeleccionado(this)"></label>
+                    <button class="btn btn-primary" id="btn-respaldo-codigo" onclick="crearRespaldoCodigoDrive()">💾 Crear respaldo integral en Drive</button>
+                </div>
+                <div id="version-lista"></div>
+                <div id="respaldo-codigo-status" style="font-size:12px;margin-top:12px;padding:10px 12px;border-radius:7px;background:#f1f5f9;color:#475569;">Respaldo integral manual: guarda el HTML publicado y el archivo Code.gs que selecciones. Selecciona primero el código de Apps Script actualizado.</div>
+                <p style="font-size:12px;color:#64748b;margin-top:14px;">Cada versión registra número, fecha, descripción, autor y huella del código. La hoja «Versiones» de Google Sheets permite compartir el historial entre dispositivos. La huella detecta diferencias, pero no reconstruye por sí sola las líneas modificadas.</p>
+            </div>
+        </div>
+
     </div>
 
     <script>
+        // ── CONTROL DE VERSIONES Y TEMA ───────────────────────────────
+        const APP_RELEASE = '4.0.3'; // versión de esta entrega
+        const VERSION_STORAGE_KEY = 'alexander-dc-version-history-v1';
+        const THEME_STORAGE_KEY = 'alexander-dc-theme';
+        let historialVersiones = [];
+        let versionesNubeConectada = false;
+        let sincronizandoVersiones = false;
+
+        function mostrarEstadoVersiones(mensaje, tipo = 'info') {
+            const el = document.getElementById('version-sync-status');
+            if (!el) return;
+            const estilos = {
+                info: ['#f1f5f9', '#475569'],
+                ok: ['#dcfce7', '#166534'],
+                warning: ['#fef3c7', '#92400e'],
+                error: ['#fee2e2', '#991b1b']
+            };
+            const c = estilos[tipo] || estilos.info;
+            el.style.background = c[0];
+            el.style.color = c[1];
+            el.textContent = mensaje;
+        }
+
+        function normalizarVersiones(lista) {
+            if (!Array.isArray(lista)) return [];
+            return lista.filter(v => v && v.version && v.huella).map(v => ({
+                version: String(v.version),
+                fecha: v.fecha || new Date().toISOString(),
+                descripcion: String(v.descripcion || 'Modificación de código'),
+                autor: String(v.autor || 'No declarado'),
+                huella: String(v.huella),
+                estado: String(v.estado || 'registrada')
+            }));
+        }
+
+        function fusionarHistorialVersiones(listaNube) {
+            const mapa = new Map();
+            [...normalizarVersiones(listaNube), ...normalizarVersiones(historialVersiones)].forEach(v => {
+                const anterior = mapa.get(v.huella);
+                if (!anterior || new Date(v.fecha) > new Date(anterior.fecha)) mapa.set(v.huella, v);
+            });
+            historialVersiones = Array.from(mapa.values()).sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+            guardarHistorialVersiones();
+        }
+
+        async function sincronizarHistorialVersiones(silencioso = false) {
+            if (sincronizandoVersiones) return;
+            if (typeof URL_GAS === 'undefined' || !obtenerTokenAcceso()) {
+                mostrarEstadoVersiones('Inicia sesión para sincronizar el historial con Google Sheets.', 'warning');
+                return;
+            }
+            if (esModoLectura()) {
+                mostrarEstadoVersiones('Tu acceso es de solo lectura. Puedes consultar el historial, pero no sincronizar cambios.', 'warning');
+                return;
+            }
+            sincronizandoVersiones = true;
+            mostrarEstadoVersiones('Sincronizando historial con Google Sheets…', 'info');
+            try {
+                const respuesta = await fetch(URL_GAS, {
+                    method: 'POST',
+                    redirect: 'follow',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({
+                        tabla: 'Versiones',
+                        datos: normalizarVersiones(historialVersiones),
+                        token: obtenerTokenAcceso()
+                    })
+                });
+                if (!respuesta.ok) throw new Error('HTTP ' + respuesta.status);
+                const resultado = await respuesta.json();
+                if (!resultado || resultado.ok !== true) throw new Error((resultado && resultado.error) || 'Apps Script no confirmó el guardado del historial.');
+                versionesNubeConectada = true;
+                mostrarEstadoVersiones('Historial guardado en Google Sheets. Para comprobar la sincronización entre dispositivos, abre el sistema en otro equipo e inicia sesión.', 'ok');
+                if (!silencioso) mostrarToast('☁️ Historial sincronizado con Google Sheets.', 'success');
+            } catch (e) {
+                console.error('Error al sincronizar versiones:', e);
+                mostrarEstadoVersiones('No se pudo confirmar la conexión con la hoja Versiones. Revisa Apps Script y vuelve a intentar.', 'error');
+            } finally {
+                sincronizandoVersiones = false;
+                renderHistorialVersiones();
+            }
+        }
+
+        // ── RESPALDO INTEGRAL DEL CÓDIGO FUENTE EN GOOGLE DRIVE ─────────
+        function mostrarArchivoGsSeleccionado(input) {
+            const estado = document.getElementById('respaldo-codigo-status');
+            const archivo = input && input.files && input.files[0];
+            if (archivo) {
+                estado.textContent = 'Archivo de Apps Script seleccionado: ' + archivo.name + '. Al crear el respaldo se guardarán este archivo y el HTML publicado.';
+                estado.style.background = '#dcfce7';
+                estado.style.color = '#166534';
+            }
+        }
+
+        async function crearRespaldoCodigoDrive() {
+            const boton = document.getElementById('btn-respaldo-codigo');
+            const estado = document.getElementById('respaldo-codigo-status');
+            const pintar = (mensaje, tipo = 'info') => {
+                const colores = {
+                    info: ['#f1f5f9', '#475569'],
+                    ok: ['#dcfce7', '#166534'],
+                    warning: ['#fef3c7', '#92400e'],
+                    error: ['#fee2e2', '#991b1b']
+                };
+                const c = colores[tipo] || colores.info;
+                estado.style.background = c[0];
+                estado.style.color = c[1];
+                estado.textContent = mensaje;
+            };
+
+            if (esModoLectura()) {
+                pintar('Tu acceso es de solo lectura. Solicita al administrador que cree el respaldo.', 'warning');
+                return;
+            }
+            if (!obtenerTokenAcceso()) {
+                pintar('Inicia sesión como administrador antes de crear un respaldo.', 'warning');
+                return;
+            }
+            if (!/^https?:$/.test(window.location.protocol)) {
+                pintar('Para respaldar el HTML publicado, abre el sistema desde su dirección web (GitHub Pages), no desde un archivo local.', 'warning');
+                return;
+            }
+
+            const inputGs = document.getElementById('input-codigo-gs');
+            const archivoGs = inputGs && inputGs.files && inputGs.files[0];
+            if (!archivoGs) {
+                pintar('Antes de continuar, selecciona el archivo Code.gs actualizado. El respaldo integral necesita ambos archivos.', 'warning');
+                return;
+            }
+
+            const textoOriginal = boton ? boton.textContent : '';
+            if (boton) { boton.disabled = true; boton.textContent = '⏳ Creando respaldo…'; }
+            pintar('Obteniendo el HTML publicado y leyendo el archivo Code.gs…', 'info');
+
+            try {
+                const urlFuente = window.location.origin + window.location.pathname;
+                const respuestaFuente = await fetch(urlFuente, { cache: 'no-store' });
+                if (!respuestaFuente.ok) throw new Error('No se pudo obtener el HTML publicado (HTTP ' + respuestaFuente.status + ').');
+                const codigoHtml = await respuestaFuente.text();
+                const codigoGs = await archivoGs.text();
+
+                if (!/<html[\s>]/i.test(codigoHtml) || codigoHtml.length < 1000) {
+                    throw new Error('La dirección del sistema no devolvió un documento HTML válido.');
+                }
+                if (!codigoGs.trim() || codigoGs.length < 100) {
+                    throw new Error('El archivo Code.gs está vacío o no parece contener el código de Apps Script.');
+                }
+
+                const payload = {
+                    tipo: 'guardarRespaldoCodigo',
+                    version: versionActual(),
+                    descripcion: 'Respaldo integral manual del HTML publicado y del código de Google Apps Script.',
+                    autor: 'Administrador',
+                    codigoHtml: codigoHtml,
+                    codigoGs: codigoGs,
+                    nombreGs: archivoGs.name,
+                    token: obtenerTokenAcceso()
+                };
+
+                const respuesta = await fetch(URL_GAS, {
+                    method: 'POST',
+                    redirect: 'follow',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(payload)
+                });
+                if (!respuesta.ok) throw new Error('Apps Script respondió HTTP ' + respuesta.status + '.');
+                const resultado = await respuesta.json();
+                if (!resultado || !resultado.ok || !resultado.htmlUrl || !resultado.gsUrl) {
+                    throw new Error((resultado && resultado.error) || 'Apps Script no confirmó la creación de los dos archivos.');
+                }
+
+                pintar('', 'ok');
+                estado.textContent = resultado.duplicado
+                    ? 'Ya existía un respaldo idéntico. Se reutilizaron los archivos guardados en Drive: '
+                    : 'Respaldo integral creado correctamente en Google Drive: ';
+
+                const crearEnlace = (url, texto) => {
+                    const enlace = document.createElement('a');
+                    enlace.href = url;
+                    enlace.target = '_blank';
+                    enlace.rel = 'noopener noreferrer';
+                    enlace.textContent = texto;
+                    enlace.style.cssText = 'font-weight:700;color:inherit;text-decoration:underline;margin:0 5px;';
+                    return enlace;
+                };
+                estado.appendChild(crearEnlace(resultado.htmlUrl, 'Abrir index.html'));
+                estado.appendChild(document.createTextNode('·'));
+                estado.appendChild(crearEnlace(resultado.gsUrl, 'Abrir Code.gs'));
+            } catch (error) {
+                console.error('Error al crear respaldo integral del código:', error);
+                pintar('No se pudo crear el respaldo: ' + error.message, 'error');
+            } finally {
+                if (boton) { boton.disabled = false; boton.textContent = textoOriginal || '💾 Crear respaldo integral en Drive'; }
+            }
+        }
+
+        function integrarHistorialVersionesNube(listaNube) {
+            if (Array.isArray(listaNube)) {
+                versionesNubeConectada = true;
+                fusionarHistorialVersiones(listaNube);
+                if (!esModoLectura()) sincronizarHistorialVersiones(true);
+                else mostrarEstadoVersiones('Historial recibido desde Google Sheets. Acceso de solo lectura.', 'ok');
+            } else {
+                versionesNubeConectada = false;
+                mostrarEstadoVersiones('Historial local activo. Falta actualizar Apps Script para leer y devolver la hoja «Versiones»; la sincronización entre dispositivos aún no está habilitada.', 'warning');
+            }
+        }
+
+        function obtenerHistorialVersiones() {
+            try { const v = JSON.parse(localStorage.getItem(VERSION_STORAGE_KEY) || '[]'); return Array.isArray(v) ? v : []; }
+            catch (_) { return []; }
+        }
+        function guardarHistorialVersiones() {
+            try { localStorage.setItem(VERSION_STORAGE_KEY, JSON.stringify(historialVersiones)); }
+            catch (e) { console.warn('No se pudo guardar el historial local:', e); }
+            renderHistorialVersiones();
+        }
+        function huellaCodigoActual() {
+            // Captura CSS, scripts y estructura inicial antes de que la aplicación cargue datos dinámicos.
+            const fuente = Array.from(document.querySelectorAll('style')).map(x => x.textContent).join('\n') +
+                Array.from(document.querySelectorAll('script')).map(x => x.textContent).join('\n') +
+                document.body.innerHTML;
+            let h = 2166136261;
+            for (let i = 0; i < fuente.length; i++) { h ^= fuente.charCodeAt(i); h = Math.imul(h, 16777619); }
+            return ('00000000' + (h >>> 0).toString(16)).slice(-8);
+        }
+        function versionActual() {
+            const n = historialVersiones.length ? historialVersiones[0].version : APP_RELEASE;
+            return n || APP_RELEASE;
+        }
+        function registrarVersionInicialOCambio() {
+            historialVersiones = obtenerHistorialVersiones();
+            const huella = huellaCodigoActual();
+            const ultima = historialVersiones[0];
+            if (!ultima) {
+                historialVersiones.unshift({ version:APP_RELEASE, fecha:new Date().toISOString(), descripcion:'Instalación del control de versiones sincronizable y tema oscuro.', autor:'ChatGPT', huella, estado:'registrada' });
+                guardarHistorialVersiones();
+            } else if (ultima.huella !== huella) {
+                const partes = APP_RELEASE.split('.').map(Number);
+                const anterior = ultima.version || APP_RELEASE;
+                const a = anterior.split('.').map(Number);
+                const base = Math.max(partes[0] || 4, a[0] || 4) + '.' + (partes[1] || 0);
+                const patch = (a[0] === partes[0] && a[1] === partes[1] ? (a[2] || 0) + 1 : 1);
+                const nueva = base + '.' + patch;
+                historialVersiones.unshift({ version:nueva, fecha:new Date().toISOString(), descripcion:'Modificación de código detectada automáticamente. Pendiente de descripción.', autor:'No declarado', huella, estado:'registrada' });
+                guardarHistorialVersiones();
+                // El prompt es opcional; el registro ya quedó guardado aunque se cierre.
+                setTimeout(() => {
+                    const desc = prompt('Se detectó una nueva modificación del sistema (' + nueva + '). Describe brevemente qué cambió:', 'Modificación de código');
+                    if (desc && desc.trim()) { historialVersiones[0].descripcion = desc.trim(); guardarHistorialVersiones(); }
+                }, 700);
+            }
+            actualizarEtiquetaVersion();
+            renderHistorialVersiones();
+        }
+        function actualizarEtiquetaVersion() {
+            const v = versionActual();
+            const el = document.getElementById('app-version-label');
+            if (el) el.textContent = 'Alexander Diseño & Construcción v' + v + ' 📱';
+            const btn = document.getElementById('btn-tema');
+            if (btn) btn.textContent = document.body.classList.contains('tema-oscuro') ? '☀️ Modo claro' : '🌙 Modo oscuro';
+        }
+        function alternarTema() {
+            document.body.classList.toggle('tema-oscuro');
+            const tema = document.body.classList.contains('tema-oscuro') ? 'oscuro' : 'claro';
+            try { localStorage.setItem(THEME_STORAGE_KEY, tema); } catch (_) {}
+            actualizarEtiquetaVersion();
+        }
+        function inicializarTema() {
+            try { if (localStorage.getItem(THEME_STORAGE_KEY) === 'oscuro') document.body.classList.add('tema-oscuro'); } catch (_) {}
+            actualizarEtiquetaVersion();
+        }
+        function renderHistorialVersiones() {
+            const lista = document.getElementById('version-lista');
+            const resumen = document.getElementById('version-resumen');
+            if (!lista || !resumen) return;
+            resumen.textContent = 'Versión activa: v' + versionActual() + ' · ' + historialVersiones.length + ' registro(s) · ' + (versionesNubeConectada ? 'Google Sheets conectado' : 'solo historial local');
+            lista.innerHTML = historialVersiones.map((v, i) => `<div class="version-entry" style="padding:14px 4px;border-bottom:1px solid #e2e8f0;">
+                <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;"><strong>v${v.version}</strong><small style="color:#64748b;">${new Date(v.fecha).toLocaleString('es-PE')}</small></div>
+                <div style="margin:7px 0;">${String(v.descripcion || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}</div>
+                <small style="color:#64748b;">Autor: ${v.autor || 'No declarado'} · Huella: ${v.huella || '—'}</small>
+            </div>`).join('') || '<p>No hay versiones registradas.</p>';
+        }
+        function describirUltimaVersion() {
+            if (!historialVersiones.length) return;
+            const desc = prompt('Descripción de la versión ' + historialVersiones[0].version + ':', historialVersiones[0].descripcion || '');
+            if (desc !== null && desc.trim()) { historialVersiones[0].descripcion = desc.trim(); guardarHistorialVersiones(); }
+            const autor = prompt('Autor del cambio (ChatGPT, Claude, manual, etc.):', historialVersiones[0].autor || 'No declarado');
+            if (autor !== null && autor.trim()) { historialVersiones[0].autor = autor.trim(); guardarHistorialVersiones(); }
+        }
+        function exportarHistorialVersiones() {
+            const blob = new Blob([JSON.stringify(historialVersiones, null, 2)], {type:'application/json'});
+            const url = URL.createObjectURL(blob); const a = document.createElement('a');
+            a.href = url; a.download = 'AlexanderDC_historial_versiones.json'; a.click(); URL.revokeObjectURL(url);
+        }
+        function importarHistorialVersiones(event) {
+            const file = event.target.files && event.target.files[0]; if (!file) return;
+            const reader = new FileReader();
+            reader.onload = () => { try { const data = JSON.parse(reader.result); if (!Array.isArray(data)) throw new Error('Formato inválido');
+                const mapa = new Map(); [...data, ...historialVersiones].forEach(x => { if (x && x.version && x.huella) mapa.set(x.huella, x); });
+                historialVersiones = Array.from(mapa.values()).sort((a,b) => new Date(b.fecha)-new Date(a.fecha)); guardarHistorialVersiones(); mostrarToast('Historial importado correctamente.','success');
+            } catch(e) { alert('No se pudo importar el historial: ' + e.message); } };
+            reader.readAsText(file); event.target.value = '';
+        }
+
         // NUEVA INICIALIZACIÓN CON LA NUBE
 const URL_GAS = "https://script.google.com/macros/s/AKfycbyea7Y15IoQ_sn4OCW0Hi59FX_rl3eB_qxt-UedDorutGKK1z6YRLvRyu6sYvSbEOs8/exec";
 
@@ -1915,6 +2279,7 @@ function cargarDatosDesdeNube() {
             // viejos (que todavía no tienen este cambio) no mandan "nivel" → tratamos eso como
             // 'admin' para no bloquear instalaciones existentes.
             aplicarNivelAcceso(datos.nivel || 'admin');
+            integrarHistorialVersionesNube(datos.versiones);
 
             // NUEVO: reportes de obra guardados en la nube (backend viejo sin hoja "Reportes" → llega []).
             memoriaReportesNube = (datos.reportes || []).map(function(r) {
@@ -4090,6 +4455,11 @@ Responde ÚNICAMENTE con un JSON válido, sin texto adicional, sin markdown, con
             { v: 'flex-end',     label: '➡ Fotos a la derecha' },
             { v: 'space-evenly', label: '↔ Repartir parejo' }
         ];
+        const REP_MODOS_LAYOUT = [
+            { v: 'filas',    label: '▦ Distribución: por filas' },
+            { v: 'mosaico2', label: '🧱 Mosaico 2 columnas (sin huecos)' },
+            { v: 'mosaico3', label: '🧱 Mosaico 3 columnas (sin huecos)' }
+        ];
         const REP_ESPACIADOS = [
             { v: 6,  label: 'Espacio: compacto' },
             { v: 12, label: 'Espacio: normal' },
@@ -4123,7 +4493,7 @@ Responde ÚNICAMENTE con un JSON válido, sin texto adicional, sin markdown, con
 
         function layoutDeEtapa(destino) {
             const l = (destino && destino.layout) || {};
-            return { alinear: l.alinear || 'flex-start', gap: l.gap || 12 };
+            return { alinear: l.alinear || 'flex-start', gap: l.gap || 12, modo: l.modo || 'filas' };
         }
 
         // Qué datos de cabecera se muestran en el reporte (por defecto todos, como antes).
@@ -4290,7 +4660,7 @@ Responde ÚNICAMENTE con un JSON válido, sin texto adicional, sin markdown, con
                 f.ratio = ratio;
                 f.orientacion = orientacionLegacyDesdeRatio(ratio);
             });
-            destino.layout = { alinear: 'center', gap: 12 };
+            destino.layout = { alinear: 'center', gap: 12, modo: layoutDeEtapa(destino).modo };
             renderReporteObra();
             mostrarToast('✨ Fotos acomodadas. Puedes ajustar el encuadre de cada una arrastrándola.', 'success');
         }
@@ -4302,6 +4672,8 @@ Responde ÚNICAMENTE con un JSON válido, sin texto adicional, sin markdown, con
             return `
                 <div class="rep-layout-bar">
                     <span>🧩 Diseño de las fotos (${destino.fotos.length}):</span>
+                    <select title="Mosaico: las fotos se acomodan en columnas, una vertical grande puede quedar al lado de 2 horizontales apiladas, sin espacios vacíos"
+                        onchange="actualizarLayoutEtapa('${idObra}','${etapaKey}','modo', this.value)">${opts(REP_MODOS_LAYOUT, lay.modo)}</select>
                     <select title="Cómo se alinean las fotos cuando la última fila queda incompleta (ej. 3 fotos: 2 arriba y 1 abajo)"
                         onchange="actualizarLayoutEtapa('${idObra}','${etapaKey}','alinear', this.value)">${opts(REP_ALINEACIONES, lay.alinear)}</select>
                     <select onchange="actualizarLayoutEtapa('${idObra}','${etapaKey}','gap', this.value)">${opts(REP_ESPACIADOS, lay.gap)}</select>
@@ -4668,7 +5040,9 @@ Responde ÚNICAMENTE con un JSON válido, sin texto adicional, sin markdown, con
             if (!fotos || fotos.length === 0) return '';
             const lay = layoutDeEtapa(destino);
             const opts = (lista, actual) => lista.map(o => `<option value="${o.v}" ${String(o.v) === String(actual) ? 'selected' : ''}>${o.label}</option>`).join('');
-            return `<div class="rep-foto-grid" style="--rep-gap:${lay.gap}px; --rep-just:${lay.alinear};">` + fotos.map((f, idx) => {
+            const esMosaico = lay.modo === 'mosaico2' || lay.modo === 'mosaico3';
+            const colsMosaico = lay.modo === 'mosaico3' ? 3 : 2;
+            return `<div class="rep-foto-grid${esMosaico ? ' rep-mosaico' : ''}" style="--rep-gap:${lay.gap}px; --rep-just:${lay.alinear}; --rep-cols:${colsMosaico};">` + fotos.map((f, idx) => {
                 if (!f.id) f.id = generarIdFoto();
                 const ratio = ratioDeFoto(f);
                 const esOrig = ratio === 'orig';
@@ -4931,7 +5305,7 @@ Responde ÚNICAMENTE con un JSON válido, sin texto adicional, sin markdown, con
             if (reporteObraState.obras.length === 0) {
                 return mostrarToast('⚠️ Agrega al menos una obra antes de imprimir.', 'warning');
             }
-            const tituloDoc = (document.getElementById('rep-titulo-doc').value || 'Reporte_de_Obra').replace(/\s+/g, '_');
+            const tituloDoc = (nombreObrasReporte(reporteObraState.obras) || document.getElementById('rep-titulo-doc').value || 'Reporte_de_Obra').replace(/[\\/:*?"<>|]+/g, '').replace(/\s+/g, '_');
             imprimirConTitulo(tituloDoc);
         }
 
@@ -5233,7 +5607,9 @@ ${estilos}
 img { max-width: 100%; }
 /* Forzado incondicional (no depende de @media print): mismo criterio que la impresión del
    navegador, para que el PDF de Drive luzca igual y nunca se desborde de la página. */
-.rep-foto-grid { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 10px !important; }
+.rep-foto-grid:not(.rep-mosaico) { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 10px !important; }
+.rep-foto-grid.rep-mosaico { display: block !important; column-count: var(--rep-cols, 2) !important; column-gap: 10px !important; }
+.rep-foto-grid.rep-mosaico .rep-foto-item { margin-bottom: 10px !important; break-inside: avoid !important; }
 .rep-foto-item { width: 100% !important; box-sizing: border-box !important; }
 /* Mismo criterio que en @media print: 1 columna (no forzar ancho completo) y alto máximo
    para que la foto entre siempre completa en una página, sin recortarse ni partirse. */
@@ -5243,7 +5619,7 @@ img { max-width: 100%; }
 
                 const payload = {
                     tipo: "guardarReportePdf",
-                    titulo: registro.titulo || registro.nombre,
+                    titulo: registro.nombre,
                     nombre: registro.nombre,
                     htmlFull: htmlCompleto,
                     pdfFileIdAnterior: registro.pdfFileId || '',
@@ -5282,6 +5658,23 @@ img { max-width: 100%; }
         // para asegurarnos de que lo que se imprime/sube a Drive sea siempre lo último editado.
         // Conserva pdfUrl/pdfFileId del registro anterior (si existía) para que, al generar un
         // PDF nuevo más adelante, el backend pueda borrar el archivo viejo en vez de duplicarlo.
+        // Nombre con el que se identifica un reporte: el/los nombre(s) de la OBRA o PROYECTO
+        // (no el título del documento). Si hay varias obras: "Obra A + Obra B".
+        function nombreObrasReporte(obras) {
+            const nombres = (obras || []).map(o => (o.nombreObra || '').trim()).filter(Boolean);
+            if (nombres.length === 0) return '';
+            return nombres.length <= 2 ? nombres.join(' + ') : nombres[0] + ' + ' + (nombres.length - 1) + ' más';
+        }
+        function nombreVisibleReporte(r) {
+            const base = nombreObrasReporte(r.obras) || r.titulo || 'Reporte de Obra';
+            let fecha = '';
+            try { fecha = new Date(r.fechaGuardado).toLocaleDateString('es-PE'); } catch (e) {}
+            if (!fecha || fecha === 'Invalid Date') {
+                const m = /—\s*([^—]+)$/.exec(r.nombre || ''); fecha = m ? m[1].trim() : '';
+            }
+            return base + (fecha ? ' — ' + fecha : '');
+        }
+
         function guardarReporteObraLocal(silencioso) {
             if (bloquearSiSoloLectura()) return null;
             if (reporteObraState.obras.length === 0) {
@@ -5290,7 +5683,7 @@ img { max-width: 100%; }
             }
             const guardados = obtenerReportesLocales();
             const anterior = reporteObraGuardadoId ? guardados.find(r => r.id === reporteObraGuardadoId) : null;
-            const nombreSugerido = document.getElementById('rep-titulo-doc').value || 'Reporte de Obra';
+            const nombreSugerido = nombreObrasReporte(reporteObraState.obras) || document.getElementById('rep-titulo-doc').value || 'Reporte de Obra';
             const registro = {
                 id: reporteObraGuardadoId || ('rep_' + Date.now()),
                 nombre: nombreSugerido + ' — ' + new Date().toLocaleDateString('es-PE'),
@@ -5370,7 +5763,7 @@ img { max-width: 100%; }
             }
             cont.innerHTML = guardados.slice().reverse().map(r => `
                 <div class="rep-guardado-item">
-                    <span>📄 ${r.nombre} <span style="color:#94a3b8;">(${(r.obras||[]).length} obra${(r.obras||[]).length===1?'':'s'})</span>
+                    <span>📄 ${nombreVisibleReporte(r)} <span style="color:#94a3b8;">(${(r.obras||[]).length} obra${(r.obras||[]).length===1?'':'s'})</span>
                         ${r.pdfUrl ? `<a href="${r.pdfUrl}" target="_blank" rel="noopener" style="margin-left:8px;font-size:11px;color:#16a34a;font-weight:600;text-decoration:none;">☁️ PDF en Drive</a>` : ''}
                     </span>
                     <div style="display:flex; gap:6px;">
@@ -5425,7 +5818,7 @@ img { max-width: 100%; }
 
             // Reportes guardados en este dispositivo
             obtenerReportesGuardados().forEach(reg => {
-                (reg.obras || []).forEach(obra => agregarDeObra(obra, reg.id, reg.nombre));
+                (reg.obras || []).forEach(obra => agregarDeObra(obra, reg.id, nombreVisibleReporte(reg)));
             });
 
             return items;
@@ -7503,6 +7896,8 @@ async function borrarCuenta(i) {
         }
 
         window.onload = function() {
+            inicializarTema();
+            registrarVersionInicialOCambio();
             const claveGuardada = obtenerTokenAcceso();
             if (claveGuardada) {
                 cargarDatosDesdeNube().then(() => {
