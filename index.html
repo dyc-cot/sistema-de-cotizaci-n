@@ -1906,7 +1906,7 @@
 
     <script>
         // ── CONTROL DE VERSIONES Y TEMA ───────────────────────────────
-        const APP_RELEASE = '4.0.6'; // versión de esta entrega
+        const APP_RELEASE = '4.0.7'; // versión de esta entrega
         // Instantánea del HTML inicial: se captura una sola vez al ejecutar este script,
         // antes de que window.onload y los módulos modifiquen el DOM.
         const APP_MARKUP_SNAPSHOT = document.body.innerHTML;
@@ -2141,31 +2141,43 @@
             }
             return ('00000000' + (h >>> 0).toString(16)).slice(-8);
         }
+        // Compara versiones semánticas numéricas (por ejemplo, 4.0.7 > 4.0.6).
+        function compararVersiones(a, b) {
+            const pa = String(a || '0').split('.').map(x => parseInt(x, 10) || 0);
+            const pb = String(b || '0').split('.').map(x => parseInt(x, 10) || 0);
+            for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+                const diferencia = (pa[i] || 0) - (pb[i] || 0);
+                if (diferencia !== 0) return diferencia > 0 ? 1 : -1;
+            }
+            return 0;
+        }
+        // Muestra la versión REAL del archivo que se está ejecutando, no la última
+        // versión que figure en el historial compartido.
         function versionActual() {
-            const n = historialVersiones.length ? historialVersiones[0].version : APP_RELEASE;
-            return n || APP_RELEASE;
+            return APP_RELEASE;
         }
         function registrarVersionInicialOCambio() {
             historialVersiones = obtenerHistorialVersiones();
             const huella = huellaCodigoActual();
-            const ultima = historialVersiones[0];
-            if (!ultima) {
+            if (!historialVersiones.length) {
                 historialVersiones.unshift({ version:APP_RELEASE, fecha:new Date().toISOString(), descripcion:'Instalación del control de versiones sincronizable y tema oscuro.', autor:'ChatGPT', huella, estado:'registrada' });
                 guardarHistorialVersiones();
-            } else if (ultima.huella !== huella) {
-                const partes = APP_RELEASE.split('.').map(Number);
-                const anterior = ultima.version || APP_RELEASE;
-                const a = anterior.split('.').map(Number);
-                const base = Math.max(partes[0] || 4, a[0] || 4) + '.' + (partes[1] || 0);
-                const patch = (a[0] === partes[0] && a[1] === partes[1] ? (a[2] || 0) + 1 : 1);
-                const nueva = base + '.' + patch;
-                historialVersiones.unshift({ version:nueva, fecha:new Date().toISOString(), descripcion:'Modificación de código detectada automáticamente. Pendiente de descripción.', autor:'No declarado', huella, estado:'registrada' });
-                guardarHistorialVersiones();
-                // El prompt es opcional; el registro ya quedó guardado aunque se cierre.
-                setTimeout(() => {
-                    const desc = prompt('Se detectó una nueva modificación del sistema (' + nueva + '). Describe brevemente qué cambió:', 'Modificación de código');
-                    if (desc && desc.trim()) { historialVersiones[0].descripcion = desc.trim(); guardarHistorialVersiones(); }
-                }, 700);
+            } else {
+                const versionesRegistradas = historialVersiones.map(v => v.version);
+                const versionMasAlta = versionesRegistradas.reduce((mayor, actual) => compararVersiones(actual, mayor) > 0 ? actual : mayor, '0');
+                const existeEstaVersion = historialVersiones.some(v => v.version === APP_RELEASE);
+
+                // Solo se registra una entrega cuando APP_RELEASE avanza explícitamente.
+                // Abrir un HTML antiguo (versión menor) o una copia ya registrada no crea
+                // una versión nueva, aunque su huella de código sea diferente.
+                if (!existeEstaVersion && compararVersiones(APP_RELEASE, versionMasAlta) > 0) {
+                    historialVersiones.unshift({ version:APP_RELEASE, fecha:new Date().toISOString(), descripcion:'Nueva versión publicada. Pendiente de descripción.', autor:'No declarado', huella, estado:'registrada' });
+                    guardarHistorialVersiones();
+                    setTimeout(() => {
+                        const desc = prompt('Se detectó una nueva entrega del sistema (' + APP_RELEASE + '). Describe brevemente qué cambió:', 'Actualización del sistema');
+                        if (desc && desc.trim()) { historialVersiones[0].descripcion = desc.trim(); guardarHistorialVersiones(); }
+                    }, 700);
+                }
             }
             actualizarEtiquetaVersion();
             renderHistorialVersiones();
@@ -2191,7 +2203,7 @@
             const lista = document.getElementById('version-lista');
             const resumen = document.getElementById('version-resumen');
             if (!lista || !resumen) return;
-            resumen.textContent = 'Versión activa: v' + versionActual() + ' · ' + historialVersiones.length + ' registro(s) · ' + (versionesNubeConectada ? 'Google Sheets conectado' : 'solo historial local');
+            resumen.textContent = 'Archivo en ejecución: v' + versionActual() + ' · ' + historialVersiones.length + ' registro(s) · ' + (versionesNubeConectada ? 'Google Sheets conectado' : 'solo historial local');
             lista.innerHTML = historialVersiones.map((v, i) => `<div class="version-entry" style="padding:14px 4px;border-bottom:1px solid #e2e8f0;">
                 <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;"><strong>v${v.version}</strong><small style="color:#64748b;">${new Date(v.fecha).toLocaleString('es-PE')}</small></div>
                 <div style="margin:7px 0;">${String(v.descripcion || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}</div>
