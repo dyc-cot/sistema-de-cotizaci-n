@@ -1906,7 +1906,10 @@
 
     <script>
         // ── CONTROL DE VERSIONES Y TEMA ───────────────────────────────
-        const APP_RELEASE = '4.0.4'; // versión de esta entrega
+        const APP_RELEASE = '4.0.6'; // versión de esta entrega
+        // Instantánea del HTML inicial: se captura una sola vez al ejecutar este script,
+        // antes de que window.onload y los módulos modifiquen el DOM.
+        const APP_MARKUP_SNAPSHOT = document.body.innerHTML;
         const VERSION_STORAGE_KEY = 'alexander-dc-version-history-v1';
         const THEME_STORAGE_KEY = 'alexander-dc-theme';
         let historialVersiones = [];
@@ -2123,12 +2126,19 @@
             renderHistorialVersiones();
         }
         function huellaCodigoActual() {
-            // Captura CSS, scripts y estructura inicial antes de que la aplicación cargue datos dinámicos.
-            const fuente = Array.from(document.querySelectorAll('style')).map(x => x.textContent).join('\n') +
-                Array.from(document.querySelectorAll('script')).map(x => x.textContent).join('\n') +
-                document.body.innerHTML;
+            // La huella se calcula sobre el código y el HTML inicial capturado al cargar
+            // el archivo. Nunca se usa el DOM vivo: abrir reportes, cambiar de módulo,
+            // cargar fotos o actualizar datos no debe crear versiones ficticias.
+            const estilos = Array.from(document.querySelectorAll('style'))
+                .map(x => x.textContent || '').join('\n');
+            const scripts = Array.from(document.querySelectorAll('script'))
+                .map(x => x.textContent || '').join('\n');
+            const fuente = estilos + '\n' + scripts + '\n' + APP_MARKUP_SNAPSHOT;
             let h = 2166136261;
-            for (let i = 0; i < fuente.length; i++) { h ^= fuente.charCodeAt(i); h = Math.imul(h, 16777619); }
+            for (let i = 0; i < fuente.length; i++) {
+                h ^= fuente.charCodeAt(i);
+                h = Math.imul(h, 16777619);
+            }
             return ('00000000' + (h >>> 0).toString(16)).slice(-8);
         }
         function versionActual() {
