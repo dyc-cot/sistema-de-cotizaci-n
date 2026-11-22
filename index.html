@@ -637,6 +637,12 @@
         body.tema-oscuro .invoice-box th { color:#475569; background:#f1f5f9; }
         body.tema-oscuro .version-entry { border-color:#34445c !important; }
         body.tema-oscuro .version-entry small { color:#a9b8cc !important; }
+
+        /* Perfil de acceso restringido: solo Galería Fotográfica */
+        body.modo-galeria .main-content > .view:not(#galeria) { display: none !important; }
+        body.modo-galeria .sidebar .menu-btn:not([onclick*="switchView('galeria')"]):not([onclick*="cerrarSesionSistema"]) { display: none !important; }
+        body.modo-galeria #gal-btn-resubir,
+        body.modo-galeria #gal-resubir-status { display: none !important; }
     </style>
 </head>
 <body>
@@ -676,7 +682,7 @@
         <h2>ALEXANDER D&C</h2>
         <div id="badge-modo-lectura" style="display:none; margin:-6px 20px 14px 20px; background:#78350f; color:#fde68a;
             font-size:11px; font-weight:700; text-align:center; padding:6px 8px; border-radius:6px; letter-spacing:.3px;">
-            🔒 MODO SOLO LECTURA
+            🖼️ ACCESO SOLO A GALERÍA
         </div>
         <button class="menu-btn active" onclick="switchView('nueva-cotizacion')">📄 Nueva Cotización</button>
         <button class="menu-btn" onclick="switchView('cotizaciones')">📂 Cotizaciones</button>
@@ -1900,7 +1906,7 @@
 
     <script>
         // ── CONTROL DE VERSIONES Y TEMA ───────────────────────────────
-        const APP_RELEASE = '4.0.3'; // versión de esta entrega
+        const APP_RELEASE = '4.0.4'; // versión de esta entrega
         const VERSION_STORAGE_KEY = 'alexander-dc-version-history-v1';
         const THEME_STORAGE_KEY = 'alexander-dc-theme';
         let historialVersiones = [];
@@ -2221,20 +2227,47 @@ let editIndexGasto = null;
 // es de solo lectura, aunque alguien manipule el frontend); esto de acá es solo para
 // avisar al usuario al toque y no dejarlo esperando un guardado que el backend va a
 // rechazar de todas formas.
+function esModoGaleria() {
+    return localStorage.getItem('nivel-acceso-sistema') === 'galeria';
+}
+
 function esModoLectura() {
-    return localStorage.getItem('nivel-acceso-sistema') === 'lectura';
+    // Compatibilidad con las comprobaciones existentes: Galería nunca puede escribir.
+    return esModoGaleria();
 }
 
 function aplicarNivelAcceso(nivel) {
-    localStorage.setItem('nivel-acceso-sistema', nivel === 'lectura' ? 'lectura' : 'admin');
-    document.body.classList.toggle('modo-lectura', nivel === 'lectura');
+    const modoGaleria = nivel === 'galeria' || nivel === 'lectura';
+    const nivelFinal = modoGaleria ? 'galeria' : 'admin';
+    localStorage.setItem('nivel-acceso-sistema', nivelFinal);
+    document.body.classList.toggle('modo-lectura', modoGaleria);
+    document.body.classList.toggle('modo-galeria', modoGaleria);
+
     const badge = document.getElementById('badge-modo-lectura');
-    if (badge) badge.style.display = nivel === 'lectura' ? 'block' : 'none';
+    if (badge) {
+        badge.textContent = modoGaleria ? '🖼️ ACCESO SOLO A GALERÍA' : '';
+        badge.style.display = modoGaleria ? 'block' : 'none';
+    }
+
+    // El usuario de Galería entra directamente a su único módulo permitido.
+    if (modoGaleria) {
+        document.querySelectorAll('.menu-btn').forEach(btn => {
+            const esGaleria = (btn.getAttribute('onclick') || '').includes("switchView('galeria')");
+            const esCerrarSesion = (btn.getAttribute('onclick') || '').includes('cerrarSesionSistema');
+            btn.style.display = (esGaleria || esCerrarSesion) ? 'flex' : 'none';
+        });
+        const hb = document.getElementById('hamburger-btn');
+        if (hb) hb.style.display = 'none';
+    } else {
+        document.querySelectorAll('.menu-btn').forEach(btn => btn.style.removeProperty('display'));
+        const hb = document.getElementById('hamburger-btn');
+        if (hb) hb.style.removeProperty('display');
+    }
 }
 
 function bloquearSiSoloLectura() {
-    if (esModoLectura()) {
-        mostrarToast('🔒 Tu clave es de solo lectura: puedes ver e imprimir, pero no guardar ni modificar datos.', 'warning');
+    if (esModoGaleria()) {
+        mostrarToast('🔒 Este usuario solo tiene permiso para consultar la Galería Fotográfica.', 'warning');
         return true;
     }
     return false;
@@ -2299,7 +2332,8 @@ function cargarDatosDesdeNube() {
             panelTitulo.innerText = "Panel de Creación de Cotizaciones";
             panelTitulo.style.color = "var(--primary)";
 
-            inicializarModulos();
+            if (!esModoGaleria()) inicializarModulos();
+            else inicializarGaleria();
             resolve();
         };
 
@@ -2335,6 +2369,7 @@ async function intentarAcceso() {
         await cargarDatosDesdeNube();
         // Clave correcta: ocultamos la pantalla de acceso y arrancamos el resto de la app.
         document.getElementById('gate-acceso').style.display = 'none';
+        if (esModoGaleria()) switchView('galeria');
         registrarServiceWorker();
     } catch (e) {
         localStorage.removeItem('token-acceso-sistema');
@@ -3957,14 +3992,18 @@ ${catalogoResumen || '(catálogo vacío)'}`;
         let correlativoRequerimiento = parseInt(localStorage.getItem('correlativo-requerimiento') || '1', 10);
 
         function switchView(viewId) {
+            if (esModoGaleria() && viewId !== 'galeria') {
+                mostrarToast('🔒 Tu cuenta solo tiene acceso a la Galería Fotográfica.', 'warning');
+                viewId = 'galeria';
+            }
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
             document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('active'));
             document.getElementById(viewId).classList.add('active');
             if(window.event && window.event.target && window.event.target.classList.contains('menu-btn')) { 
                 window.event.target.classList.add('active'); 
             }
-            inicializarModulos();
-            if (viewId === 'guia-precios') { guiaRenderFiltros(); guiaRender(); }
+            if (!esModoGaleria()) inicializarModulos();
+            if (viewId === 'guia-precios' && !esModoGaleria()) { guiaRenderFiltros(); guiaRender(); }
             if (viewId === 'catalogo') { catRenderFiltros(); catRender(); }
             if (viewId === 'cotizaciones') { inicializarFiltrosHistorial(); renderTablaHistorial(); }
             if (viewId === 'requerimiento') { inicializarRequerimiento(); }
@@ -5412,6 +5451,10 @@ Contexto de la obra: ${contexto}`;
         // (tiene las fotos recién tomadas en base64, más fresca que la nube).
         function obtenerReportesGuardados() {
             const nube = memoriaReportesNube || [];
+            // En el perfil Galería no se mezclan reportes locales de otros usuarios/dispositivos.
+            if (esModoGaleria()) {
+                return nube.slice().sort((a, b) => new Date(a.fechaGuardado || 0) - new Date(b.fechaGuardado || 0));
+            }
             const locales = obtenerReportesLocales();
             const porId = new Map();
             nube.forEach(r => porId.set(r.id, r));
@@ -5885,6 +5928,7 @@ img { max-width: 100%; }
         // un driveFileId (se ignora a propósito: si borraste las carpetas/archivos en Drive
         // manualmente, ese ID ya apunta a algo que no existe — subimos uno nuevo desde cero).
         async function resubirTodasLasFotosADrive() {
+            if (bloquearSiSoloLectura()) return;
             // OJO: leemos localStorage UNA sola vez y reusamos la misma referencia todo el
             // proceso — si se vuelve a leer después del bucle, se pierden los driveUrl/driveFileId
             // nuevos que sincronizarFotoConDrive va escribiendo sobre estos mismos objetos.
@@ -5923,6 +5967,11 @@ img { max-width: 100%; }
         function renderGaleria() {
             const cont = document.getElementById('gal-contenido');
             if (!cont) return;
+
+            const btnResubir = document.getElementById('gal-btn-resubir');
+            if (btnResubir) btnResubir.style.display = esModoGaleria() ? 'none' : '';
+            const statusResubir = document.getElementById('gal-resubir-status');
+            if (statusResubir && esModoGaleria()) statusResubir.style.display = 'none';
 
             const filtroObra = document.getElementById('gal-filtro-obra').value;
             const filtroCategoria = document.getElementById('gal-filtro-categoria').value;
@@ -6004,7 +6053,7 @@ img { max-width: 100%; }
                         ${foto.driveUrl
                             ? `<a href="${foto.driveUrl}" target="_blank" rel="noopener" style="display:block;font-size:10px;color:#94a3b8;margin-bottom:6px;text-decoration:none;">Abrir archivo original en Drive ↗</a>`
                             : `<div style="font-size:11px;color:#94a3b8;margin-bottom:6px;">☁️ Aún no respaldada</div>`}
-                        <button class="btn btn-danger" style="width:100%;justify-content:center;" onclick="eliminarFotoDeGaleria('${it.reporteId}','${it.obraId}','${it.etapaKey}',${it.idx})">🗑️ Eliminar</button>
+                        ${esModoGaleria() ? '' : `<button class="btn btn-danger" style="width:100%;justify-content:center;" onclick="eliminarFotoDeGaleria('${it.reporteId}','${it.obraId}','${it.etapaKey}',${it.idx})">🗑️ Eliminar</button>`}
                     </div>
                 </div>`;
         }
@@ -7902,6 +7951,7 @@ async function borrarCuenta(i) {
             if (claveGuardada) {
                 cargarDatosDesdeNube().then(() => {
                     document.getElementById('gate-acceso').style.display = 'none';
+                    if (esModoGaleria()) switchView('galeria');
                     registrarServiceWorker();
                 }).catch(() => {
                     localStorage.removeItem('token-acceso-sistema');
